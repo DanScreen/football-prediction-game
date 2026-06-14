@@ -82,19 +82,13 @@ export default async function AdminFixturesPage() {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    SCHEDULED: "bg-blue-100 text-blue-700",
-    AWAITING_RESULT: "bg-yellow-100 text-yellow-700",
-    COMPLETED: "bg-green-100 text-green-700",
+  const config: Record<string, { style: string; label: string }> = {
+    SCHEDULED: { style: "bg-blue-100 text-blue-700", label: "📅 Scheduled" },
+    AWAITING_RESULT: { style: "bg-yellow-100 text-yellow-700", label: "🟨 Awaiting Result" },
+    COMPLETED: { style: "bg-green-100 text-green-700", label: "✅ Completed" },
   }
-  const labels: Record<string, string> = {
-    SCHEDULED: "Scheduled",
-    AWAITING_RESULT: "Awaiting Result",
-    COMPLETED: "Completed",
-  }
+  const { style, label } = config[status] ?? { style: "bg-gray-100 text-gray-600", label: status }
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${styles[status] ?? "bg-gray-100 text-gray-600"}`}>
-      {labels[status] ?? status}
-    </span>
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${style}`}>{label}</span>
   )
 }

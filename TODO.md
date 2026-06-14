@@ -62,13 +62,13 @@ _(nothing blocked yet)_
 - [x] `GET /api/v1/leaderboard`
 - [x] API key auth middleware (`Authorization: Bearer <apiKey>`)
 
-## Phase 9 — Design Pass
-- [ ] Pitch-green palette with yellow/red card accent colours
-- [ ] Rounded headline font + clean body sans-serif
-- [ ] Football iconography (⚽ 🏆 🟨) for status indicators
-- [ ] Celebration animation for exact-score predictions ("Nailed it!")
-- [ ] Animated leaderboard point updates
-- [ ] Responsive / mobile-friendly layout
+## Phase 9 — Design Pass ✅
+- [x] Pitch-green palette with yellow/red card accent colours
+- [x] Rounded headline font + clean body sans-serif
+- [x] Football iconography (⚽ 🏆 🟨) for status indicators
+- [x] Celebration animation for exact-score predictions ("Nailed it!")
+- [x] Animated leaderboard point updates
+- [x] Responsive / mobile-friendly layout
 
 ## Phase 10 — Seed Data & QA
 - [ ] Seed real or placeholder upcoming fixtures

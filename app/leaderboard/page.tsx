@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { scoreOnePrediction } from "@/lib/scoring"
+import { AnimatedPoints } from "./AnimatedPoints"
 
 type FormColor = "green" | "yellow" | "red" | "grey"
 
@@ -10,10 +11,6 @@ function formColorClass(c: FormColor) {
     red: "bg-red-500",
     grey: "bg-gray-200",
   }[c]
-}
-
-function pts(n: number) {
-  return Number.isInteger(n) ? String(n) : n.toFixed(1)
 }
 
 export default async function LeaderboardPage() {
@@ -68,54 +65,60 @@ export default async function LeaderboardPage() {
     predsByUser.set(p.userId, arr)
   }
 
-  // Compute leaderboard entries
-  const entries = users.map((user) => {
-    const preds = predsByUser.get(user.id) ?? []
+  const entries = users
+    .map((user) => {
+      const preds = predsByUser.get(user.id) ?? []
+      const totalPoints = preds.reduce((sum, p) => sum + (p.pointsAwarded ?? 0), 0)
 
-    const totalPoints = preds.reduce((sum, p) => sum + (p.pointsAwarded ?? 0), 0)
+      const exactCount = preds.filter(
+        (p) =>
+          p.fixture.actualHomeScore !== null &&
+          p.fixture.actualAwayScore !== null &&
+          scoreOnePrediction(
+            p.predictedHomeScore,
+            p.predictedAwayScore,
+            p.fixture.actualHomeScore,
+            p.fixture.actualAwayScore,
+          ) === 3,
+      ).length
 
-    // Exact count from base score (avoids grand-slam inflated pointsAwarded affecting the count)
-    const exactCount = preds.filter(
-      (p) =>
-        p.fixture.actualHomeScore !== null &&
-        p.fixture.actualAwayScore !== null &&
-        scoreOnePrediction(
-          p.predictedHomeScore,
-          p.predictedAwayScore,
-          p.fixture.actualHomeScore,
-          p.fixture.actualAwayScore,
-        ) === 3,
-    ).length
+      const roundStats = new Map<string, { scored: number; count: number }>()
+      for (const p of preds) {
+        const rk = `${p.fixture.competition}||${p.fixture.round}`
+        const s = roundStats.get(rk) ?? { scored: 0, count: 0 }
+        roundStats.set(rk, { scored: s.scored + (p.pointsAwarded ?? 0), count: s.count + 1 })
+      }
 
-    // Group preds by round key
-    const roundStats = new Map<string, { scored: number; count: number }>()
-    for (const p of preds) {
-      const rk = `${p.fixture.competition}||${p.fixture.round}`
-      const s = roundStats.get(rk) ?? { scored: 0, count: 0 }
-      roundStats.set(rk, { scored: s.scored + (p.pointsAwarded ?? 0), count: s.count + 1 })
-    }
+      const form: FormColor[] = last5Rounds.map(({ key }) => {
+        const s = roundStats.get(key)
+        if (!s || s.count === 0) return "grey"
+        const pct = s.scored / (s.count * 3)
+        if (pct > 0.4) return "green"
+        if (pct > 0.2) return "yellow"
+        return "red"
+      })
 
-    const form: FormColor[] = last5Rounds.map(({ key }) => {
-      const s = roundStats.get(key)
-      if (!s || s.count === 0) return "grey"
-      const pct = s.scored / (s.count * 3)
-      if (pct > 0.4) return "green"
-      if (pct > 0.2) return "yellow"
-      return "red"
+      return { ...user, totalPoints, exactCount, form }
     })
+    .sort((a, b) => b.totalPoints - a.totalPoints)
 
-    return { ...user, totalPoints, exactCount, form }
-  })
-
-  // Sort by points DESC
-  entries.sort((a, b) => b.totalPoints - a.totalPoints)
-
-  // Assign ranks (ties share same rank)
   let currentRank = 1
   const ranked = entries.map((entry, i) => {
     if (i > 0 && entries[i - 1].totalPoints !== entry.totalPoints) currentRank = i + 1
     return { ...entry, rank: currentRank }
   })
+
+  const rankDisplay = (i: number) =>
+    i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : ranked[i].rank
+
+  const rowBg = (i: number) =>
+    i === 0
+      ? "bg-amber-50 hover:bg-amber-100"
+      : i === 1
+        ? "bg-slate-50 hover:bg-slate-100"
+        : i === 2
+          ? "bg-orange-50 hover:bg-orange-100"
+          : "hover:bg-gray-50"
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -123,7 +126,9 @@ export default async function LeaderboardPage() {
       <p className="text-gray-500 text-sm mb-6">
         {entries.length} player{entries.length !== 1 ? "s" : ""}
         {last5Rounds.length > 0 && (
-          <> · form based on last {last5Rounds.length} round{last5Rounds.length !== 1 ? "s" : ""}</>
+          <>
+            {" · "}form: last {last5Rounds.length} round{last5Rounds.length !== 1 ? "s" : ""}
+          </>
         )}
       </p>
 
@@ -141,11 +146,11 @@ export default async function LeaderboardPage() {
                   <th className="text-left px-4 py-3 w-10">#</th>
                   <th className="text-left px-4 py-3">Player</th>
                   <th className="text-right px-4 py-3">Points</th>
-                  <th className="text-right px-4 py-3 hidden sm:table-cell">Exact</th>
+                  <th className="text-right px-4 py-3 hidden sm:table-cell">Exact ⚽</th>
                   {last5Rounds.length > 0 && (
                     <th className="text-right px-4 py-3 hidden md:table-cell">
-                      Form
-                      <span className="ml-1 text-gray-400 normal-case font-normal">
+                      Form{" "}
+                      <span className="normal-case font-normal text-gray-400">
                         (oldest → newest)
                       </span>
                     </th>
@@ -156,27 +161,20 @@ export default async function LeaderboardPage() {
                 {ranked.map((entry, i) => (
                   <tr
                     key={entry.id}
-                    className={`transition-colors ${
-                      i === 0
-                        ? "bg-yellow-50 hover:bg-yellow-100"
-                        : i === 1
-                          ? "bg-gray-50 hover:bg-gray-100"
-                          : i === 2
-                            ? "bg-orange-50 hover:bg-orange-100"
-                            : "hover:bg-gray-50"
-                    }`}
+                    className={`transition-colors animate-slide-up ${rowBg(i)}`}
+                    style={{ animationDelay: `${i * 55}ms` }}
                   >
-                    <td className="px-4 py-3 font-bold text-gray-500 tabular-nums">
-                      {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : entry.rank}
+                    <td className="px-4 py-3 font-bold text-gray-500 tabular-nums text-base">
+                      {rankDisplay(i)}
                     </td>
                     <td className="px-4 py-3">
                       <span className="font-semibold text-gray-900">{entry.displayName}</span>
                       {entry.isBot && (
-                        <span className="ml-1.5 text-xs text-gray-400 font-normal">🤖 bot</span>
+                        <span className="ml-1.5 text-xs text-gray-400 font-normal">🤖</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums text-gray-900">
-                      {pts(entry.totalPoints)}
+                    <td className="px-4 py-3 text-right font-bold tabular-nums text-gray-900 text-base">
+                      <AnimatedPoints value={entry.totalPoints} />
                     </td>
                     <td className="px-4 py-3 text-right text-gray-500 hidden sm:table-cell tabular-nums">
                       {entry.exactCount}
@@ -200,22 +198,22 @@ export default async function LeaderboardPage() {
             </table>
           </div>
 
-          {/* Form legend */}
           {last5Rounds.length > 0 && (
-            <div className="hidden md:flex items-center gap-4 text-xs text-gray-500 px-1">
-              <span className="font-medium">Form key:</span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-green-500 inline-block" /> &gt;40% of pts
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-yellow-400 inline-block" /> 21–40%
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-red-500 inline-block" /> ≤20%
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-gray-200 inline-block" /> No predictions
-              </span>
+            <div className="hidden md:flex items-center gap-5 text-xs text-gray-500 px-1">
+              <span className="font-semibold text-gray-700">Form key:</span>
+              {(
+                [
+                  ["bg-green-500", ">40% of pts"],
+                  ["bg-yellow-400", "21–40%"],
+                  ["bg-red-500", "≤20%"],
+                  ["bg-gray-200", "No picks"],
+                ] as const
+              ).map(([cls, label]) => (
+                <span key={label} className="flex items-center gap-1.5">
+                  <span className={`w-3 h-3 rounded-sm inline-block ${cls}`} />
+                  {label}
+                </span>
+              ))}
             </div>
           )}
         </>
