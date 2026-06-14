@@ -18,15 +18,15 @@ _(nothing blocked yet)_
 - [x] Create `.env.local.example` with required keys
 - [x] Initial git commit
 
-## Phase 2 — Auth & Users
-- [ ] Registration page with invite code gate
-- [ ] Login page + session handling
-- [ ] Profile page with API key generation
-- [ ] Route protection middleware
+## Phase 2 — Auth & Users ✅
+- [x] Registration page with invite code gate
+- [x] Login page + session handling
+- [x] Profile page with API key generation
+- [x] Route protection middleware (proxy.ts — Next.js 16 convention)
 
-## Phase 3 — Fixtures
-- [ ] Commissioner UI to add/edit fixtures
-- [ ] Dashboard fixture list view with countdown to deadline
+## Phase 3 — Fixtures ✅
+- [x] Commissioner UI to add/edit fixtures
+- [x] Dashboard fixture list view with countdown to deadline
 
 ## Phase 4 — Predictions
 - [ ] Prediction submission UI (home/away score inputs per fixture)
