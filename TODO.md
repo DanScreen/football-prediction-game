@@ -7,6 +7,7 @@ _(nothing blocked yet)_
 - **Node.js installed via Homebrew** — not pre-installed; added via `brew install node` (v26.3.0).
 - **Prisma v7 + better-sqlite3 adapter** — Prisma 7 dropped no-adapter mode; `@prisma/adapter-better-sqlite3` is the local SQLite path (avoids libsql/Turso dependency).
 - **NextAuth v5 beta** — using JWT sessions (stateless) with credentials provider; no DB adapter needed for auth sessions.
+- **Fixture import via AI** — no third-party football API; Commissioner can bulk-import upcoming fixtures using Claude + web search (same Anthropic API used for result resolution in Phase 6).
 
 ---
 
@@ -28,25 +29,26 @@ _(nothing blocked yet)_
 - [x] Commissioner UI to add/edit fixtures
 - [x] Dashboard fixture list view with countdown to deadline
 
-## Phase 4 — Predictions
-- [ ] Prediction submission UI (home/away score inputs per fixture)
-- [ ] Deadline locking logic (lock at kickoff time)
-- [ ] Prediction storage — upsert (one per user per fixture)
-- [ ] Reveal others' picks once deadline passes
+## Phase 4 — Predictions ✅
+- [x] Prediction submission UI (home/away score inputs per fixture)
+- [x] Deadline locking logic (lock at kickoff time)
+- [x] Prediction storage — upsert (one per user per fixture)
+- [x] Reveal others' picks once deadline passes
 
-## Phase 5 — Scoring Engine
-- [ ] Pure scoring function implementing Section 6 rules
-- [ ] Unit tests: exact score (3 pts), correct result + goal diff (1.5 pts), correct result only (1 pt), wrong (0 pt)
-- [ ] Edge cases: 0-0 draws, same goal diff different result, draws
-- [ ] Grand Slam bonus logic (per-round, toggleable via LeagueSettings)
+## Phase 5 — Scoring Engine ✅
+- [x] Pure scoring function implementing Section 6 rules
+- [x] Unit tests: exact score (3 pts), correct result + goal diff (1.5 pts), correct result only (1 pt), wrong (0 pt)
+- [x] Edge cases: 0-0 draws, same goal diff different result, draws
+- [x] Grand Slam bonus logic (per-round, toggleable via LeagueSettings)
 
-## Phase 6 — Result Resolution
-- [ ] Manual result entry by Commissioner
-- [ ] Fixture status transitions: SCHEDULED → AWAITING_RESULT → COMPLETED
-- [ ] Auto-move fixtures to AWAITING_RESULT ~2.5 h after kickoff (on-demand check)
-- [ ] AI-assisted lookup via Anthropic API (Claude + web search tool)
-- [ ] Review/confirm flow: Accept / Edit / Retry
-- [ ] Graceful stub when ANTHROPIC_API_KEY is absent (manual-only mode)
+## Phase 6 — Result Resolution & Fixture Import ✅
+- [x] Manual result entry by Commissioner
+- [x] Fixture status transitions: SCHEDULED → AWAITING_RESULT → COMPLETED
+- [x] Auto-move fixtures to AWAITING_RESULT ~2.5 h after kickoff (on-demand check)
+- [x] AI-assisted result lookup via Anthropic API (Claude + web search tool)
+- [x] Review/confirm flow: Accept / Edit / Retry
+- [x] Graceful stub when ANTHROPIC_API_KEY is absent (manual-only mode)
+- [x] AI-assisted fixture import — Commissioner enters competition + round, Claude fetches upcoming fixtures and proposes a list to confirm before inserting
 
 ## Phase 7 — Leaderboard
 - [ ] Standings page: total points, exact predictions count
