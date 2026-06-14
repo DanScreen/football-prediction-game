@@ -1,7 +1,8 @@
 "use client"
 
-import { useActionState, useEffect, useState } from "react"
-import type { FetchProposalState, ConfirmImportState, ProposedFixture } from "./actions"
+import { useActionState, useState } from "react"
+import type { FetchProposalState, ConfirmImportState } from "./actions"
+import type { ProposedFixture } from "@/lib/ai"
 
 interface Props {
   aiEnabled: boolean
@@ -9,23 +10,36 @@ interface Props {
   confirmImport: (prev: ConfirmImportState, formData: FormData) => Promise<ConfirmImportState>
 }
 
+type DeselectedState = {
+  // ties the deselection to a specific proposal — resets automatically when a new proposal arrives
+  forProposed: FetchProposalState["proposed"]
+  indices: Set<number>
+}
+
 export default function ImportForm({ aiEnabled, fetchImportProposal, confirmImport }: Props) {
   const [fetchState, fetchAction, fetchPending] = useActionState(fetchImportProposal, {})
   const [confirmState, confirmAction, confirmPending] = useActionState(confirmImport, {})
-  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [deselectedState, setDeselectedState] = useState<DeselectedState>({
+    forProposed: undefined,
+    indices: new Set(),
+  })
 
   const proposed = fetchState.proposed
 
-  // Select all fixtures when a new proposal arrives
-  useEffect(() => {
-    if (proposed) {
-      setSelected(new Set(proposed.fixtures.map((_, i) => i)))
-    }
-  }, [proposed])
+  // Deselected set is valid only while it belongs to the current proposal.
+  // When a new proposal arrives the set resets to empty (= all selected).
+  const deselected =
+    deselectedState.forProposed === proposed ? deselectedState.indices : new Set<number>()
 
-  const selectedFixtures: ProposedFixture[] = proposed
-    ? proposed.fixtures.filter((_, i) => selected.has(i))
-    : []
+  const toggle = (i: number) => {
+    const next = new Set(deselected)
+    if (next.has(i)) next.delete(i)
+    else next.add(i)
+    setDeselectedState({ forProposed: proposed, indices: next })
+  }
+
+  const selectedFixtures: ProposedFixture[] =
+    proposed?.fixtures.filter((_, i) => !deselected.has(i)) ?? []
 
   return (
     <div className="space-y-6">
@@ -88,13 +102,8 @@ export default function ImportForm({ aiEnabled, fetchImportProposal, confirmImpo
               >
                 <input
                   type="checkbox"
-                  checked={selected.has(i)}
-                  onChange={(e) => {
-                    const next = new Set(selected)
-                    if (e.target.checked) next.add(i)
-                    else next.delete(i)
-                    setSelected(next)
-                  }}
+                  checked={!deselected.has(i)}
+                  onChange={() => toggle(i)}
                   className="h-4 w-4 accent-[#1a7a3c]"
                 />
                 <div className="flex-1 min-w-0">

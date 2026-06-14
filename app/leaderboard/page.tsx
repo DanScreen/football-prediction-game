@@ -102,11 +102,12 @@ export default async function LeaderboardPage() {
     })
     .sort((a, b) => b.totalPoints - a.totalPoints)
 
-  let currentRank = 1
-  const ranked = entries.map((entry, i) => {
-    if (i > 0 && entries[i - 1].totalPoints !== entry.totalPoints) currentRank = i + 1
-    return { ...entry, rank: currentRank }
-  })
+  type RankedEntry = (typeof entries)[number] & { rank: number }
+  const ranked = entries.reduce<RankedEntry[]>((acc, entry, i) => {
+    const rank = i === 0 ? 1 : entries[i - 1].totalPoints === entry.totalPoints ? acc[i - 1].rank : i + 1
+    acc.push({ ...entry, rank })
+    return acc
+  }, [])
 
   const rankDisplay = (i: number) =>
     i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : ranked[i].rank

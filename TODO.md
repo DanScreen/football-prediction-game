@@ -70,7 +70,7 @@ _(nothing blocked yet)_
 - [x] Animated leaderboard point updates
 - [x] Responsive / mobile-friendly layout
 
-## Phase 10 — Seed Data & QA
-- [ ] Seed real or placeholder upcoming fixtures
-- [ ] End-to-end cycle: predict → resolve → score
-- [ ] Final lint + build check
+## Phase 10 — Seed Data & QA ✅
+- [x] Seed real or placeholder upcoming fixtures
+- [x] End-to-end cycle: predict → resolve → score
+- [x] Final lint + build check

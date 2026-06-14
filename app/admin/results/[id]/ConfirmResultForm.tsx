@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect, useState } from "react"
+import { useActionState, useState } from "react"
 import type { ResultFormState } from "../actions"
 
 interface Props {
@@ -10,6 +10,13 @@ interface Props {
   aiEnabled: boolean
   lookupResultAI: (prev: ResultFormState, formData: FormData) => Promise<ResultFormState>
   confirmResult: (prev: ResultFormState, formData: FormData) => Promise<ResultFormState>
+}
+
+type EditState = {
+  home: string
+  away: string
+  // ties this edit session to a specific AI proposal — resets automatically on Retry
+  forProposed: ResultFormState["proposed"]
 }
 
 export default function ConfirmResultForm({
@@ -22,20 +29,11 @@ export default function ConfirmResultForm({
 }: Props) {
   const [aiState, aiAction, aiPending] = useActionState(lookupResultAI, {})
   const [confirmState, confirmAction, confirmPending] = useActionState(confirmResult, {})
-  const [editHome, setEditHome] = useState("")
-  const [editAway, setEditAway] = useState("")
-  const [editing, setEditing] = useState(false)
+  const [editState, setEditState] = useState<EditState | null>(null)
 
   const proposed = aiState.proposed
-
-  // Pre-fill editable inputs whenever a new AI proposal arrives
-  useEffect(() => {
-    if (proposed) {
-      setEditHome(String(proposed.homeScore))
-      setEditAway(String(proposed.awayScore))
-      setEditing(false)
-    }
-  }, [proposed])
+  // editing only active when the editState belongs to the current proposal
+  const isEditing = editState !== null && editState.forProposed === proposed
 
   return (
     <div className="space-y-4">
@@ -44,7 +42,7 @@ export default function ConfirmResultForm({
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
           <h2 className="font-semibold text-blue-900 mb-3">AI Result Lookup</h2>
 
-          {proposed && !editing ? (
+          {proposed && !isEditing ? (
             // Show AI proposal with Accept / Edit / Retry
             <div>
               <p className="text-blue-700 text-sm mb-1">AI suggests:</p>
@@ -72,7 +70,13 @@ export default function ConfirmResultForm({
                   </button>
                 </form>
                 <button
-                  onClick={() => setEditing(true)}
+                  onClick={() =>
+                    setEditState({
+                      home: String(proposed.homeScore),
+                      away: String(proposed.awayScore),
+                      forProposed: proposed,
+                    })
+                  }
                   className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg font-semibold text-sm hover:bg-gray-50 transition-colors"
                 >
                   Edit
@@ -89,7 +93,7 @@ export default function ConfirmResultForm({
                 </form>
               </div>
             </div>
-          ) : editing ? (
+          ) : isEditing ? (
             // Editable AI-proposal scores
             <div>
               <p className="text-blue-700 text-sm mb-3">Edit the AI&apos;s suggestion:</p>
@@ -103,8 +107,8 @@ export default function ConfirmResultForm({
                       type="number"
                       name="homeScore"
                       min={0}
-                      value={editHome}
-                      onChange={(e) => setEditHome(e.target.value)}
+                      value={editState!.home}
+                      onChange={(e) => setEditState((s) => s && { ...s, home: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -115,8 +119,8 @@ export default function ConfirmResultForm({
                       type="number"
                       name="awayScore"
                       min={0}
-                      value={editAway}
-                      onChange={(e) => setEditAway(e.target.value)}
+                      value={editState!.away}
+                      onChange={(e) => setEditState((s) => s && { ...s, away: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -134,7 +138,7 @@ export default function ConfirmResultForm({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEditing(false)}
+                    onClick={() => setEditState(null)}
                     className="border border-gray-300 text-gray-700 py-2 px-4 rounded-lg text-sm hover:bg-gray-50 transition-colors"
                   >
                     Cancel

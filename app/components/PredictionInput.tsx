@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect, useRef } from "react"
+import { useActionState } from "react"
 import { upsertPrediction, type PredictionState } from "@/app/predictions/actions"
 
 type Props = {
@@ -12,11 +12,6 @@ type Props = {
 export default function PredictionInput({ fixtureId, savedHome, savedAway }: Props) {
   const action = upsertPrediction.bind(null, fixtureId)
   const [state, formAction, pending] = useActionState<PredictionState, FormData>(action, {})
-  const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    return () => { if (successTimer.current) clearTimeout(successTimer.current) }
-  }, [])
 
   const hasSaved = savedHome !== undefined && savedAway !== undefined
 

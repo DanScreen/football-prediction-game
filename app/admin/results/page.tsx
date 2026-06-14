@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { checkTransitions } from "./actions"
 
 export default async function AdminResultsPage() {
-  const cutoff = new Date(Date.now() - 2.5 * 60 * 60 * 1000)
+  const now = new Date()
+  const cutoff = new Date(now.getTime() - 2.5 * 60 * 60 * 1000)
 
   const [awaitingFixtures, scheduledReadyCount] = await Promise.all([
     prisma.fixture.findMany({

@@ -7,8 +7,6 @@ import { prisma } from "@/lib/prisma"
 import { lookupFixtures } from "@/lib/ai"
 import type { ProposedFixture } from "@/lib/ai"
 
-export type { ProposedFixture }
-
 async function requireAdmin() {
   const session = await auth()
   if (!session?.user?.isAdmin) throw new Error("Unauthorised")
