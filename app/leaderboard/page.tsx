@@ -1,0 +1,225 @@
+import { prisma } from "@/lib/prisma"
+import { scoreOnePrediction } from "@/lib/scoring"
+
+type FormColor = "green" | "yellow" | "red" | "grey"
+
+function formColorClass(c: FormColor) {
+  return {
+    green: "bg-green-500",
+    yellow: "bg-yellow-400",
+    red: "bg-red-500",
+    grey: "bg-gray-200",
+  }[c]
+}
+
+function pts(n: number) {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1)
+}
+
+export default async function LeaderboardPage() {
+  const [users, scoredPredictions, completedFixtures] = await Promise.all([
+    prisma.user.findMany({ select: { id: true, displayName: true, isBot: true } }),
+    prisma.prediction.findMany({
+      where: { pointsAwarded: { not: null } },
+      select: {
+        userId: true,
+        pointsAwarded: true,
+        predictedHomeScore: true,
+        predictedAwayScore: true,
+        fixture: {
+          select: {
+            competition: true,
+            round: true,
+            kickoffTime: true,
+            actualHomeScore: true,
+            actualAwayScore: true,
+          },
+        },
+      },
+    }),
+    prisma.fixture.findMany({
+      where: { status: "COMPLETED" },
+      select: { competition: true, round: true, kickoffTime: true },
+    }),
+  ])
+
+  // Build the last 5 completed rounds (oldest → newest for left-to-right form strip)
+  const roundMaxKickoff = new Map<string, Date>()
+  for (const f of completedFixtures) {
+    const key = `${f.competition}||${f.round}`
+    const existing = roundMaxKickoff.get(key)
+    if (!existing || f.kickoffTime > existing) roundMaxKickoff.set(key, f.kickoffTime)
+  }
+
+  const last5Rounds = [...roundMaxKickoff.entries()]
+    .sort(([, a], [, b]) => b.getTime() - a.getTime())
+    .slice(0, 5)
+    .reverse()
+    .map(([key, maxKickoff]) => {
+      const sep = key.indexOf("||")
+      return { key, competition: key.slice(0, sep), round: key.slice(sep + 2), maxKickoff }
+    })
+
+  // Group predictions by userId
+  const predsByUser = new Map<string, typeof scoredPredictions>()
+  for (const p of scoredPredictions) {
+    const arr = predsByUser.get(p.userId) ?? []
+    arr.push(p)
+    predsByUser.set(p.userId, arr)
+  }
+
+  // Compute leaderboard entries
+  const entries = users.map((user) => {
+    const preds = predsByUser.get(user.id) ?? []
+
+    const totalPoints = preds.reduce((sum, p) => sum + (p.pointsAwarded ?? 0), 0)
+
+    // Exact count from base score (avoids grand-slam inflated pointsAwarded affecting the count)
+    const exactCount = preds.filter(
+      (p) =>
+        p.fixture.actualHomeScore !== null &&
+        p.fixture.actualAwayScore !== null &&
+        scoreOnePrediction(
+          p.predictedHomeScore,
+          p.predictedAwayScore,
+          p.fixture.actualHomeScore,
+          p.fixture.actualAwayScore,
+        ) === 3,
+    ).length
+
+    // Group preds by round key
+    const roundStats = new Map<string, { scored: number; count: number }>()
+    for (const p of preds) {
+      const rk = `${p.fixture.competition}||${p.fixture.round}`
+      const s = roundStats.get(rk) ?? { scored: 0, count: 0 }
+      roundStats.set(rk, { scored: s.scored + (p.pointsAwarded ?? 0), count: s.count + 1 })
+    }
+
+    const form: FormColor[] = last5Rounds.map(({ key }) => {
+      const s = roundStats.get(key)
+      if (!s || s.count === 0) return "grey"
+      const pct = s.scored / (s.count * 3)
+      if (pct > 0.4) return "green"
+      if (pct > 0.2) return "yellow"
+      return "red"
+    })
+
+    return { ...user, totalPoints, exactCount, form }
+  })
+
+  // Sort by points DESC
+  entries.sort((a, b) => b.totalPoints - a.totalPoints)
+
+  // Assign ranks (ties share same rank)
+  let currentRank = 1
+  const ranked = entries.map((entry, i) => {
+    if (i > 0 && entries[i - 1].totalPoints !== entry.totalPoints) currentRank = i + 1
+    return { ...entry, rank: currentRank }
+  })
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold text-gray-900 mb-1">Leaderboard</h1>
+      <p className="text-gray-500 text-sm mb-6">
+        {entries.length} player{entries.length !== 1 ? "s" : ""}
+        {last5Rounds.length > 0 && (
+          <> · form based on last {last5Rounds.length} round{last5Rounds.length !== 1 ? "s" : ""}</>
+        )}
+      </p>
+
+      {ranked.length === 0 ? (
+        <div className="text-center py-16 text-gray-500">
+          <p className="text-4xl mb-3">🏆</p>
+          <p className="font-medium">No players yet.</p>
+        </div>
+      ) : (
+        <>
+          <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm mb-4">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-900 text-white text-xs uppercase tracking-wide">
+                <tr>
+                  <th className="text-left px-4 py-3 w-10">#</th>
+                  <th className="text-left px-4 py-3">Player</th>
+                  <th className="text-right px-4 py-3">Points</th>
+                  <th className="text-right px-4 py-3 hidden sm:table-cell">Exact</th>
+                  {last5Rounds.length > 0 && (
+                    <th className="text-right px-4 py-3 hidden md:table-cell">
+                      Form
+                      <span className="ml-1 text-gray-400 normal-case font-normal">
+                        (oldest → newest)
+                      </span>
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {ranked.map((entry, i) => (
+                  <tr
+                    key={entry.id}
+                    className={`transition-colors ${
+                      i === 0
+                        ? "bg-yellow-50 hover:bg-yellow-100"
+                        : i === 1
+                          ? "bg-gray-50 hover:bg-gray-100"
+                          : i === 2
+                            ? "bg-orange-50 hover:bg-orange-100"
+                            : "hover:bg-gray-50"
+                    }`}
+                  >
+                    <td className="px-4 py-3 font-bold text-gray-500 tabular-nums">
+                      {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : entry.rank}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="font-semibold text-gray-900">{entry.displayName}</span>
+                      {entry.isBot && (
+                        <span className="ml-1.5 text-xs text-gray-400 font-normal">🤖 bot</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold tabular-nums text-gray-900">
+                      {pts(entry.totalPoints)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-500 hidden sm:table-cell tabular-nums">
+                      {entry.exactCount}
+                    </td>
+                    {last5Rounds.length > 0 && (
+                      <td className="px-4 py-3 hidden md:table-cell">
+                        <div className="flex justify-end gap-1">
+                          {entry.form.map((color, j) => (
+                            <span
+                              key={j}
+                              title={`${last5Rounds[j].competition} · ${last5Rounds[j].round}`}
+                              className={`w-4 h-4 rounded-sm ${formColorClass(color)}`}
+                            />
+                          ))}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Form legend */}
+          {last5Rounds.length > 0 && (
+            <div className="hidden md:flex items-center gap-4 text-xs text-gray-500 px-1">
+              <span className="font-medium">Form key:</span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm bg-green-500 inline-block" /> &gt;40% of pts
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm bg-yellow-400 inline-block" /> 21–40%
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm bg-red-500 inline-block" /> ≤20%
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm bg-gray-200 inline-block" /> No predictions
+              </span>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}

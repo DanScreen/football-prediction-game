@@ -50,10 +50,10 @@ _(nothing blocked yet)_
 - [x] Graceful stub when ANTHROPIC_API_KEY is absent (manual-only mode)
 - [x] AI-assisted fixture import — Commissioner enters competition + round, Claude fetches upcoming fixtures and proposes a list to confirm before inserting
 
-## Phase 7 — Leaderboard
-- [ ] Standings page: total points, exact predictions count
-- [ ] Form strip (last 5 rounds) per player
-- [ ] Styled as a real league table
+## Phase 7 — Leaderboard ✅
+- [x] Standings page: total points, exact predictions count
+- [x] Form strip (last 5 rounds) per player
+- [x] Styled as a real league table
 
 ## Phase 8 — Public API
 - [ ] `GET /api/v1/fixtures?status=open`
