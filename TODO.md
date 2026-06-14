@@ -55,12 +55,12 @@ _(nothing blocked yet)_
 - [x] Form strip (last 5 rounds) per player
 - [x] Styled as a real league table
 
-## Phase 8 — Public API
-- [ ] `GET /api/v1/fixtures?status=open`
-- [ ] `GET /api/v1/predictions`
-- [ ] `POST /api/v1/predictions`
-- [ ] `GET /api/v1/leaderboard`
-- [ ] API key auth middleware (`Authorization: Bearer <apiKey>`)
+## Phase 8 — Public API ✅
+- [x] `GET /api/v1/fixtures?status=open`
+- [x] `GET /api/v1/predictions`
+- [x] `POST /api/v1/predictions`
+- [x] `GET /api/v1/leaderboard`
+- [x] API key auth middleware (`Authorization: Bearer <apiKey>`)
 
 ## Phase 9 — Design Pass
 - [ ] Pitch-green palette with yellow/red card accent colours
