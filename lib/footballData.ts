@@ -1,12 +1,15 @@
-import type { ProposedFixture } from "./ai"
-
 const BASE_URL = "https://api.football-data.org/v4"
 
-// Maps the competition names used in the app to football-data.org competition codes.
-// Free tier covers both of these.
 const COMPETITION_CODES: Record<string, string> = {
   "Premier League": "PL",
   "FIFA World Cup 2026": "WC",
+}
+
+export interface ProposedFixture {
+  homeTeam: string
+  awayTeam: string
+  kickoffTime: string
+  round?: string
 }
 
 interface FDTeam {
@@ -14,6 +17,10 @@ interface FDTeam {
   name: string
   shortName: string
   tla: string
+}
+
+interface FDScore {
+  fullTime: { home: number | null; away: number | null }
 }
 
 interface FDMatch {
@@ -25,6 +32,7 @@ interface FDMatch {
   group: string | null
   homeTeam: FDTeam
   awayTeam: FDTeam
+  score?: FDScore
 }
 
 const STAGE_LABELS: Record<string, string> = {
@@ -45,7 +53,6 @@ function formatRound(match: FDMatch): string {
   return match.stage
 }
 
-// Key used to group matches into logical rounds (e.g. "Matchweek 39" or "LAST_16")
 function roundKey(match: FDMatch): string {
   if (match.stage === "REGULAR_SEASON" || match.stage === "SEASON_STAGE") {
     return `mw:${match.matchday}`
@@ -54,6 +61,20 @@ function roundKey(match: FDMatch): string {
     return `group:${match.group ?? ""}:${match.matchday}`
   }
   return `stage:${match.stage}`
+}
+
+async function fdFetch(path: string): Promise<Response> {
+  const apiKey = process.env.FOOTBALL_DATA_API_KEY
+  if (!apiKey) throw new Error("FOOTBALL_DATA_API_KEY is not configured.")
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: { "X-Auth-Token": apiKey },
+    cache: "no-store",
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => "")
+    throw new Error(`football-data.org API error ${res.status}: ${body.slice(0, 200)}`)
+  }
+  return res
 }
 
 export async function fetchUpcomingFixtures(
@@ -67,24 +88,10 @@ export async function fetchUpcomingFixtures(
     )
   }
 
-  const apiKey = process.env.FOOTBALL_DATA_API_KEY
-  if (!apiKey) throw new Error("FOOTBALL_DATA_API_KEY is not configured.")
-
-  const res = await fetch(`${BASE_URL}/competitions/${code}/matches?status=SCHEDULED`, {
-    headers: { "X-Auth-Token": apiKey },
-    cache: "no-store",
-  })
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "")
-    throw new Error(`football-data.org API error ${res.status}: ${body.slice(0, 200)}`)
-  }
-
+  const res = await fdFetch(`/competitions/${code}/matches?status=SCHEDULED`)
   const data = (await res.json()) as { matches: FDMatch[] }
   const matches = data.matches ?? []
 
-  // Collect round keys in the order they appear (API returns oldest first)
-  // then keep only the first N distinct rounds
   const seenKeys: string[] = []
   for (const m of matches) {
     const key = roundKey(m)
@@ -101,4 +108,52 @@ export async function fetchUpcomingFixtures(
       kickoffTime: m.utcDate,
       round: formatRound(m),
     }))
+}
+
+function teamNameMatches(team: FDTeam, query: string): boolean {
+  const q = query.toLowerCase()
+  const candidates = [team.name, team.shortName, team.tla]
+    .filter(Boolean)
+    .map((s) => s.toLowerCase())
+  return candidates.some((c) => c.includes(q) || q.includes(c))
+}
+
+export async function lookupResult(
+  homeTeam: string,
+  awayTeam: string,
+  competition: string,
+  _round: string,
+  kickoffTime: Date,
+): Promise<{ homeScore: number; awayScore: number }> {
+  const code = COMPETITION_CODES[competition]
+  if (!code) throw new Error(`No API mapping for "${competition}".`)
+
+  const dateFrom = kickoffTime.toISOString().split("T")[0]
+  const dateTo = new Date(kickoffTime.getTime() + 2 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0]
+
+  const res = await fdFetch(
+    `/competitions/${code}/matches?status=FINISHED&dateFrom=${dateFrom}&dateTo=${dateTo}`,
+  )
+  const data = (await res.json()) as { matches: FDMatch[] }
+  const matches = data.matches ?? []
+
+  const match = matches.find(
+    (m) =>
+      teamNameMatches(m.homeTeam, homeTeam) &&
+      teamNameMatches(m.awayTeam, awayTeam) &&
+      m.score?.fullTime?.home != null,
+  )
+
+  if (!match) {
+    throw new Error(
+      `No finished result found for ${homeTeam} vs ${awayTeam} around ${dateFrom}. The match may not have been played yet.`,
+    )
+  }
+
+  return {
+    homeScore: match.score!.fullTime!.home!,
+    awayScore: match.score!.fullTime!.away!,
+  }
 }

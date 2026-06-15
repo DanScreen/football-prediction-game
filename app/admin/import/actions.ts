@@ -5,8 +5,7 @@ import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { fetchUpcomingFixtures } from "@/lib/footballData"
-import type { ProposedFixture } from "@/lib/ai"
+import { fetchUpcomingFixtures, type ProposedFixture } from "@/lib/footballData"
 import { ACTIVE_LEAGUE_COOKIE } from "@/lib/activeLeague"
 
 async function requireCommissioner() {

@@ -6,7 +6,7 @@ import { cookies } from "next/headers"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { scoreOnePrediction, qualifiesForGrandSlam } from "@/lib/scoring"
-import { lookupResult } from "@/lib/ai"
+import { lookupResult as fetchResult } from "@/lib/footballData"
 import { FixtureStatus, ResultSource } from "@/app/generated/prisma/client"
 import { ACTIVE_LEAGUE_COOKIE } from "@/lib/activeLeague"
 
@@ -25,7 +25,7 @@ async function requireCommissioner() {
 
 export type ResultFormState = {
   error?: string
-  proposed?: { homeScore: number; awayScore: number; rawText: string }
+  proposed?: { homeScore: number; awayScore: number }
 }
 
 /** Move SCHEDULED fixtures ≥2.5h past kickoff to AWAITING_RESULT */
@@ -40,8 +40,8 @@ export async function checkTransitions(): Promise<void> {
   revalidatePath("/admin/results")
 }
 
-/** AI lookup — returns proposed score in form state without saving anything */
-export async function lookupResultAI(
+/** API lookup — returns proposed score in form state without saving anything */
+export async function lookupResult(
   _prev: ResultFormState,
   formData: FormData,
 ): Promise<ResultFormState> {
@@ -50,15 +50,15 @@ export async function lookupResultAI(
   const fixtureId = String(formData.get("fixtureId") ?? "")
   if (!fixtureId) return { error: "Missing fixture ID." }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return { error: "ANTHROPIC_API_KEY is not configured — use manual entry." }
+  if (!process.env.FOOTBALL_DATA_API_KEY) {
+    return { error: "FOOTBALL_DATA_API_KEY is not configured — use manual entry." }
   }
 
   const fixture = await prisma.fixture.findUnique({ where: { id: fixtureId, leagueId } })
   if (!fixture) return { error: "Fixture not found." }
 
   try {
-    const result = await lookupResult(
+    const result = await fetchResult(
       fixture.homeTeam,
       fixture.awayTeam,
       fixture.competition,
@@ -67,7 +67,7 @@ export async function lookupResultAI(
     )
     return { proposed: result }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "AI lookup failed." }
+    return { error: err instanceof Error ? err.message : "Result lookup failed." }
   }
 }
 

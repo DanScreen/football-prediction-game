@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { lookupResultAI, confirmResult } from "../actions"
+import { lookupResult, confirmResult } from "../actions"
 import ConfirmResultForm from "./ConfirmResultForm"
 
 export default async function ResultPage({ params }: { params: Promise<{ id: string }> }) {
@@ -8,7 +8,7 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
   const fixture = await prisma.fixture.findUnique({ where: { id } })
   if (!fixture) notFound()
 
-  const aiEnabled = Boolean(process.env.ANTHROPIC_API_KEY)
+  const apiEnabled = Boolean(process.env.FOOTBALL_DATA_API_KEY)
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8">
@@ -36,8 +36,8 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
         fixtureId={fixture.id}
         homeTeam={fixture.homeTeam}
         awayTeam={fixture.awayTeam}
-        aiEnabled={aiEnabled}
-        lookupResultAI={lookupResultAI}
+        apiEnabled={apiEnabled}
+        lookupResult={lookupResult}
         confirmResult={confirmResult}
       />
     </div>

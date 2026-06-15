@@ -63,7 +63,6 @@ jobs:
             --service-account "${{ secrets.CLOUD_RUN_SA }}" \
             --add-cloudsql-instances "${{ secrets.CLOUD_SQL_INSTANCE }}" \
             --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
-            --set-env-vars "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" \
             --set-env-vars "FOOTBALL_DATA_API_KEY=${{ secrets.FOOTBALL_DATA_API_KEY }}" \
             --set-env-vars "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
             --set-env-vars "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" \

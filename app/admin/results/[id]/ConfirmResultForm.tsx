@@ -7,15 +7,14 @@ interface Props {
   fixtureId: string
   homeTeam: string
   awayTeam: string
-  aiEnabled: boolean
-  lookupResultAI: (prev: ResultFormState, formData: FormData) => Promise<ResultFormState>
+  apiEnabled: boolean
+  lookupResult: (prev: ResultFormState, formData: FormData) => Promise<ResultFormState>
   confirmResult: (prev: ResultFormState, formData: FormData) => Promise<ResultFormState>
 }
 
 type EditState = {
   home: string
   away: string
-  // ties this edit session to a specific AI proposal — resets automatically on Retry
   forProposed: ResultFormState["proposed"]
 }
 
@@ -23,29 +22,28 @@ export default function ConfirmResultForm({
   fixtureId,
   homeTeam,
   awayTeam,
-  aiEnabled,
-  lookupResultAI,
+  apiEnabled,
+  lookupResult,
   confirmResult,
 }: Props) {
-  const [aiState, aiAction, aiPending] = useActionState(lookupResultAI, {})
+  const [lookupState, lookupAction, lookupPending] = useActionState(lookupResult, {})
   const [confirmState, confirmAction, confirmPending] = useActionState(confirmResult, {})
   const [editState, setEditState] = useState<EditState | null>(null)
 
-  const proposed = aiState.proposed
-  // editing only active when the editState belongs to the current proposal
+  const proposed = lookupState.proposed
   const isEditing = editState !== null && editState.forProposed === proposed
 
   return (
     <div className="space-y-4">
-      {/* AI Lookup Panel */}
-      {aiEnabled && (
+      {/* API Lookup Panel */}
+      {apiEnabled && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
-          <h2 className="font-semibold text-blue-900 mb-3">AI Result Lookup</h2>
+          <h2 className="font-semibold text-blue-900 mb-3">Result Lookup</h2>
 
           {proposed && !isEditing ? (
-            // Show AI proposal with Accept / Edit / Retry
+            // Show proposed result with Accept / Edit / Retry
             <div>
-              <p className="text-blue-700 text-sm mb-1">AI suggests:</p>
+              <p className="text-blue-700 text-sm mb-1">Result found:</p>
               <p className="text-3xl font-bold text-blue-900 text-center tracking-wide mb-1">
                 {proposed.homeScore} – {proposed.awayScore}
               </p>
@@ -81,11 +79,11 @@ export default function ConfirmResultForm({
                 >
                   Edit
                 </button>
-                <form action={aiAction}>
+                <form action={lookupAction}>
                   <input type="hidden" name="fixtureId" value={fixtureId} />
                   <button
                     type="submit"
-                    disabled={aiPending}
+                    disabled={lookupPending}
                     className="border border-blue-300 text-blue-700 py-2 px-3 rounded-lg font-semibold text-sm hover:bg-blue-100 disabled:opacity-50 transition-colors"
                   >
                     Retry
@@ -94,9 +92,9 @@ export default function ConfirmResultForm({
               </div>
             </div>
           ) : isEditing ? (
-            // Editable AI-proposal scores
+            // Editable scores
             <div>
-              <p className="text-blue-700 text-sm mb-3">Edit the AI&apos;s suggestion:</p>
+              <p className="text-blue-700 text-sm mb-3">Edit the result:</p>
               <form action={confirmAction}>
                 <input type="hidden" name="fixtureId" value={fixtureId} />
                 <input type="hidden" name="source" value="MANUAL" />
@@ -147,17 +145,19 @@ export default function ConfirmResultForm({
               </form>
             </div>
           ) : (
-            // Initial AI lookup button
+            // Initial lookup button
             <div>
-              {aiState.error && <p className="text-red-600 text-sm mb-3">{aiState.error}</p>}
-              <form action={aiAction}>
+              {lookupState.error && (
+                <p className="text-red-600 text-sm mb-3">{lookupState.error}</p>
+              )}
+              <form action={lookupAction}>
                 <input type="hidden" name="fixtureId" value={fixtureId} />
                 <button
                   type="submit"
-                  disabled={aiPending}
+                  disabled={lookupPending}
                   className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
-                  {aiPending ? "Searching…" : "🔍 Look Up with AI"}
+                  {lookupPending ? "Searching…" : "🔍 Look Up Result"}
                 </button>
               </form>
             </div>
@@ -168,7 +168,7 @@ export default function ConfirmResultForm({
       {/* Manual Entry */}
       <div className="bg-white border border-gray-200 rounded-xl p-5">
         <h2 className="font-semibold text-gray-900 mb-3">Manual Entry</h2>
-        {!aiEnabled && confirmState.error && (
+        {!apiEnabled && confirmState.error && (
           <p className="text-red-600 text-sm mb-3">{confirmState.error}</p>
         )}
         <form action={confirmAction}>
@@ -197,7 +197,7 @@ export default function ConfirmResultForm({
               />
             </div>
           </div>
-          {aiEnabled && confirmState.error && !proposed && (
+          {apiEnabled && confirmState.error && !proposed && (
             <p className="text-red-600 text-sm mb-3">{confirmState.error}</p>
           )}
           <button

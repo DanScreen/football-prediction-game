@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react"
 import type { FetchProposalState, ConfirmImportState } from "./actions"
-import type { ProposedFixture } from "@/lib/ai"
+import type { ProposedFixture } from "@/lib/footballData"
 
 interface Props {
   leagueCompetition: string
@@ -51,7 +51,7 @@ export default function ImportForm({
     <div className="space-y-6">
       {/* Step 1: AI fetch */}
       <div className="bg-white border border-gray-200 rounded-xl p-5">
-        <h2 className="font-semibold text-gray-900 mb-4">1. Find Fixtures with AI</h2>
+        <h2 className="font-semibold text-gray-900 mb-4">1. Find Fixtures</h2>
 
         <div className="mb-4 p-3 bg-gray-50 rounded-lg">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">
