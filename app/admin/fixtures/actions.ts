@@ -2,21 +2,31 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { ACTIVE_LEAGUE_COOKIE } from "@/lib/activeLeague"
 
-async function requireAdmin() {
+async function requireCommissioner() {
   const session = await auth()
-  if (!session?.user?.isAdmin) throw new Error("Unauthorised")
+  if (!session?.user?.id) throw new Error("Unauthorised")
+  const store = await cookies()
+  const leagueId = store.get(ACTIVE_LEAGUE_COOKIE)?.value
+  if (!leagueId) throw new Error("No active league")
+  const membership = await prisma.leagueMembership.findUnique({
+    where: { userId_leagueId: { userId: session.user.id, leagueId } },
+  })
+  if (membership?.role !== "COMMISSIONER") throw new Error("Unauthorised")
+  return { userId: session.user.id, leagueId }
 }
 
 export type FixtureFormState = { error?: string }
 
 export async function createFixture(
   _prev: FixtureFormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<FixtureFormState> {
-  await requireAdmin()
+  const { leagueId } = await requireCommissioner()
 
   const competition = String(formData.get("competition") ?? "").trim()
   const round = String(formData.get("round") ?? "").trim()
@@ -34,7 +44,7 @@ export async function createFixture(
   }
 
   await prisma.fixture.create({
-    data: { competition, round, homeTeam, awayTeam, kickoffTime },
+    data: { leagueId, competition, round, homeTeam, awayTeam, kickoffTime },
   })
 
   revalidatePath("/admin/fixtures")
@@ -45,9 +55,9 @@ export async function createFixture(
 export async function updateFixture(
   id: string,
   _prev: FixtureFormState,
-  formData: FormData
+  formData: FormData,
 ): Promise<FixtureFormState> {
-  await requireAdmin()
+  const { leagueId } = await requireCommissioner()
 
   const competition = String(formData.get("competition") ?? "").trim()
   const round = String(formData.get("round") ?? "").trim()
@@ -65,7 +75,7 @@ export async function updateFixture(
   }
 
   await prisma.fixture.update({
-    where: { id },
+    where: { id, leagueId },
     data: { competition, round, homeTeam, awayTeam, kickoffTime },
   })
 
@@ -75,8 +85,8 @@ export async function updateFixture(
 }
 
 export async function deleteFixture(id: string): Promise<void> {
-  await requireAdmin()
-  await prisma.fixture.delete({ where: { id } })
+  const { leagueId } = await requireCommissioner()
+  await prisma.fixture.delete({ where: { id, leagueId } })
   revalidatePath("/admin/fixtures")
   revalidatePath("/")
 }

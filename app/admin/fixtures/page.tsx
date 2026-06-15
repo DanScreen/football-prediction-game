@@ -1,9 +1,15 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
+import { getActiveLeagueId } from "@/lib/activeLeague"
+import { redirect } from "next/navigation"
 import DeleteFixtureButton from "./DeleteFixtureButton"
 
 export default async function AdminFixturesPage() {
+  const leagueId = await getActiveLeagueId()
+  if (!leagueId) redirect("/leagues")
+
   const fixtures = await prisma.fixture.findMany({
+    where: { leagueId },
     orderBy: { kickoffTime: "asc" },
   })
 
@@ -66,10 +72,7 @@ export default async function AdminFixturesPage() {
                     >
                       Edit
                     </Link>
-                    <DeleteFixtureButton
-                      id={f.id}
-                      label={`${f.homeTeam} vs ${f.awayTeam}`}
-                    />
+                    <DeleteFixtureButton id={f.id} label={`${f.homeTeam} vs ${f.awayTeam}`} />
                   </td>
                 </tr>
               ))}

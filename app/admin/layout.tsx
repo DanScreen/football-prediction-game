@@ -1,10 +1,20 @@
 import Link from "next/link"
 import { auth } from "@/auth"
+import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
+import { getActiveLeagueId } from "@/lib/activeLeague"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
-  if (!session?.user?.isAdmin) redirect("/")
+  if (!session?.user?.id) redirect("/login")
+
+  const activeLeagueId = await getActiveLeagueId()
+  if (!activeLeagueId) redirect("/leagues")
+
+  const membership = await prisma.leagueMembership.findUnique({
+    where: { userId_leagueId: { userId: session.user.id, leagueId: activeLeagueId } },
+  })
+  if (membership?.role !== "COMMISSIONER") redirect("/")
 
   return (
     <div>

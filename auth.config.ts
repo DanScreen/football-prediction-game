@@ -6,7 +6,6 @@ export const authConfig = {
     jwt({ token, user }) {
       if (user) {
         token.id = user.id as string
-        token.isAdmin = (user as { isAdmin: boolean }).isAdmin
         token.isBot = (user as { isBot: boolean }).isBot
       }
       return token
@@ -14,7 +13,6 @@ export const authConfig = {
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.id
-        session.user.isAdmin = token.isAdmin
         session.user.isBot = token.isBot
       }
       return session

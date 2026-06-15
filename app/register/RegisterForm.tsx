@@ -79,16 +79,15 @@ export default function RegisterForm() {
 
       <div>
         <label htmlFor="inviteCode" className="block text-sm font-medium text-zinc-700 mb-1">
-          Invite Code
+          Invite Code <span className="font-normal text-zinc-400">(optional)</span>
         </label>
         <input
           id="inviteCode"
           name="inviteCode"
           type="text"
-          required
           autoComplete="off"
           className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-[#1a7a3c] focus:outline-none focus:ring-1 focus:ring-[#1a7a3c]"
-          placeholder="Ask the Commissioner"
+          placeholder="Leave blank or enter code"
         />
       </div>
 

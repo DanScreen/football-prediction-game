@@ -19,7 +19,7 @@ export async function registerUser(
   const inviteCode = String(formData.get("inviteCode") ?? "").trim()
 
   // Basic validation
-  if (!displayName || !email || !password || !inviteCode) {
+  if (!displayName || !email || !password) {
     return { error: "All fields are required." }
   }
 
@@ -31,10 +31,12 @@ export async function registerUser(
     return { error: "Password must be at least 8 characters." }
   }
 
-  // Verify invite code
-  const settings = await prisma.leagueSettings.findUnique({ where: { id: 1 } })
-  if (!settings || settings.inviteCode !== inviteCode) {
-    return { error: "Invalid invite code." }
+  // Verify invite code only if one was provided
+  if (inviteCode) {
+    const league = await prisma.league.findUnique({ where: { inviteCode } })
+    if (!league) {
+      return { error: "Invalid invite code." }
+    }
   }
 
   // Check for duplicate email

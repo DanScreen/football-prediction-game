@@ -2,15 +2,25 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { scoreOnePrediction, qualifiesForGrandSlam } from "@/lib/scoring"
 import { lookupResult } from "@/lib/ai"
 import { FixtureStatus, ResultSource } from "@/app/generated/prisma/client"
+import { ACTIVE_LEAGUE_COOKIE } from "@/lib/activeLeague"
 
-async function requireAdmin() {
+async function requireCommissioner() {
   const session = await auth()
-  if (!session?.user?.isAdmin) throw new Error("Unauthorised")
+  if (!session?.user?.id) throw new Error("Unauthorised")
+  const store = await cookies()
+  const leagueId = store.get(ACTIVE_LEAGUE_COOKIE)?.value
+  if (!leagueId) throw new Error("No active league")
+  const membership = await prisma.leagueMembership.findUnique({
+    where: { userId_leagueId: { userId: session.user.id, leagueId } },
+  })
+  if (membership?.role !== "COMMISSIONER") throw new Error("Unauthorised")
+  return { userId: session.user.id, leagueId }
 }
 
 export type ResultFormState = {
@@ -20,10 +30,11 @@ export type ResultFormState = {
 
 /** Move SCHEDULED fixtures ≥2.5h past kickoff to AWAITING_RESULT */
 export async function checkTransitions(): Promise<void> {
-  await requireAdmin()
-  const cutoff = new Date(Date.now() - 2.5 * 60 * 60 * 1000)
+  const { leagueId } = await requireCommissioner()
+  const now = new Date()
+  const cutoff = new Date(now.getTime() - 2.5 * 60 * 60 * 1000)
   await prisma.fixture.updateMany({
-    where: { status: FixtureStatus.SCHEDULED, kickoffTime: { lte: cutoff } },
+    where: { leagueId, status: FixtureStatus.SCHEDULED, kickoffTime: { lte: cutoff } },
     data: { status: FixtureStatus.AWAITING_RESULT },
   })
   revalidatePath("/admin/results")
@@ -34,7 +45,7 @@ export async function lookupResultAI(
   _prev: ResultFormState,
   formData: FormData,
 ): Promise<ResultFormState> {
-  await requireAdmin()
+  const { leagueId } = await requireCommissioner()
 
   const fixtureId = String(formData.get("fixtureId") ?? "")
   if (!fixtureId) return { error: "Missing fixture ID." }
@@ -43,7 +54,7 @@ export async function lookupResultAI(
     return { error: "ANTHROPIC_API_KEY is not configured — use manual entry." }
   }
 
-  const fixture = await prisma.fixture.findUnique({ where: { id: fixtureId } })
+  const fixture = await prisma.fixture.findUnique({ where: { id: fixtureId, leagueId } })
   if (!fixture) return { error: "Fixture not found." }
 
   try {
@@ -65,7 +76,7 @@ export async function confirmResult(
   _prev: ResultFormState,
   formData: FormData,
 ): Promise<ResultFormState> {
-  await requireAdmin()
+  const { leagueId } = await requireCommissioner()
 
   const fixtureId = String(formData.get("fixtureId") ?? "")
   const homeRaw = Number(formData.get("homeScore"))
@@ -82,7 +93,7 @@ export async function confirmResult(
   await prisma.$transaction(async (tx) => {
     // 1. Mark fixture complete
     const fixture = await tx.fixture.update({
-      where: { id: fixtureId },
+      where: { id: fixtureId, leagueId },
       data: {
         actualHomeScore: homeRaw,
         actualAwayScore: awayRaw,
@@ -109,12 +120,12 @@ export async function confirmResult(
       ),
     )
 
-    // 3. Grand Slam check — only if all fixtures in this competition+round are now done
-    const settings = await tx.leagueSettings.findFirst()
-    if (!settings?.grandSlamEnabled) return
+    // 3. Grand Slam — only if all fixtures in this league+competition+round are done
+    const league = await tx.league.findUnique({ where: { id: leagueId } })
+    if (!league?.grandSlamEnabled) return
 
     const roundFixtures = await tx.fixture.findMany({
-      where: { competition: fixture.competition, round: fixture.round },
+      where: { leagueId, competition: fixture.competition, round: fixture.round },
     })
     if (!roundFixtures.every((f) => f.status === FixtureStatus.COMPLETED)) return
 
@@ -122,7 +133,6 @@ export async function confirmResult(
       where: { fixtureId: { in: roundFixtures.map((f) => f.id) } },
     })
 
-    // Group by user
     const byUser = new Map<string, typeof roundPredictions>()
     for (const p of roundPredictions) {
       const arr = byUser.get(p.userId) ?? []
@@ -131,12 +141,11 @@ export async function confirmResult(
     }
 
     for (const [, preds] of byUser) {
-      // User must have predicted every fixture in the round
       if (preds.length < roundFixtures.length) continue
       if (qualifiesForGrandSlam(preds.map((p) => (p.pointsAwarded ?? 0) > 0))) {
         await tx.prediction.update({
           where: { id: preds[0].id },
-          data: { pointsAwarded: (preds[0].pointsAwarded ?? 0) + settings.grandSlamPoints },
+          data: { pointsAwarded: (preds[0].pointsAwarded ?? 0) + league.grandSlamPoints },
         })
       }
     }

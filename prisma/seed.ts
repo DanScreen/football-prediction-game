@@ -9,33 +9,14 @@ const adapter = new PrismaBetterSqlite3({ url })
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
-  // ── 1. League settings ──────────────────────────────────────────────────
-  await prisma.leagueSettings.upsert({
-    where: { id: 1 },
-    update: {},
-    create: {
-      id: 1,
-      leagueName: "Footy Predictor",
-      inviteCode: "GOAAALLL",
-      grandSlamEnabled: false,
-      grandSlamPoints: 3,
-    },
-  })
-  console.log("✓ LeagueSettings")
-
-  // ── 2. Users ─────────────────────────────────────────────────────────────
   const hash = await bcrypt.hash("password123", 10)
 
-  const users = await Promise.all([
+  // ── 1. Users ──────────────────────────────────────────────────────────────
+  const [commissioner, alice, bob, robo] = await Promise.all([
     prisma.user.upsert({
       where: { email: "commissioner@footy.test" },
       update: {},
-      create: {
-        email: "commissioner@footy.test",
-        passwordHash: hash,
-        displayName: "Commissioner",
-        isAdmin: true,
-      },
+      create: { email: "commissioner@footy.test", passwordHash: hash, displayName: "Commissioner" },
     }),
     prisma.user.upsert({
       where: { email: "alice@footy.test" },
@@ -53,27 +34,65 @@ async function main() {
       create: { email: "robo@footy.test", passwordHash: hash, displayName: "Robo", isBot: true },
     }),
   ])
-  const [, alice, bob, robo] = users
   console.log("✓ Users (commissioner, alice, bob, robo)")
 
-  // ── 3. Fixtures ──────────────────────────────────────────────────────────
-  const existingCount = await prisma.fixture.count()
+  // ── 2. League ─────────────────────────────────────────────────────────────
+  const league = await prisma.league.upsert({
+    where: { inviteCode: "GOAAALLL" },
+    update: {},
+    create: {
+      name: "Footy Predictor",
+      inviteCode: "GOAAALLL",
+      grandSlamEnabled: false,
+      grandSlamPoints: 3,
+    },
+  })
+  console.log(`✓ League "${league.name}" (code: ${league.inviteCode})`)
+
+  // ── 3. Memberships ────────────────────────────────────────────────────────
+  await Promise.all([
+    prisma.leagueMembership.upsert({
+      where: { userId_leagueId: { userId: commissioner.id, leagueId: league.id } },
+      update: {},
+      create: { userId: commissioner.id, leagueId: league.id, role: "COMMISSIONER" },
+    }),
+    prisma.leagueMembership.upsert({
+      where: { userId_leagueId: { userId: alice.id, leagueId: league.id } },
+      update: {},
+      create: { userId: alice.id, leagueId: league.id, role: "MEMBER" },
+    }),
+    prisma.leagueMembership.upsert({
+      where: { userId_leagueId: { userId: bob.id, leagueId: league.id } },
+      update: {},
+      create: { userId: bob.id, leagueId: league.id, role: "MEMBER" },
+    }),
+    prisma.leagueMembership.upsert({
+      where: { userId_leagueId: { userId: robo.id, leagueId: league.id } },
+      update: {},
+      create: { userId: robo.id, leagueId: league.id, role: "MEMBER" },
+    }),
+  ])
+  console.log("✓ Memberships")
+
+  // ── 4. Fixtures ───────────────────────────────────────────────────────────
+  const existingCount = await prisma.fixture.count({ where: { leagueId: league.id } })
   if (existingCount > 0) {
-    console.log(`⏭  Skipping fixtures — ${existingCount} already in DB`)
+    console.log(`⏭  Skipping fixtures — ${existingCount} already exist in this league`)
     return
   }
 
-  // Completed round — Premier League Matchweek 38 (June 8, 2026)
+  // Completed round — Matchweek 38 (June 8, 2026)
   const mw38Data = [
-    { homeTeam: "Arsenal",          awayTeam: "Chelsea",           kickoff: "2026-06-08T15:00:00Z", h: 2, a: 1 },
-    { homeTeam: "Manchester City",  awayTeam: "Liverpool",          kickoff: "2026-06-08T17:30:00Z", h: 1, a: 1 },
-    { homeTeam: "Tottenham",        awayTeam: "Manchester United",  kickoff: "2026-06-08T20:00:00Z", h: 0, a: 2 },
+    { homeTeam: "Arsenal",         awayTeam: "Chelsea",          kickoff: "2026-06-08T15:00:00Z", h: 2, a: 1 },
+    { homeTeam: "Manchester City", awayTeam: "Liverpool",         kickoff: "2026-06-08T17:30:00Z", h: 1, a: 1 },
+    { homeTeam: "Tottenham",       awayTeam: "Manchester United", kickoff: "2026-06-08T20:00:00Z", h: 0, a: 2 },
   ]
 
   const mw38 = await Promise.all(
     mw38Data.map((d) =>
       prisma.fixture.create({
         data: {
+          leagueId: league.id,
           competition: "Premier League",
           round: "Matchweek 38",
           homeTeam: d.homeTeam,
@@ -89,7 +108,7 @@ async function main() {
   )
   console.log("✓ Completed fixtures — Matchweek 38")
 
-  // Upcoming round — Premier League Matchweek 39 (June 22-23, 2026)
+  // Upcoming round — Matchweek 39 (June 22-23, 2026)
   const mw39Data = [
     { homeTeam: "Arsenal",         awayTeam: "Manchester United", kickoff: "2026-06-22T15:00:00Z" },
     { homeTeam: "Chelsea",         awayTeam: "Liverpool",          kickoff: "2026-06-22T17:30:00Z" },
@@ -98,6 +117,7 @@ async function main() {
 
   await prisma.fixture.createMany({
     data: mw39Data.map((d) => ({
+      leagueId: league.id,
       competition: "Premier League",
       round: "Matchweek 39",
       homeTeam: d.homeTeam,
@@ -108,7 +128,7 @@ async function main() {
   })
   console.log("✓ Upcoming fixtures  — Matchweek 39")
 
-  // ── 4. Predictions for completed fixtures ──────────────────────────────
+  // ── 5. Predictions for completed fixtures ──────────────────────────────
   //
   // Results:  Arsenal 2-1 Chelsea | Man City 1-1 Liverpool | Spurs 0-2 Man Utd
   //
@@ -117,18 +137,15 @@ async function main() {
   // Robo:     1-1 (wrong)   | 2-2 (draw, same diff)  | 0-1 (AW, diff -1≠-2)  → 0 + 1.5 + 1 = 2.5
 
   const allPicks: Array<{ userId: string; fixtureIdx: number; pH: number; pA: number }> = [
-    // Alice
     { userId: alice.id, fixtureIdx: 0, pH: 2, pA: 1 },
     { userId: alice.id, fixtureIdx: 1, pH: 0, pA: 0 },
     { userId: alice.id, fixtureIdx: 2, pH: 0, pA: 3 },
-    // Bob
-    { userId: bob.id, fixtureIdx: 0, pH: 1, pA: 0 },
-    { userId: bob.id, fixtureIdx: 1, pH: 2, pA: 1 },
-    { userId: bob.id, fixtureIdx: 2, pH: 1, pA: 2 },
-    // Robo
-    { userId: robo.id, fixtureIdx: 0, pH: 1, pA: 1 },
-    { userId: robo.id, fixtureIdx: 1, pH: 2, pA: 2 },
-    { userId: robo.id, fixtureIdx: 2, pH: 0, pA: 1 },
+    { userId: bob.id,   fixtureIdx: 0, pH: 1, pA: 0 },
+    { userId: bob.id,   fixtureIdx: 1, pH: 2, pA: 1 },
+    { userId: bob.id,   fixtureIdx: 2, pH: 1, pA: 2 },
+    { userId: robo.id,  fixtureIdx: 0, pH: 1, pA: 1 },
+    { userId: robo.id,  fixtureIdx: 1, pH: 2, pA: 2 },
+    { userId: robo.id,  fixtureIdx: 2, pH: 0, pA: 1 },
   ]
 
   for (const { userId, fixtureIdx, pH, pA } of allPicks) {
@@ -152,7 +169,7 @@ async function main() {
   console.log("  Robo   2.5 pts  🤖")
   console.log("\nMatchweek 39 fixtures are open for predictions.")
   console.log("Login: alice@footy.test / bob@footy.test / commissioner@footy.test")
-  console.log("Password: password123  |  Invite code: GOAAALLL")
+  console.log("Password: password123  |  League invite code: GOAAALLL")
 }
 
 main()

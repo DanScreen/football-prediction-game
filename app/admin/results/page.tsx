@@ -1,18 +1,23 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
+import { getActiveLeagueId } from "@/lib/activeLeague"
+import { redirect } from "next/navigation"
 import { checkTransitions } from "./actions"
 
 export default async function AdminResultsPage() {
+  const leagueId = await getActiveLeagueId()
+  if (!leagueId) redirect("/leagues")
+
   const now = new Date()
   const cutoff = new Date(now.getTime() - 2.5 * 60 * 60 * 1000)
 
   const [awaitingFixtures, scheduledReadyCount] = await Promise.all([
     prisma.fixture.findMany({
-      where: { status: "AWAITING_RESULT" },
+      where: { leagueId, status: "AWAITING_RESULT" },
       orderBy: { kickoffTime: "asc" },
     }),
     prisma.fixture.count({
-      where: { status: "SCHEDULED", kickoffTime: { lte: cutoff } },
+      where: { leagueId, status: "SCHEDULED", kickoffTime: { lte: cutoff } },
     }),
   ])
 

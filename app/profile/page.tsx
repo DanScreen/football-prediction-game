@@ -11,7 +11,7 @@ export default async function ProfilePage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { displayName: true, email: true, apiKey: true, isBot: true, isAdmin: true },
+    select: { displayName: true, email: true, apiKey: true, isBot: true },
   })
   if (!user) redirect("/login")
 
@@ -22,7 +22,6 @@ export default async function ProfilePage() {
       <div className="bg-white rounded-xl shadow-sm border border-zinc-200 divide-y divide-zinc-100">
         <Row label="Display name" value={user.displayName} />
         <Row label="Email" value={user.email} />
-        {user.isAdmin && <Row label="Role" value="Commissioner (Admin)" />}
         {user.isBot && <Row label="Account type" value="🤖 Bot" />}
       </div>
 

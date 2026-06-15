@@ -1,4 +1,7 @@
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { getActiveLeagueId } from "@/lib/activeLeague"
 import { scoreOnePrediction } from "@/lib/scoring"
 import { AnimatedPoints } from "./AnimatedPoints"
 
@@ -14,10 +17,33 @@ function formColorClass(c: FormColor) {
 }
 
 export default async function LeaderboardPage() {
+  const session = await auth()
+  if (!session?.user?.id) redirect("/login")
+
+  const activeLeagueId = await getActiveLeagueId()
+  if (!activeLeagueId) redirect("/leagues")
+
+  const league = await prisma.league.findUnique({ where: { id: activeLeagueId } })
+  if (!league) redirect("/leagues")
+
+  const memberIds = (
+    await prisma.leagueMembership.findMany({
+      where: { leagueId: activeLeagueId },
+      select: { userId: true },
+    })
+  ).map((m) => m.userId)
+
   const [users, scoredPredictions, completedFixtures] = await Promise.all([
-    prisma.user.findMany({ select: { id: true, displayName: true, isBot: true } }),
+    prisma.user.findMany({
+      where: { id: { in: memberIds } },
+      select: { id: true, displayName: true, isBot: true },
+    }),
     prisma.prediction.findMany({
-      where: { pointsAwarded: { not: null } },
+      where: {
+        userId: { in: memberIds },
+        fixture: { leagueId: activeLeagueId },
+        pointsAwarded: { not: null },
+      },
       select: {
         userId: true,
         pointsAwarded: true,
@@ -35,12 +61,12 @@ export default async function LeaderboardPage() {
       },
     }),
     prisma.fixture.findMany({
-      where: { status: "COMPLETED" },
+      where: { leagueId: activeLeagueId, status: "COMPLETED" },
       select: { competition: true, round: true, kickoffTime: true },
     }),
   ])
 
-  // Build the last 5 completed rounds (oldest → newest for left-to-right form strip)
+  // Build last 5 completed rounds (oldest → newest for form strip)
   const roundMaxKickoff = new Map<string, Date>()
   for (const f of completedFixtures) {
     const key = `${f.competition}||${f.round}`
@@ -57,7 +83,6 @@ export default async function LeaderboardPage() {
       return { key, competition: key.slice(0, sep), round: key.slice(sep + 2), maxKickoff }
     })
 
-  // Group predictions by userId
   const predsByUser = new Map<string, typeof scoredPredictions>()
   for (const p of scoredPredictions) {
     const arr = predsByUser.get(p.userId) ?? []
@@ -104,7 +129,8 @@ export default async function LeaderboardPage() {
 
   type RankedEntry = (typeof entries)[number] & { rank: number }
   const ranked = entries.reduce<RankedEntry[]>((acc, entry, i) => {
-    const rank = i === 0 ? 1 : entries[i - 1].totalPoints === entry.totalPoints ? acc[i - 1].rank : i + 1
+    const rank =
+      i === 0 ? 1 : entries[i - 1].totalPoints === entry.totalPoints ? acc[i - 1].rank : i + 1
     acc.push({ ...entry, rank })
     return acc
   }, [])
@@ -123,7 +149,7 @@ export default async function LeaderboardPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Leaderboard</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-1">{league.name}</h1>
       <p className="text-gray-500 text-sm mb-6">
         {entries.length} player{entries.length !== 1 ? "s" : ""}
         {last5Rounds.length > 0 && (
@@ -172,6 +198,9 @@ export default async function LeaderboardPage() {
                       <span className="font-semibold text-gray-900">{entry.displayName}</span>
                       {entry.isBot && (
                         <span className="ml-1.5 text-xs text-gray-400 font-normal">🤖</span>
+                      )}
+                      {entry.id === session.user.id && (
+                        <span className="ml-1.5 text-xs text-[#1a7a3c] font-medium">(you)</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right font-bold tabular-nums text-gray-900 text-base">

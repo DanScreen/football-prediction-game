@@ -2,14 +2,24 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { lookupFixtures } from "@/lib/ai"
 import type { ProposedFixture } from "@/lib/ai"
+import { ACTIVE_LEAGUE_COOKIE } from "@/lib/activeLeague"
 
-async function requireAdmin() {
+async function requireCommissioner() {
   const session = await auth()
-  if (!session?.user?.isAdmin) throw new Error("Unauthorised")
+  if (!session?.user?.id) throw new Error("Unauthorised")
+  const store = await cookies()
+  const leagueId = store.get(ACTIVE_LEAGUE_COOKIE)?.value
+  if (!leagueId) throw new Error("No active league")
+  const membership = await prisma.leagueMembership.findUnique({
+    where: { userId_leagueId: { userId: session.user.id, leagueId } },
+  })
+  if (membership?.role !== "COMMISSIONER") throw new Error("Unauthorised")
+  return { userId: session.user.id, leagueId }
 }
 
 export type FetchProposalState = {
@@ -21,7 +31,7 @@ export async function fetchImportProposal(
   _prev: FetchProposalState,
   formData: FormData,
 ): Promise<FetchProposalState> {
-  await requireAdmin()
+  await requireCommissioner()
 
   const competition = String(formData.get("competition") ?? "").trim()
   const round = String(formData.get("round") ?? "").trim()
@@ -50,7 +60,7 @@ export async function confirmImport(
   _prev: ConfirmImportState,
   formData: FormData,
 ): Promise<ConfirmImportState> {
-  await requireAdmin()
+  const { leagueId } = await requireCommissioner()
 
   const competition = String(formData.get("competition") ?? "").trim()
   const round = String(formData.get("round") ?? "").trim()
@@ -75,7 +85,7 @@ export async function confirmImport(
       return { error: `Invalid kickoff time for ${f.homeTeam} vs ${f.awayTeam}.` }
     }
     await prisma.fixture.create({
-      data: { competition, round, homeTeam: f.homeTeam, awayTeam: f.awayTeam, kickoffTime },
+      data: { leagueId, competition, round, homeTeam: f.homeTeam, awayTeam: f.awayTeam, kickoffTime },
     })
   }
 

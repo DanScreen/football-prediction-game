@@ -2,12 +2,30 @@ import { type NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { authenticateApiKey } from "@/lib/apiAuth"
 
+async function resolveLeagueId(userId: string, requested: string | null): Promise<string | null> {
+  if (requested) {
+    const m = await prisma.leagueMembership.findUnique({
+      where: { userId_leagueId: { userId, leagueId: requested } },
+    })
+    return m ? requested : null
+  }
+  const first = await prisma.leagueMembership.findFirst({
+    where: { userId },
+    orderBy: { joinedAt: "asc" },
+  })
+  return first?.leagueId ?? null
+}
+
 export async function GET(request: NextRequest) {
   const user = await authenticateApiKey(request)
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
+  const leagueIdParam = request.nextUrl.searchParams.get("leagueId")
+  const leagueId = await resolveLeagueId(user.id, leagueIdParam)
+  if (!leagueId) return Response.json({ error: "No league found" }, { status: 404 })
+
   const predictions = await prisma.prediction.findMany({
-    where: { userId: user.id },
+    where: { userId: user.id, fixture: { leagueId } },
     orderBy: { fixture: { kickoffTime: "desc" } },
     select: {
       id: true,
@@ -82,6 +100,12 @@ export async function POST(request: NextRequest) {
 
   const fixture = await prisma.fixture.findUnique({ where: { id: fixtureId } })
   if (!fixture) return Response.json({ error: "Fixture not found" }, { status: 404 })
+
+  // Ensure this fixture belongs to a league the user is in
+  const membership = await prisma.leagueMembership.findUnique({
+    where: { userId_leagueId: { userId: user.id, leagueId: fixture.leagueId } },
+  })
+  if (!membership) return Response.json({ error: "Fixture not found" }, { status: 404 })
 
   if (fixture.kickoffTime <= new Date()) {
     return Response.json(

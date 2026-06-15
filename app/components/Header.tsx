@@ -1,9 +1,22 @@
 import Link from "next/link"
-import { auth } from "@/auth"
-import { signOut } from "@/auth"
+import { auth, signOut } from "@/auth"
+import { prisma } from "@/lib/prisma"
+import { getActiveLeagueId } from "@/lib/activeLeague"
 
 export default async function Header() {
   const session = await auth()
+  const activeLeagueId = session?.user?.id ? await getActiveLeagueId() : null
+
+  const isCommissioner =
+    session?.user?.id && activeLeagueId
+      ? !!(await prisma.leagueMembership.findFirst({
+          where: {
+            userId: session.user.id,
+            leagueId: activeLeagueId,
+            role: "COMMISSIONER",
+          },
+        }))
+      : false
 
   return (
     <header className="bg-[#1a7a3c] text-white shadow-md">
@@ -26,7 +39,10 @@ export default async function Header() {
               <Link href="/leaderboard" className="hover:text-green-200 transition-colors">
                 Leaderboard
               </Link>
-              {session.user.isAdmin && (
+              <Link href="/leagues" className="hover:text-green-200 transition-colors">
+                My Leagues
+              </Link>
+              {isCommissioner && (
                 <Link
                   href="/admin"
                   className="bg-yellow-400 text-green-900 px-3 py-1 rounded-full text-xs font-bold hover:bg-yellow-300 transition-colors"

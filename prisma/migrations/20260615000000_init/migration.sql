@@ -4,24 +4,36 @@ CREATE TABLE "User" (
     "email" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
     "displayName" TEXT NOT NULL,
-    "isAdmin" BOOLEAN NOT NULL DEFAULT false,
     "isBot" BOOLEAN NOT NULL DEFAULT false,
     "apiKey" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- CreateTable
-CREATE TABLE "LeagueSettings" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "leagueName" TEXT NOT NULL DEFAULT 'Footy Predictor',
+CREATE TABLE "League" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
     "inviteCode" TEXT NOT NULL,
     "grandSlamEnabled" BOOLEAN NOT NULL DEFAULT false,
-    "grandSlamPoints" INTEGER NOT NULL DEFAULT 3
+    "grandSlamPoints" INTEGER NOT NULL DEFAULT 3,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- CreateTable
+CREATE TABLE "LeagueMembership" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "leagueId" TEXT NOT NULL,
+    "role" TEXT NOT NULL DEFAULT 'MEMBER',
+    "joinedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "LeagueMembership_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "LeagueMembership_leagueId_fkey" FOREIGN KEY ("leagueId") REFERENCES "League" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "Fixture" (
     "id" TEXT NOT NULL PRIMARY KEY,
+    "leagueId" TEXT NOT NULL,
     "competition" TEXT NOT NULL,
     "round" TEXT NOT NULL,
     "homeTeam" TEXT NOT NULL,
@@ -31,7 +43,8 @@ CREATE TABLE "Fixture" (
     "actualHomeScore" INTEGER,
     "actualAwayScore" INTEGER,
     "resultSource" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Fixture_leagueId_fkey" FOREIGN KEY ("leagueId") REFERENCES "League" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -56,4 +69,11 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE UNIQUE INDEX "User_apiKey_key" ON "User"("apiKey");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "League_inviteCode_key" ON "League"("inviteCode");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "LeagueMembership_userId_leagueId_key" ON "LeagueMembership"("userId", "leagueId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Prediction_userId_fixtureId_key" ON "Prediction"("userId", "fixtureId");
+

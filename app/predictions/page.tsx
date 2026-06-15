@@ -1,14 +1,21 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { getActiveLeagueId } from "@/lib/activeLeague"
 import { scoreOnePrediction } from "@/lib/scoring"
 
 export default async function MyPredictionsPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
 
+  const activeLeagueId = await getActiveLeagueId()
+  if (!activeLeagueId) redirect("/leagues")
+
   const predictions = await prisma.prediction.findMany({
-    where: { userId: session.user.id },
+    where: {
+      userId: session.user.id,
+      fixture: { leagueId: activeLeagueId },
+    },
     orderBy: { fixture: { kickoffTime: "desc" } },
     include: { fixture: true },
   })
@@ -16,7 +23,7 @@ export default async function MyPredictionsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-1">My Predictions</h1>
-      <p className="text-gray-500 text-sm mb-6">Your full prediction history.</p>
+      <p className="text-gray-500 text-sm mb-6">Your full prediction history in this league.</p>
 
       {predictions.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
@@ -30,9 +37,7 @@ export default async function MyPredictionsPage() {
             const f = p.fixture
             const isCompleted = f.status === "COMPLETED"
             const baseScore =
-              isCompleted &&
-              f.actualHomeScore !== null &&
-              f.actualAwayScore !== null
+              isCompleted && f.actualHomeScore !== null && f.actualAwayScore !== null
                 ? scoreOnePrediction(
                     p.predictedHomeScore,
                     p.predictedAwayScore,
@@ -56,7 +61,6 @@ export default async function MyPredictionsPage() {
                 className={`bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 ${accentBorder} px-5 py-4`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  {/* Left: fixture info */}
                   <div className="min-w-0">
                     <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">
                       {f.competition} · {f.round}
@@ -75,7 +79,6 @@ export default async function MyPredictionsPage() {
                     </p>
                   </div>
 
-                  {/* Right: scores + points */}
                   <div className="flex items-center gap-5 shrink-0">
                     <div>
                       <p className="text-xs text-gray-400 mb-0.5">My pick</p>
