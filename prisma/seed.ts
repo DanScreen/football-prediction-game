@@ -42,6 +42,7 @@ async function main() {
     update: {},
     create: {
       name: "Footy Predictor",
+      competition: "Premier League",
       inviteCode: "GOAAALLL",
       grandSlamEnabled: false,
       grandSlamPoints: 3,

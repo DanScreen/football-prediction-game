@@ -53,6 +53,7 @@ export default async function LeaguesPage() {
                   )}
                 </div>
                 <p className="text-xs text-gray-500">
+                  {m.league.competition && <span className="mr-2">{m.league.competition}</span>}
                   {m.league._count.memberships} member{m.league._count.memberships !== 1 ? "s" : ""}
                   {" · "}
                   {m.league._count.fixtures} fixture{m.league._count.fixtures !== 1 ? "s" : ""}

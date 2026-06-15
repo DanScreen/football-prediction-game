@@ -38,6 +38,7 @@ model User {
 model League {
   id               String             @id @default(cuid())
   name             String
+  competition      String             @default("")
   inviteCode       String             @unique
   grandSlamEnabled Boolean            @default(false)
   grandSlamPoints  Int                @default(3)

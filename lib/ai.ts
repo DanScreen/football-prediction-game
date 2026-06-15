@@ -14,6 +14,7 @@ export interface ProposedFixture {
   homeTeam: string
   awayTeam: string
   kickoffTime: string
+  round?: string
 }
 
 function extractJson<T>(text: string, pattern: RegExp): T {
@@ -68,6 +69,54 @@ Search for the result and respond with ONLY a JSON object — no markdown, no ex
   }
 
   return { homeScore: parsed.home, awayScore: parsed.away, rawText: raw }
+}
+
+export async function lookupUpcomingFixtures(competition: string): Promise<ProposedFixture[]> {
+  const client = new Anthropic()
+  const today = new Date().toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+
+  const stream = client.messages.stream({
+    model: MODEL,
+    max_tokens: 2048,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tools: [WEB_SEARCH] as any,
+    messages: [
+      {
+        role: "user",
+        content: `Today is ${today}. Find all upcoming scheduled fixtures for ${competition} that have not yet been played.
+
+Focus on the next scheduled round or matchday. If multiple rounds are imminent (within the next 2 weeks), include them all.
+
+Return ONLY a JSON array — no markdown, no explanation:
+[{"homeTeam": "Team A", "awayTeam": "Team B", "kickoffTime": "2026-06-22T15:00:00Z", "round": "Matchweek 39"}]
+
+Use ISO 8601 UTC for kickoffTime. Include the round/stage name for every fixture.`,
+      },
+    ],
+  })
+
+  const msg = await stream.finalMessage()
+
+  const textBlock = msg.content.find((b) => b.type === "text")
+  if (!textBlock || textBlock.type !== "text") throw new Error("AI returned no text")
+
+  const raw = textBlock.text.trim()
+  const parsed = extractJson<unknown[]>(raw, /\[[\s\S]*\]/)
+
+  if (!Array.isArray(parsed)) throw new Error("AI did not return an array")
+
+  return parsed.filter(
+    (f): f is ProposedFixture =>
+      typeof f === "object" &&
+      f !== null &&
+      typeof (f as ProposedFixture).homeTeam === "string" &&
+      typeof (f as ProposedFixture).awayTeam === "string" &&
+      typeof (f as ProposedFixture).kickoffTime === "string",
+  )
 }
 
 export async function lookupFixtures(
