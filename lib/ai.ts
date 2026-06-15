@@ -71,27 +71,30 @@ Search for the result and respond with ONLY a JSON object — no markdown, no ex
   return { homeScore: parsed.home, awayScore: parsed.away, rawText: raw }
 }
 
-export async function lookupUpcomingFixtures(competition: string): Promise<ProposedFixture[]> {
-  const client = new Anthropic()
+export async function lookupUpcomingFixtures(
+  competition: string,
+  rounds = 1,
+): Promise<ProposedFixture[]> {
+  const client = new Anthropic({ timeout: 45 * 1000 })
   const today = new Date().toLocaleDateString("en-GB", {
     day: "numeric",
     month: "long",
     year: "numeric",
   })
 
+  const roundsLabel = rounds === 1 ? "the next round" : `the next ${rounds} rounds`
+
   const stream = client.messages.stream({
     model: MODEL,
-    max_tokens: 2048,
+    max_tokens: rounds > 1 ? 2048 : 1024,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     tools: [WEB_SEARCH] as any,
     messages: [
       {
         role: "user",
-        content: `Today is ${today}. Find all upcoming scheduled fixtures for ${competition} that have not yet been played.
+        content: `Today is ${today}. Search for all upcoming fixtures in ${roundsLabel} of ${competition} for the current season that have not yet been played.
 
-Focus on the next scheduled round or matchday. If multiple rounds are imminent (within the next 2 weeks), include them all.
-
-Return ONLY a JSON array — no markdown, no explanation:
+Do one search, then return ONLY a JSON array — no markdown, no explanation:
 [{"homeTeam": "Team A", "awayTeam": "Team B", "kickoffTime": "2026-06-22T15:00:00Z", "round": "Matchweek 39"}]
 
 Use ISO 8601 UTC for kickoffTime. Include the round/stage name for every fixture.`,
@@ -101,11 +104,16 @@ Use ISO 8601 UTC for kickoffTime. Include the round/stage name for every fixture
 
   const msg = await stream.finalMessage()
 
-  const textBlock = msg.content.find((b) => b.type === "text")
-  if (!textBlock || textBlock.type !== "text") throw new Error("AI returned no text")
+  // Model often emits a preamble text block before searching, then the JSON in a later block.
+  // Concatenate all text blocks so the regex finds the array regardless of which block it's in.
+  const allText = msg.content
+    .filter((b): b is Extract<(typeof msg.content)[number], { type: "text" }> => b.type === "text")
+    .map((b) => b.text)
+    .join("\n")
 
-  const raw = textBlock.text.trim()
-  const parsed = extractJson<unknown[]>(raw, /\[[\s\S]*\]/)
+  if (!allText) throw new Error("AI returned no text")
+
+  const parsed = extractJson<unknown[]>(allText, /\[[\s\S]*\]/)
 
   if (!Array.isArray(parsed)) throw new Error("AI did not return an array")
 

@@ -1,22 +1,30 @@
 import Link from "next/link"
 import { fetchImportProposal, confirmImport } from "./actions"
 import ImportForm from "./ImportForm"
+import { prisma } from "@/lib/prisma"
+import { getActiveLeagueId } from "@/lib/activeLeague"
 
-export default function AdminImportPage() {
-  const aiEnabled = Boolean(process.env.ANTHROPIC_API_KEY)
+export default async function AdminImportPage() {
+  const apiEnabled = Boolean(process.env.FOOTBALL_DATA_API_KEY)
+
+  const activeLeagueId = await getActiveLeagueId()
+  const league = activeLeagueId
+    ? await prisma.league.findUnique({ where: { id: activeLeagueId } })
+    : null
+  const leagueCompetition = league?.competition ?? ""
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Import Fixtures</h1>
       <p className="text-gray-500 text-sm mb-6">
-        Ask Claude to find upcoming fixtures for a competition and round, then confirm before
-        inserting.
+        Fetch upcoming fixtures from football-data.org and confirm before inserting.
       </p>
 
-      {!aiEnabled && (
+      {!apiEnabled && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 mb-6 text-sm text-yellow-800">
-          <strong>ANTHROPIC_API_KEY not set.</strong> AI import is unavailable. Add fixtures
-          manually from the{" "}
+          <strong>FOOTBALL_DATA_API_KEY not set.</strong> Add your free API key from{" "}
+          <span className="font-mono">football-data.org</span> to <span className="font-mono">.env.local</span>,
+          or add fixtures manually from the{" "}
           <Link href="/admin/fixtures" className="underline">
             Fixtures
           </Link>{" "}
@@ -25,7 +33,8 @@ export default function AdminImportPage() {
       )}
 
       <ImportForm
-        aiEnabled={aiEnabled}
+        leagueCompetition={leagueCompetition}
+        apiEnabled={apiEnabled}
         fetchImportProposal={fetchImportProposal}
         confirmImport={confirmImport}
       />

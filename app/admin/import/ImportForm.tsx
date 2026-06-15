@@ -5,29 +5,35 @@ import type { FetchProposalState, ConfirmImportState } from "./actions"
 import type { ProposedFixture } from "@/lib/ai"
 
 interface Props {
-  aiEnabled: boolean
+  leagueCompetition: string
+  apiEnabled: boolean
   fetchImportProposal: (prev: FetchProposalState, formData: FormData) => Promise<FetchProposalState>
   confirmImport: (prev: ConfirmImportState, formData: FormData) => Promise<ConfirmImportState>
 }
 
 type DeselectedState = {
-  // ties the deselection to a specific proposal — resets automatically when a new proposal arrives
   forProposed: FetchProposalState["proposed"]
   indices: Set<number>
 }
 
-export default function ImportForm({ aiEnabled, fetchImportProposal, confirmImport }: Props) {
+const ROUNDS_OPTIONS = [1, 2, 3] as const
+
+export default function ImportForm({
+  leagueCompetition,
+  apiEnabled,
+  fetchImportProposal,
+  confirmImport,
+}: Props) {
   const [fetchState, fetchAction, fetchPending] = useActionState(fetchImportProposal, {})
   const [confirmState, confirmAction, confirmPending] = useActionState(confirmImport, {})
   const [deselectedState, setDeselectedState] = useState<DeselectedState>({
     forProposed: undefined,
     indices: new Set(),
   })
+  const [rounds, setRounds] = useState(1)
 
   const proposed = fetchState.proposed
 
-  // Deselected set is valid only while it belongs to the current proposal.
-  // When a new proposal arrives the set resets to empty (= all selected).
   const deselected =
     deselectedState.forProposed === proposed ? deselectedState.indices : new Set<number>()
 
@@ -46,41 +52,48 @@ export default function ImportForm({ aiEnabled, fetchImportProposal, confirmImpo
       {/* Step 1: AI fetch */}
       <div className="bg-white border border-gray-200 rounded-xl p-5">
         <h2 className="font-semibold text-gray-900 mb-4">1. Find Fixtures with AI</h2>
-        <form action={fetchAction} className="space-y-3">
+
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">
+            Competition
+          </p>
+          <p className="text-sm font-semibold text-gray-900">{leagueCompetition}</p>
+        </div>
+
+        <form action={fetchAction} className="space-y-4">
+          <input type="hidden" name="rounds" value={rounds} />
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Competition</label>
-            <input
-              name="competition"
-              placeholder="e.g. Premier League"
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a7a3c]"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">Rounds to fetch</label>
+            <div className="flex gap-2">
+              {ROUNDS_OPTIONS.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setRounds(n)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                    rounds === n
+                      ? "bg-[#1a7a3c] text-white border-[#1a7a3c]"
+                      : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                  }`}
+                >
+                  {n === 1 ? "1 round" : `${n} rounds`}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5">
+              Fetches upcoming unplayed fixtures for the current season
+            </p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Round</label>
-            <input
-              name="round"
-              placeholder="e.g. Matchweek 30"
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a7a3c]"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Season</label>
-            <input
-              name="season"
-              placeholder="e.g. 2025/26"
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a7a3c]"
-            />
-          </div>
+
           {fetchState.error && <p className="text-red-600 text-sm">{fetchState.error}</p>}
+
           <button
             type="submit"
-            disabled={fetchPending || !aiEnabled}
+            disabled={fetchPending || !apiEnabled}
             className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
-            {fetchPending ? "Searching…" : "🔍 Find Fixtures"}
+            {fetchPending ? "Fetching…" : "Fetch Fixtures"}
           </button>
         </form>
       </div>
@@ -90,11 +103,11 @@ export default function ImportForm({ aiEnabled, fetchImportProposal, confirmImpo
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <h2 className="font-semibold text-gray-900 mb-1">2. Review & Import</h2>
           <p className="text-gray-500 text-sm mb-4">
-            {proposed.competition} · {proposed.round} · {proposed.fixtures.length} fixture
-            {proposed.fixtures.length !== 1 ? "s" : ""} found
+            {proposed.competition} · {proposed.fixtures.length} fixture
+            {proposed.fixtures.length !== 1 ? "s" : ""} found — deselect any to skip
           </p>
 
-          <div className="space-y-2 mb-5">
+          <div className="space-y-2 mb-5 max-h-80 overflow-y-auto">
             {proposed.fixtures.map((f, i) => (
               <label
                 key={i}
@@ -111,6 +124,7 @@ export default function ImportForm({ aiEnabled, fetchImportProposal, confirmImpo
                     {f.homeTeam} vs {f.awayTeam}
                   </p>
                   <p className="text-xs text-gray-500">
+                    {f.round && <span className="mr-2 font-medium">{f.round}</span>}
                     {new Date(f.kickoffTime).toLocaleString("en-GB", {
                       day: "2-digit",
                       month: "short",
@@ -130,8 +144,6 @@ export default function ImportForm({ aiEnabled, fetchImportProposal, confirmImpo
           )}
 
           <form action={confirmAction}>
-            <input type="hidden" name="competition" value={proposed.competition} />
-            <input type="hidden" name="round" value={proposed.round} />
             <input type="hidden" name="fixtures" value={JSON.stringify(selectedFixtures)} />
             <button
               type="submit"

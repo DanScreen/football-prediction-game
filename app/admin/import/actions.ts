@@ -5,7 +5,7 @@ import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { lookupFixtures } from "@/lib/ai"
+import { fetchUpcomingFixtures } from "@/lib/footballData"
 import type { ProposedFixture } from "@/lib/ai"
 import { ACTIVE_LEAGUE_COOKIE } from "@/lib/activeLeague"
 
@@ -24,33 +24,28 @@ async function requireCommissioner() {
 
 export type FetchProposalState = {
   error?: string
-  proposed?: { competition: string; round: string; fixtures: ProposedFixture[] }
+  proposed?: { competition: string; fixtures: ProposedFixture[] }
 }
 
 export async function fetchImportProposal(
   _prev: FetchProposalState,
   formData: FormData,
 ): Promise<FetchProposalState> {
-  await requireCommissioner()
+  const { leagueId } = await requireCommissioner()
 
-  const competition = String(formData.get("competition") ?? "").trim()
-  const round = String(formData.get("round") ?? "").trim()
-  const season = String(formData.get("season") ?? "").trim()
+  const rounds = Math.min(3, Math.max(1, parseInt(String(formData.get("rounds") ?? "1"), 10) || 1))
 
-  if (!competition || !round || !season) return { error: "All fields are required." }
-
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return { error: "ANTHROPIC_API_KEY is not configured." }
-  }
+  const league = await prisma.league.findUnique({ where: { id: leagueId } })
+  if (!league) return { error: "League not found." }
 
   try {
-    const fixtures = await lookupFixtures(competition, round, season)
+    const fixtures = await fetchUpcomingFixtures(league.competition, rounds)
     if (fixtures.length === 0) {
-      return { error: "AI found no fixtures. Try rephrasing the competition or round name." }
+      return { error: "No upcoming fixtures found. The competition may be in an off-season period." }
     }
-    return { proposed: { competition, round, fixtures } }
+    return { proposed: { competition: league.competition, fixtures } }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "AI lookup failed." }
+    return { error: err instanceof Error ? err.message : "Failed to fetch fixtures." }
   }
 }
 
@@ -62,11 +57,8 @@ export async function confirmImport(
 ): Promise<ConfirmImportState> {
   const { leagueId } = await requireCommissioner()
 
-  const competition = String(formData.get("competition") ?? "").trim()
-  const round = String(formData.get("round") ?? "").trim()
   const rawFixtures = String(formData.get("fixtures") ?? "")
-
-  if (!competition || !round || !rawFixtures) return { error: "Missing required data." }
+  if (!rawFixtures) return { error: "Missing fixture data." }
 
   let fixtures: ProposedFixture[]
   try {
@@ -79,13 +71,23 @@ export async function confirmImport(
     return { error: "No fixtures selected." }
   }
 
+  const league = await prisma.league.findUnique({ where: { id: leagueId } })
+  if (!league) return { error: "League not found." }
+
   for (const f of fixtures) {
     const kickoffTime = new Date(f.kickoffTime)
     if (isNaN(kickoffTime.getTime())) {
       return { error: `Invalid kickoff time for ${f.homeTeam} vs ${f.awayTeam}.` }
     }
     await prisma.fixture.create({
-      data: { leagueId, competition, round, homeTeam: f.homeTeam, awayTeam: f.awayTeam, kickoffTime },
+      data: {
+        leagueId,
+        competition: league.competition,
+        round: f.round ?? "Round 1",
+        homeTeam: f.homeTeam,
+        awayTeam: f.awayTeam,
+        kickoffTime,
+      },
     })
   }
 

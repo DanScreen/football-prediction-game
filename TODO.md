@@ -7,7 +7,11 @@ _(nothing blocked yet)_
 - **Node.js installed via Homebrew** — not pre-installed; added via `brew install node` (v26.3.0).
 - **Prisma v7 + better-sqlite3 adapter** — Prisma 7 dropped no-adapter mode; `@prisma/adapter-better-sqlite3` is the local SQLite path (avoids libsql/Turso dependency).
 - **NextAuth v5 beta** — using JWT sessions (stateless) with credentials provider; no DB adapter needed for auth sessions.
-- **Fixture import via AI** — no third-party football API; Commissioner can bulk-import upcoming fixtures using Claude + web search (same Anthropic API used for result resolution in Phase 6).
+- **Fixture import via football-data.org** — switched from Claude web search to the football-data.org REST API (free tier covers PL + WC). Claude is still used for AI result lookup only. Key: `FOOTBALL_DATA_API_KEY`.
+- **Active league via cookie** — league context stored in `httpOnly` cookie `activeLeagueId` rather than URL segments, keeping all existing routes unchanged.
+- **Cross-league prediction sync** — one prediction for a real-world match auto-copies to matching fixtures (same teams + kickoff) in the user's other leagues; no separate junction table needed.
+- **Commissioner role per league** — `isAdmin` removed from User/session; admin access is gated by `LeagueMembership.role = "COMMISSIONER"` for the active league.
+- **`"use server"` files export functions only** — Turbopack errors if a server-action file exports a constant; shared constants (e.g. `COMPETITIONS`) live in plain `.ts` files.
 
 ---
 
@@ -74,3 +78,27 @@ _(nothing blocked yet)_
 - [x] Seed real or placeholder upcoming fixtures
 - [x] End-to-end cycle: predict → resolve → score
 - [x] Final lint + build check
+
+## Phase 11 — Multi-League Architecture ✅
+- [x] Remove global invite-code gate — registration is now open; invite code optional (links user to a league on sign-up)
+- [x] Schema: `League`, `LeagueMembership` (role: COMMISSIONER / MEMBER); `Fixture.leagueId`
+- [x] Active league stored in `httpOnly` cookie; helper `lib/activeLeague.ts`
+- [x] League creation: choose competition (Premier League / World Cup 2026), auto-import next round via AI, confirm fixtures before saving
+- [x] League join via invite code; invite code shown on My Leagues page
+- [x] "My Leagues" tab — list leagues, switch active league, view member/fixture counts
+- [x] Dashboard scoped to active league — performance summary (rank, points, exact ⚽), upcoming fixtures with prediction inputs
+- [x] `requireCommissioner()` pattern in all admin actions — DB membership check replaces `isAdmin` flag
+- [x] Admin layout, fixtures, results, and import all scoped to active league
+- [x] Cross-league prediction sync — submitting a prediction auto-copies to matching fixtures in user's other leagues
+- [x] Leaderboard and Predictions pages scoped to active league
+- [x] Public API endpoints accept optional `?leagueId=` param
+- [x] Header shows Admin link only to commissioners of the active league
+- [x] Seed updated: league with `competition`, 4 memberships (commissioner + 3 members), league-scoped fixtures
+
+## Phase 12 — Fixture Import via football-data.org ✅
+- [x] `lib/footballData.ts` — fetches scheduled matches from football-data.org v4 API
+- [x] Competition → API code mapping: Premier League (`PL`), World Cup 2026 (`WC`)
+- [x] Rounds selector (1 / 2 / 3) replaces free-text competition / round / season inputs
+- [x] Admin import page reads competition from the active league (no user input needed)
+- [x] `FOOTBALL_DATA_API_KEY` added to `.env.local.example`
+- [x] Claude web search retained only for AI result lookup (not fixture import)

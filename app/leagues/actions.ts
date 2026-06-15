@@ -41,11 +41,6 @@ export type LeagueActionState = {
   }
 }
 
-export const COMPETITIONS = [
-  { value: "Premier League", label: "Premier League", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-  { value: "FIFA World Cup 2026", label: "World Cup 2026", flag: "🌍" },
-] as const
-
 export async function createLeague(
   _prev: LeagueActionState,
   formData: FormData,

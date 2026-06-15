@@ -5,10 +5,10 @@ import {
   createLeague,
   joinLeague,
   confirmLeagueFixtures,
-  COMPETITIONS,
   type LeagueActionState,
   type ConfirmFixturesState,
 } from "./actions"
+import { COMPETITIONS } from "./data"
 
 export default function LeaguesClient({ hasLeagues }: { hasLeagues: boolean }) {
   const [tab, setTab] = useState<"create" | "join">(hasLeagues ? "join" : "create")
