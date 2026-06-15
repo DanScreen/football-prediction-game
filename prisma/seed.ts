@@ -11,24 +11,24 @@ async function main() {
   // ── 1. Users ──────────────────────────────────────────────────────────────
   const [commissioner, alice, bob, robo] = await Promise.all([
     prisma.user.upsert({
-      where: { email: "commissioner@footy.test" },
+      where: { email: "commissioner@football.test" },
       update: {},
-      create: { email: "commissioner@footy.test", passwordHash: hash, displayName: "Commissioner" },
+      create: { email: "commissioner@football.test", passwordHash: hash, displayName: "Commissioner" },
     }),
     prisma.user.upsert({
-      where: { email: "alice@footy.test" },
+      where: { email: "alice@football.test" },
       update: {},
-      create: { email: "alice@footy.test", passwordHash: hash, displayName: "Alice" },
+      create: { email: "alice@football.test", passwordHash: hash, displayName: "Alice" },
     }),
     prisma.user.upsert({
-      where: { email: "bob@footy.test" },
+      where: { email: "bob@football.test" },
       update: {},
-      create: { email: "bob@footy.test", passwordHash: hash, displayName: "Bob" },
+      create: { email: "bob@football.test", passwordHash: hash, displayName: "Bob" },
     }),
     prisma.user.upsert({
-      where: { email: "robo@footy.test" },
+      where: { email: "robo@football.test" },
       update: {},
-      create: { email: "robo@footy.test", passwordHash: hash, displayName: "Robo", isBot: true },
+      create: { email: "robo@football.test", passwordHash: hash, displayName: "Robo", isBot: true },
     }),
   ])
   console.log("✓ Users (commissioner, alice, bob, robo)")
@@ -38,7 +38,7 @@ async function main() {
     where: { inviteCode: "GOAAALLL" },
     update: {},
     create: {
-      name: "Footy Predictor",
+      name: "Test League",
       competition: "Premier League",
       inviteCode: "GOAAALLL",
       grandSlamEnabled: false,
@@ -166,7 +166,7 @@ async function main() {
   console.log("  Bob    2.5 pts")
   console.log("  Robo   2.5 pts  🤖")
   console.log("\nMatchweek 39 fixtures are open for predictions.")
-  console.log("Login: alice@footy.test / bob@footy.test / commissioner@footy.test")
+  console.log("Login: alice@football.test / bob@football.test / commissioner@football.test")
   console.log("Password: password123  |  League invite code: GOAAALLL")
 }
 

@@ -1,6 +1,6 @@
 import RegisterForm from "./RegisterForm"
 
-export const metadata = { title: "Register — Footy Predictor" }
+export const metadata = { title: "Register — Football Prediction App" }
 
 export default function RegisterPage() {
   return (

@@ -1,5 +1,5 @@
 variable "project_id" {
-  description = "GCP project ID — must be globally unique (e.g. footy-predictor-prod-abc123)"
+  description = "GCP project ID — must be globally unique (e.g. football-prediction-app-abc123)"
   type        = string
 }
 
@@ -15,7 +15,7 @@ variable "region" {
 }
 
 variable "db_password" {
-  description = "Password for the footy_user PostgreSQL user"
+  description = "Password for the app_user PostgreSQL user"
   type        = string
   sensitive   = true
 }

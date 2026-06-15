@@ -1,4 +1,4 @@
-# TODO — Footy Predictor
+# TODO — Football Prediction App
 
 ## Blocked
 _(nothing blocked yet)_

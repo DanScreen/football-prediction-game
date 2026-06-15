@@ -5,11 +5,11 @@ on:
     branches: [main]
 
 env:
-  PROJECT_ID: footy-predictor-prod      # update if you chose a different project ID
+  PROJECT_ID: football-prediction-app-prod      # update if you chose a different project ID
   REGION: europe-west2
-  SERVICE: footy-predictor
+  SERVICE: football-prediction-app
   REGISTRY: europe-west2-docker.pkg.dev
-  REPOSITORY: footy-predictor
+  REPOSITORY: football-prediction-app
 
 jobs:
   deploy:

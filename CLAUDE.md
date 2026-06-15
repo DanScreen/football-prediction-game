@@ -2,10 +2,10 @@
 
 ## Project
 
-"Footy Predictor" — a private football score-prediction game for a small group
+"Football Prediction App" — a private football score-prediction game for a small group
 of friends, with a public API so automated prediction models can submit picks
 alongside human users. The full functional spec, data model, scoring rules,
-and phased build plan live in `FOOTY_PREDICTOR_SPEC.md` — read it in full
+and phased build plan live in `FOOTBALL_PREDICTION_APP_SPEC.md` — read it in full
 before starting any work.
 
 ## Working agreement
@@ -28,19 +28,16 @@ before starting any work.
 
 ## Tech stack
 
-- Next.js (App Router) + TypeScript
-- Tailwind CSS
-- Prisma + SQLite (file-based DB, no external service)
-- NextAuth.js, credentials provider
-- Anthropic API (Claude + web search tool) for AI-assisted result lookups
+- Next.js 16 (App Router) + TypeScript
+- Tailwind CSS v4
+- Prisma 7 + PostgreSQL (Cloud SQL in production, local Postgres in dev)
+- NextAuth.js v5 beta, credentials provider, JWT sessions
+- football-data.org v4 REST API (fixture import + result lookup; free tier covers PL + WC)
 
 ## Environment
 
-- `.env.local` holds `ANTHROPIC_API_KEY`, `DATABASE_URL`, and NextAuth config —
+- `.env.local` holds `FOOTBALL_DATA_API_KEY`, `DATABASE_URL`, and NextAuth config —
   never commit this file. See `.env.local.example` for the expected keys.
-- If `ANTHROPIC_API_KEY` is missing or empty, build the AI result-lookup
-  feature behind a flag/stub so the rest of the app still works — manual
-  result entry by the Commissioner should always be available regardless.
 
 ## Commands
 

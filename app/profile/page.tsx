@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import RegenerateKeyButton from "./RegenerateKeyButton"
 
-export const metadata = { title: "Profile — Footy Predictor" }
+export const metadata = { title: "Profile — Football Prediction App" }
 
 export default async function ProfilePage() {
   const session = await auth()

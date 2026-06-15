@@ -20,7 +20,7 @@ export default async function DashboardPage() {
       return (
         <div className="max-w-md mx-auto px-4 py-24 text-center">
           <p className="text-5xl mb-4">⚽</p>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Footy Predictor</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Football Prediction App</h1>
           <p className="text-gray-500 mb-8">
             Create a new league or join one with an invite code to get started.
           </p>

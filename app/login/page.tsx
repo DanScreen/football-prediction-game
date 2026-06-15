@@ -1,6 +1,6 @@
 import LoginForm from "./LoginForm"
 
-export const metadata = { title: "Sign In — Footy Predictor" }
+export const metadata = { title: "Sign In — Football Prediction App" }
 
 export default async function LoginPage({
   searchParams,

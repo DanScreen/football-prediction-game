@@ -1,4 +1,4 @@
-# Footy Predictor — Project Spec
+# Football Prediction App — Project Spec
 
 ## 1. Overview
 

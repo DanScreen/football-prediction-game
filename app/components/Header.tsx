@@ -26,7 +26,7 @@ export default async function Header() {
             href="/"
             className="text-xl font-bold tracking-tight hover:text-green-200 transition-colors"
           >
-            ⚽ Footy Predictor
+            ⚽ Football Prediction App
           </Link>
           {session && (
             <nav className="hidden sm:flex items-center gap-4 text-sm font-medium">

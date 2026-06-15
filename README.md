@@ -1,4 +1,4 @@
-# Footy Predictor
+# Football Prediction App
 
 A score-prediction game for football fans. Users join leagues, predict scorelines for upcoming fixtures, and earn points based on accuracy. Commissioners manage fixtures, import schedules, and resolve results.
 
@@ -8,10 +8,9 @@ A score-prediction game for football fans. Users join leagues, predict scoreline
 | -------------- | --------------------------------------------------------- |
 | Framework      | Next.js 16 (App Router) + TypeScript                      |
 | Styling        | Tailwind CSS v4                                           |
-| Database       | SQLite via Prisma 7 + `@prisma/adapter-better-sqlite3`    |
+| Database       | PostgreSQL via Prisma 7 (Cloud SQL in production)         |
 | Auth           | NextAuth.js v5 beta — JWT sessions, credentials provider  |
-| AI             | Anthropic Claude (result lookup via web search)           |
-| Fixtures API   | football-data.org v4 (free tier)                          |
+| Fixtures API   | football-data.org v4 (free tier, covers PL + WC)          |
 
 ## Getting Started
 
@@ -31,10 +30,9 @@ Edit `.env.local` and fill in:
 
 | Variable                  | Where to get it                                                                        |
 | ------------------------- | -------------------------------------------------------------------------------------- |
-| `ANTHROPIC_API_KEY`       | [console.anthropic.com](https://console.anthropic.com)                                 |
 | `FOOTBALL_DATA_API_KEY`   | [football-data.org/client/register](https://www.football-data.org/client/register) (free) |
 | `AUTH_SECRET`             | `openssl rand -base64 32`                                                              |
-| `DATABASE_URL`            | Leave as `file:./dev.db`                                                               |
+| `DATABASE_URL`            | PostgreSQL connection string (e.g. `postgresql://user:pass@localhost:5432/football_prediction_app`) |
 
 ### 3. Set up the database
 
@@ -45,12 +43,12 @@ npx prisma db seed
 
 The seed creates four test accounts (password: `password123`) and one league with fixtures:
 
-| Email                        | Role        |
-| ---------------------------- | ----------- |
-| `commissioner@footy.test`    | Commissioner |
-| `alice@footy.test`           | Member      |
-| `bob@footy.test`             | Member      |
-| `robo@footy.test`            | Member (bot) |
+| Email                           | Role        |
+| ------------------------------- | ----------- |
+| `commissioner@football.test`    | Commissioner |
+| `alice@football.test`           | Member      |
+| `bob@football.test`             | Member      |
+| `robo@football.test`            | Member (bot) |
 
 League invite code: **GOAAALLL**
 
@@ -98,7 +96,7 @@ An optional **Grand Slam** bonus awards extra points (configurable per league) i
 
 ### Result Resolution
 
-Commissioners mark results manually, or use **Admin → Results** to trigger an AI lookup (Claude + web search) which proposes the final score for review before saving.
+Commissioners mark results manually, or use **Admin → Results** to trigger a lookup via football-data.org which proposes the final score for review before saving.
 
 ## Admin Guide
 

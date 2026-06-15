@@ -15,7 +15,7 @@ provider "google" {
 # ── Project ───────────────────────────────────────────────────────────────────
 
 resource "google_project" "main" {
-  name            = "Footy Predictor"
+  name            = "Football Prediction App"
   project_id      = var.project_id
   billing_account = var.billing_account_id
 }
@@ -36,7 +36,7 @@ resource "google_project_service" "apis" {
 resource "google_artifact_registry_repository" "docker" {
   project       = google_project.main.project_id
   location      = var.region
-  repository_id = "footy-predictor"
+  repository_id = "football-prediction-app"
   format        = "DOCKER"
   depends_on    = [google_project_service.apis]
 }
@@ -45,7 +45,7 @@ resource "google_artifact_registry_repository" "docker" {
 
 resource "google_sql_database_instance" "main" {
   project          = google_project.main.project_id
-  name             = "footy-predictor-db"
+  name             = "football-prediction-app-db"
   database_version = "POSTGRES_16"
   region           = var.region
 
@@ -69,13 +69,13 @@ resource "google_sql_database_instance" "main" {
 
 resource "google_sql_database" "main" {
   project  = google_project.main.project_id
-  name     = "footy_predictor"
+  name     = "football_prediction_app"
   instance = google_sql_database_instance.main.name
 }
 
 resource "google_sql_user" "app" {
   project  = google_project.main.project_id
-  name     = "footy_user"
+  name     = "app_user"
   instance = google_sql_database_instance.main.name
   password = var.db_password
 }
@@ -85,8 +85,8 @@ resource "google_sql_user" "app" {
 # Cloud Run SA — minimal, only needs to connect to Cloud SQL at runtime
 resource "google_service_account" "cloud_run" {
   project      = google_project.main.project_id
-  account_id   = "footy-predictor-run"
-  display_name = "Footy Predictor Cloud Run SA"
+  account_id   = "football-prediction-run"
+  display_name = "Football Prediction App Cloud Run SA"
 }
 
 resource "google_project_iam_member" "cloud_run_sql" {
@@ -98,8 +98,8 @@ resource "google_project_iam_member" "cloud_run_sql" {
 # Deploy SA — used by GitHub Actions to push images, run migrations, deploy
 resource "google_service_account" "deploy" {
   project      = google_project.main.project_id
-  account_id   = "footy-predictor-deploy"
-  display_name = "Footy Predictor Deploy SA"
+  account_id   = "football-prediction-deploy"
+  display_name = "Football Prediction App Deploy SA"
 }
 
 resource "google_project_iam_member" "deploy_ar" {

@@ -18,12 +18,12 @@ output "gcp_sa_key" {
 
 output "database_url" {
   description = "GitHub Secret: DATABASE_URL (Cloud Run — Unix socket)"
-  value       = "postgresql://footy_user:${var.db_password}@/footy_predictor?host=/cloudsql/${google_sql_database_instance.main.connection_name}"
+  value       = "postgresql://app_user:${var.db_password}@/football_prediction_app?host=/cloudsql/${google_sql_database_instance.main.connection_name}"
   sensitive   = true
 }
 
 output "db_migration_url" {
   description = "GitHub Secret: DB_MIGRATION_URL (GitHub Actions — via Cloud SQL Proxy)"
-  value       = "postgresql://footy_user:${var.db_password}@localhost:5432/footy_predictor"
+  value       = "postgresql://app_user:${var.db_password}@localhost:5432/football_prediction_app"
   sensitive   = true
 }

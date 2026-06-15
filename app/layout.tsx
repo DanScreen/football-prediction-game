@@ -23,7 +23,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Footy Predictor",
+  title: "Football Prediction App",
   description: "Predict match scores and compete with friends",
 };
 
