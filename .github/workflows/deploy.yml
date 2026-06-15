@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 env:
-  PROJECT_ID: football-prediction-app-prod      # update if you chose a different project ID
+  PROJECT_ID: football-prediction-app-499513
   REGION: europe-west2
   SERVICE: football-prediction-app
   REGISTRY: europe-west2-docker.pkg.dev
