@@ -1,0 +1,9 @@
+# Local state — never commit
+*.tfstate
+*.tfstate.backup
+
+# Variable values — contains secrets
+*.tfvars
+
+# Terraform working directory
+.terraform/
