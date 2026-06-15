@@ -1,0 +1,12 @@
+node_modules
+.next
+.env*
+*.db
+.git
+.gitignore
+prisma/migrations
+README.md
+TODO.md
+FOOTY_PREDICTOR_SPEC.md
+AGENTS.md
+CLAUDE.md

@@ -1,12 +1,9 @@
 import "dotenv/config"
 import bcrypt from "bcryptjs"
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3"
 import { PrismaClient, FixtureStatus, ResultSource, SubmitVia } from "../app/generated/prisma/client"
 import { scoreOnePrediction } from "../lib/scoring"
 
-const url = (process.env.DATABASE_URL ?? "file:./dev.db").replace(/^file:/, "")
-const adapter = new PrismaBetterSqlite3({ url })
-const prisma = new PrismaClient({ adapter })
+const prisma = new PrismaClient()
 
 async function main() {
   const hash = await bcrypt.hash("password123", 10)
