@@ -51,6 +51,7 @@ resource "google_sql_database_instance" "main" {
 
   settings {
     tier      = "db-f1-micro"
+    edition   = "ENTERPRISE"
     disk_size = 10
     disk_type = "PD_HDD"
 
@@ -59,7 +60,7 @@ resource "google_sql_database_instance" "main" {
     }
 
     ip_configuration {
-      ipv4_enabled = false
+      ipv4_enabled = true
     }
   }
 

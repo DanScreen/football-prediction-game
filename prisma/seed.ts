@@ -1,9 +1,12 @@
 import "dotenv/config"
 import bcrypt from "bcryptjs"
+import { Pool } from "pg"
+import { PrismaPg } from "@prisma/adapter-pg"
 import { PrismaClient, FixtureStatus, ResultSource, SubmitVia } from "../app/generated/prisma/client"
 import { scoreOnePrediction } from "../lib/scoring"
 
-const prisma = new PrismaClient()
+const pool = new Pool({ connectionString: process.env.DATABASE_URL! })
+const prisma = new PrismaClient({ adapter: new PrismaPg(pool) })
 
 async function main() {
   const hash = await bcrypt.hash("password123", 10)
