@@ -33,6 +33,7 @@ model User {
   createdAt    DateTime           @default(now())
   memberships  LeagueMembership[]
   predictions  Prediction[]
+  bonusAwards  BonusAward[]
 }
 
 model League {
@@ -45,6 +46,7 @@ model League {
   createdAt        DateTime           @default(now())
   memberships      LeagueMembership[]
   fixtures         Fixture[]
+  bonusAwards      BonusAward[]
 }
 
 model LeagueMembership {
@@ -79,6 +81,22 @@ model Fixture {
   createdAt       DateTime      @default(now())
   league          League        @relation(fields: [leagueId], references: [id])
   predictions     Prediction[]
+}
+
+// A per-round bonus (currently only the Grand Slam), kept separate from
+// Prediction.pointsAwarded so base points stay pure and bonuses are visible
+model BonusAward {
+  id          String   @id @default(cuid())
+  userId      String
+  leagueId    String
+  competition String
+  round       String
+  points      Int
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  league      League   @relation(fields: [leagueId], references: [id])
+
+  @@unique([userId, leagueId, competition, round])
 }
 
 model Prediction {

@@ -33,7 +33,7 @@ export default async function LeaderboardPage() {
     })
   ).map((m) => m.userId)
 
-  const [users, scoredPredictions, completedFixtures] = await Promise.all([
+  const [users, scoredPredictions, completedFixtures, bonusAwards] = await Promise.all([
     prisma.user.findMany({
       where: { id: { in: memberIds } },
       select: { id: true, displayName: true, isBot: true },
@@ -64,6 +64,10 @@ export default async function LeaderboardPage() {
       where: { leagueId: activeLeagueId, status: "COMPLETED" },
       select: { competition: true, round: true, kickoffTime: true },
     }),
+    prisma.bonusAward.findMany({
+      where: { leagueId: activeLeagueId },
+      select: { userId: true, points: true },
+    }),
   ])
 
   // Build last 5 completed rounds (oldest → newest for form strip)
@@ -90,10 +94,19 @@ export default async function LeaderboardPage() {
     predsByUser.set(p.userId, arr)
   }
 
+  const bonusByUser = new Map<string, { points: number; count: number }>()
+  for (const b of bonusAwards) {
+    const s = bonusByUser.get(b.userId) ?? { points: 0, count: 0 }
+    bonusByUser.set(b.userId, { points: s.points + b.points, count: s.count + 1 })
+  }
+
   const entries = users
     .map((user) => {
       const preds = predsByUser.get(user.id) ?? []
-      const totalPoints = preds.reduce((sum, p) => sum + (p.pointsAwarded ?? 0), 0)
+      const bonus = bonusByUser.get(user.id) ?? { points: 0, count: 0 }
+      const totalPoints =
+        preds.reduce((sum, p) => sum + (p.pointsAwarded ?? 0), 0) + bonus.points
+      const grandSlams = bonus.count
 
       const exactCount = preds.filter(
         (p) =>
@@ -123,7 +136,7 @@ export default async function LeaderboardPage() {
         return "red"
       })
 
-      return { ...user, totalPoints, exactCount, form }
+      return { ...user, totalPoints, exactCount, grandSlams, form }
     })
     .sort((a, b) => b.totalPoints - a.totalPoints)
 
@@ -198,6 +211,14 @@ export default async function LeaderboardPage() {
                       <span className="font-semibold text-gray-900">{entry.displayName}</span>
                       {entry.isBot && (
                         <span className="ml-1.5 text-xs text-gray-400 font-normal">🤖</span>
+                      )}
+                      {entry.grandSlams > 0 && (
+                        <span
+                          className="ml-1.5 text-xs font-medium text-amber-600"
+                          title={`${entry.grandSlams} Grand Slam${entry.grandSlams !== 1 ? "s" : ""}`}
+                        >
+                          🏆{entry.grandSlams > 1 ? `×${entry.grandSlams}` : ""}
+                        </span>
                       )}
                       {entry.id === session.user.id && (
                         <span className="ml-1.5 text-xs text-[#1a7a3c] font-medium">(you)</span>

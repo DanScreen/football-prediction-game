@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     })
   ).map((m) => m.userId)
 
-  const [users, scoredPredictions] = await Promise.all([
+  const [users, scoredPredictions, bonusAwards] = await Promise.all([
     prisma.user.findMany({
       where: { id: { in: memberIds } },
       select: { id: true, displayName: true, isBot: true },
@@ -37,6 +37,10 @@ export async function GET(request: NextRequest) {
         fixture: { select: { actualHomeScore: true, actualAwayScore: true } },
       },
     }),
+    prisma.bonusAward.findMany({
+      where: { leagueId },
+      select: { userId: true, points: true },
+    }),
   ])
 
   const predsByUser = new Map<string, typeof scoredPredictions>()
@@ -46,10 +50,18 @@ export async function GET(request: NextRequest) {
     predsByUser.set(p.userId, arr)
   }
 
+  const bonusByUser = new Map<string, { points: number; count: number }>()
+  for (const b of bonusAwards) {
+    const s = bonusByUser.get(b.userId) ?? { points: 0, count: 0 }
+    bonusByUser.set(b.userId, { points: s.points + b.points, count: s.count + 1 })
+  }
+
   const entries = users
     .map((u) => {
       const preds = predsByUser.get(u.id) ?? []
-      const totalPoints = preds.reduce((sum, p) => sum + (p.pointsAwarded ?? 0), 0)
+      const bonus = bonusByUser.get(u.id) ?? { points: 0, count: 0 }
+      const totalPoints =
+        preds.reduce((sum, p) => sum + (p.pointsAwarded ?? 0), 0) + bonus.points
       const exactCount = preds.filter(
         (p) =>
           p.fixture.actualHomeScore !== null &&
@@ -61,7 +73,14 @@ export async function GET(request: NextRequest) {
             p.fixture.actualAwayScore,
           ) === 3,
       ).length
-      return { id: u.id, displayName: u.displayName, isBot: u.isBot, totalPoints, exactCount }
+      return {
+        id: u.id,
+        displayName: u.displayName,
+        isBot: u.isBot,
+        totalPoints,
+        exactCount,
+        grandSlams: bonus.count,
+      }
     })
     .sort((a, b) => b.totalPoints - a.totalPoints)
 

@@ -107,7 +107,7 @@ export async function confirmResult(
       ),
     )
 
-    // 3. Grand Slam — only if all fixtures in this league+competition+round are done
+    // 3. Grand Slam — award BonusAward rows once every fixture in the round is done
     const league = await tx.league.findUnique({ where: { id: leagueId } })
     if (!league?.grandSlamEnabled) return
 
@@ -131,6 +131,14 @@ export async function confirmResult(
       )
     }
 
+    // Normalize the whole round to pure base points (also heals any legacy
+    // rows from when the bonus was folded into pointsAwarded)
+    await Promise.all(
+      roundPredictions.map((p) =>
+        tx.prediction.update({ where: { id: p.id }, data: { pointsAwarded: basePoints(p) } }),
+      ),
+    )
+
     const byUser = new Map<string, typeof roundPredictions>()
     for (const p of roundPredictions) {
       const arr = byUser.get(p.userId) ?? []
@@ -138,22 +146,22 @@ export async function confirmResult(
       byUser.set(p.userId, arr)
     }
 
-    // Rescore the whole round from the actual results so re-confirming a
-    // fixture can never double-count or strand a previously applied bonus
-    for (const [, preds] of byUser) {
-      const slam =
-        preds.length === roundFixtures.length &&
-        qualifiesForGrandSlam(preds.map((p) => basePoints(p) > 0))
-      await Promise.all(
-        preds.map((p, i) =>
-          tx.prediction.update({
-            where: { id: p.id },
-            data: {
-              pointsAwarded: basePoints(p) + (slam && i === 0 ? league.grandSlamPoints : 0),
-            },
-          }),
-        ),
+    const qualifying = [...byUser]
+      .filter(
+        ([, preds]) =>
+          preds.length === roundFixtures.length &&
+          qualifiesForGrandSlam(preds.map((p) => basePoints(p) > 0)),
       )
+      .map(([userId]) => userId)
+
+    const roundKey = { leagueId, competition: fixture.competition, round: fixture.round }
+    await tx.bonusAward.deleteMany({ where: { ...roundKey, userId: { notIn: qualifying } } })
+    for (const userId of qualifying) {
+      await tx.bonusAward.upsert({
+        where: { userId_leagueId_competition_round: { userId, ...roundKey } },
+        create: { userId, ...roundKey, points: league.grandSlamPoints },
+        update: { points: league.grandSlamPoints },
+      })
     }
   })
 

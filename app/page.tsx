@@ -55,7 +55,7 @@ export default async function DashboardPage() {
   const now = new Date()
   const cutoff = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
 
-  const [fixtures, scoredPredictions, leagueMembers] = await Promise.all([
+  const [fixtures, scoredPredictions, leagueMembers, bonusAwards] = await Promise.all([
     prisma.fixture.findMany({
       where: {
         leagueId: activeLeagueId,
@@ -86,12 +86,19 @@ export default async function DashboardPage() {
       where: { id: { in: leagueMemberIds } },
       select: { id: true, displayName: true },
     }),
+    prisma.bonusAward.findMany({
+      where: { leagueId: activeLeagueId },
+      select: { userId: true, points: true },
+    }),
   ])
 
-  // Compute rank for current user
+  // Compute rank for current user (base points + Grand Slam bonuses)
   const pointsByUser = new Map<string, number>()
   for (const p of scoredPredictions) {
     pointsByUser.set(p.userId, (pointsByUser.get(p.userId) ?? 0) + (p.pointsAwarded ?? 0))
+  }
+  for (const b of bonusAwards) {
+    pointsByUser.set(b.userId, (pointsByUser.get(b.userId) ?? 0) + b.points)
   }
   const myPoints = pointsByUser.get(userId) ?? 0
 
