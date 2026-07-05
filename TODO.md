@@ -116,42 +116,42 @@
 - [x] `@prisma/adapter-pg` + `pg.Pool` wired in `lib/prisma.ts` and `prisma/seed.ts`
 - [x] Cloud SQL Unix socket connection via `?host=/cloudsql/...` in `DATABASE_URL`
 
-## Phase 14 — League Settings page (spec §5.4 gap)
-- [ ] `app/admin/settings/` — page + form: rename league, Grand Slam toggle, Grand Slam points
-- [ ] Show invite code with a "Regenerate" action (invalidates the old code)
-- [ ] Move invite-code generator to `lib/inviteCode.ts`, shared with league creation
-- [ ] Add "Settings" link to the admin nav
+## Phase 14 — League Settings page (spec §5.4 gap) ✅
+- [x] `app/admin/settings/` — page + form: rename league, Grand Slam toggle, Grand Slam points
+- [x] Show invite code with a "Regenerate" action (invalidates the old code)
+- [x] Move invite-code generator to `lib/inviteCode.ts`, shared with league creation
+- [x] Add "Settings" link to the admin nav
 
-## Phase 15 — Automated result resolution
-- [ ] Schema: add `proposedHomeScore`/`proposedAwayScore` (Int?) to `Fixture`
-- [ ] `lib/resolution.ts` — shared logic: transition SCHEDULED → AWAITING_RESULT (≥2.5 h past
+## Phase 15 — Automated result resolution ✅
+- [x] Schema: add `proposedHomeScore`/`proposedAwayScore` (Int?) to `Fixture`
+- [x] `lib/resolution.ts` — shared logic: transition SCHEDULED → AWAITING_RESULT (≥2.5 h past
       kickoff, all leagues) and fetch proposed scores — one football-data.org call per
       competition + date window, fuzzy-matched to all awaiting fixtures (incl. cross-league copies)
-- [ ] `POST /api/cron/resolve` secured by `Authorization: Bearer $CRON_SECRET`
-- [ ] Results UI: pre-fetched proposal shown ready to Accept; proposals cleared on confirm
-- [ ] Terraform: Cloud Scheduler job (every 30 min) + `CRON_SECRET` env var on Cloud Run
-- [ ] Commissioner's manual "Look Up Result" stays as fallback
+- [x] `POST /api/cron/resolve` secured by `Authorization: Bearer $CRON_SECRET`
+- [x] Results UI: pre-fetched proposal shown ready to Accept; proposals cleared on confirm
+- [x] Terraform: Cloud Scheduler job (every 30 min) + `CRON_SECRET` env var on Cloud Run
+- [x] Commissioner's manual "Look Up Result" stays as fallback
 
-## Phase 16 — Deadline reminder emails
-- [ ] Reminder step in the cron route: for fixtures kicking off within 3 h, email each league
+## Phase 16 — Deadline reminder emails ✅
+- [x] Reminder step in the cron route: for fixtures kicking off within 3 h, email each league
       member who hasn't predicted yet (one email per user per run, listing their open fixtures)
-- [ ] `Fixture.reminderSentAt` timestamp guards against duplicate sends
-- [ ] Send via Resend HTTP API using fetch (no new dependency); silently skipped unless
+- [x] `Fixture.reminderSentAt` timestamp guards against duplicate sends
+- [x] Send via Resend HTTP API using fetch (no new dependency); silently skipped unless
       `RESEND_API_KEY` + `EMAIL_FROM` are configured
 
-## Phase 17 — Grand Slam transparency (BonusAward)
-- [ ] Schema: `BonusAward` model — userId, leagueId, competition, round, points;
+## Phase 17 — Grand Slam transparency (BonusAward) ✅
+- [x] Schema: `BonusAward` model — userId, leagueId, competition, round, points;
       unique on (userId, leagueId, competition, round)
-- [ ] `confirmResult` upserts/removes BonusAward rows instead of folding the bonus into one
+- [x] `confirmResult` upserts/removes BonusAward rows instead of folding the bonus into one
       prediction's `pointsAwarded` (which becomes pure base points)
-- [ ] Leaderboard page, `/api/v1/leaderboard`, and dashboard totals = base points + bonuses;
+- [x] Leaderboard page, `/api/v1/leaderboard`, and dashboard totals = base points + bonuses;
       🏆 Grand Slam count shown on the leaderboard
-- [ ] Legacy baked-in bonuses (if any) self-correct when any fixture in the round is re-confirmed
+- [x] Legacy baked-in bonuses (if any) self-correct when any fixture in the round is re-confirmed
 
-## Phase 18 — Bot API documentation
-- [ ] `/api-docs` page documenting `/api/v1/*`: auth header, endpoints, params, curl + Python examples
-- [ ] Link from the profile page next to the API key
+## Phase 18 — Bot API documentation ✅
+- [x] `/api-docs` page documenting `/api/v1/*`: auth header, endpoints, params, curl + Python examples
+- [x] Link from the profile page next to the API key
 
-## Phase 19 — My Predictions round breakdown
-- [ ] Group prediction history by competition + round with per-round subtotals
-- [ ] Show Grand Slam bonuses per round; summary strip (total, best round, exact count)
+## Phase 19 — My Predictions round breakdown ✅
+- [x] Group prediction history by competition + round with per-round subtotals
+- [x] Show Grand Slam bonuses per round; summary strip (total, best round, exact count)

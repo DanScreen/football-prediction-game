@@ -11,14 +11,74 @@ export default async function MyPredictionsPage() {
   const activeLeagueId = await getActiveLeagueId()
   if (!activeLeagueId) redirect("/leagues")
 
-  const predictions = await prisma.prediction.findMany({
-    where: {
-      userId: session.user.id,
-      fixture: { leagueId: activeLeagueId },
-    },
-    orderBy: { fixture: { kickoffTime: "desc" } },
-    include: { fixture: true },
+  const [predictions, bonusAwards] = await Promise.all([
+    prisma.prediction.findMany({
+      where: {
+        userId: session.user.id,
+        fixture: { leagueId: activeLeagueId },
+      },
+      orderBy: { fixture: { kickoffTime: "desc" } },
+      include: { fixture: true },
+    }),
+    prisma.bonusAward.findMany({
+      where: { userId: session.user.id, leagueId: activeLeagueId },
+    }),
+  ])
+
+  const bonusByRound = new Map(bonusAwards.map((b) => [`${b.competition}||${b.round}`, b.points]))
+
+  // Group into rounds, preserving the newest-first ordering
+  type Round = {
+    key: string
+    competition: string
+    round: string
+    predictions: typeof predictions
+  }
+  const rounds: Round[] = []
+  const roundByKey = new Map<string, Round>()
+  for (const p of predictions) {
+    const key = `${p.fixture.competition}||${p.fixture.round}`
+    let r = roundByKey.get(key)
+    if (!r) {
+      r = { key, competition: p.fixture.competition, round: p.fixture.round, predictions: [] }
+      roundByKey.set(key, r)
+      rounds.push(r)
+    }
+    r.predictions.push(p)
+  }
+
+  const baseScoreOf = (p: (typeof predictions)[number]) => {
+    const f = p.fixture
+    return f.status === "COMPLETED" && f.actualHomeScore !== null && f.actualAwayScore !== null
+      ? scoreOnePrediction(
+          p.predictedHomeScore,
+          p.predictedAwayScore,
+          f.actualHomeScore,
+          f.actualAwayScore,
+        )
+      : null
+  }
+
+  const roundStats = rounds.map((r) => {
+    const scored = r.predictions.map(baseScoreOf).filter((s): s is number => s !== null)
+    const bonus = bonusByRound.get(r.key) ?? 0
+    return {
+      ...r,
+      scoredCount: scored.length,
+      exactCount: scored.filter((s) => s === 3).length,
+      subtotal: scored.reduce((a, b) => a + b, 0) + bonus,
+      bonus,
+    }
   })
+
+  const totalPoints = roundStats.reduce((sum, r) => sum + r.subtotal, 0)
+  const totalExact = roundStats.reduce((sum, r) => sum + r.exactCount, 0)
+  const bestRound = roundStats
+    .filter((r) => r.scoredCount > 0)
+    .reduce<(typeof roundStats)[number] | null>(
+      (best, r) => (best === null || r.subtotal > best.subtotal ? r : best),
+      null,
+    )
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -32,93 +92,135 @@ export default async function MyPredictionsPage() {
           <p className="text-sm mt-1">Head to the dashboard to submit your first pick.</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {predictions.map((p) => {
-            const f = p.fixture
-            const isCompleted = f.status === "COMPLETED"
-            const baseScore =
-              isCompleted && f.actualHomeScore !== null && f.actualAwayScore !== null
-                ? scoreOnePrediction(
-                    p.predictedHomeScore,
-                    p.predictedAwayScore,
-                    f.actualHomeScore,
-                    f.actualAwayScore,
-                  )
-                : null
+        <>
+          <div className="grid grid-cols-3 gap-3 mb-8">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 text-center">
+              <p className="text-2xl font-bold text-gray-900 tabular-nums">{totalPoints}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Total points</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 text-center">
+              <p className="text-2xl font-bold text-gray-900 tabular-nums">{totalExact}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Exact ⚽</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 text-center">
+              {bestRound ? (
+                <>
+                  <p className="text-2xl font-bold text-gray-900 tabular-nums">
+                    {bestRound.subtotal}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5 truncate" title={bestRound.round}>
+                    Best: {bestRound.round}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-gray-400">–</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Best round</p>
+                </>
+              )}
+            </div>
+          </div>
 
-            const accentBorder =
-              baseScore === 3
-                ? "border-l-green-500"
-                : baseScore === 0
-                  ? "border-l-red-400"
-                  : baseScore !== null
-                    ? "border-l-blue-400"
-                    : "border-l-gray-200"
-
-            return (
-              <div
-                key={p.id}
-                className={`bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 ${accentBorder} px-5 py-4`}
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">
-                      {f.competition} · {f.round}
-                    </p>
-                    <p className="font-bold text-gray-900 truncate">
-                      {f.homeTeam}{" "}
-                      <span className="text-gray-400 font-normal">vs</span>{" "}
-                      {f.awayTeam}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {new Date(f.kickoffTime).toLocaleString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-5 shrink-0">
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">My pick</p>
-                      <p className="font-bold text-lg tabular-nums">
-                        {p.predictedHomeScore} – {p.predictedAwayScore}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-xs text-gray-400 mb-0.5">Result</p>
-                      {isCompleted ? (
-                        <p className="font-bold text-lg tabular-nums">
-                          {f.actualHomeScore} – {f.actualAwayScore}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-gray-400 italic">Pending</p>
+          <div className="space-y-8">
+            {roundStats.map((r) => (
+              <section key={r.key}>
+                <div className="flex items-baseline justify-between mb-2 px-1">
+                  <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+                    {r.competition} · {r.round}
+                  </h2>
+                  {r.scoredCount > 0 && (
+                    <p className="text-sm text-gray-500">
+                      {r.bonus > 0 && (
+                        <span className="text-amber-600 font-semibold mr-2">
+                          🏆 Grand Slam +{r.bonus}
+                        </span>
                       )}
-                    </div>
-
-                    <div className="min-w-[3rem]">
-                      <p className="text-xs text-gray-400 mb-0.5">Pts</p>
-                      {isCompleted && p.pointsAwarded !== null ? (
-                        <div className="flex flex-col items-start gap-1">
-                          <PointsBadge points={baseScore ?? p.pointsAwarded} />
-                          {baseScore === 3 && (
-                            <span className="text-xs font-bold text-green-700 bg-green-100 border border-green-200 rounded-full px-2 py-0.5 animate-pop whitespace-nowrap">
-                              Nailed it! ⚽
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-400">–</p>
-                      )}
-                    </div>
-                  </div>
+                      <span className="font-bold text-gray-900 tabular-nums">{r.subtotal}</span>{" "}
+                      pts
+                    </p>
+                  )}
                 </div>
-              </div>
-            )
-          })}
-        </div>
+
+                <div className="space-y-2">
+                  {r.predictions.map((p) => {
+                    const f = p.fixture
+                    const isCompleted = f.status === "COMPLETED"
+                    const baseScore = baseScoreOf(p)
+
+                    const accentBorder =
+                      baseScore === 3
+                        ? "border-l-green-500"
+                        : baseScore === 0
+                          ? "border-l-red-400"
+                          : baseScore !== null
+                            ? "border-l-blue-400"
+                            : "border-l-gray-200"
+
+                    return (
+                      <div
+                        key={p.id}
+                        className={`bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 ${accentBorder} px-5 py-4`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-bold text-gray-900 truncate">
+                              {f.homeTeam}{" "}
+                              <span className="text-gray-400 font-normal">vs</span>{" "}
+                              {f.awayTeam}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {new Date(f.kickoffTime).toLocaleString("en-GB", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-5 shrink-0">
+                            <div>
+                              <p className="text-xs text-gray-400 mb-0.5">My pick</p>
+                              <p className="font-bold text-lg tabular-nums">
+                                {p.predictedHomeScore} – {p.predictedAwayScore}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs text-gray-400 mb-0.5">Result</p>
+                              {isCompleted ? (
+                                <p className="font-bold text-lg tabular-nums">
+                                  {f.actualHomeScore} – {f.actualAwayScore}
+                                </p>
+                              ) : (
+                                <p className="text-sm text-gray-400 italic">Pending</p>
+                              )}
+                            </div>
+
+                            <div className="min-w-[3rem]">
+                              <p className="text-xs text-gray-400 mb-0.5">Pts</p>
+                              {isCompleted && baseScore !== null ? (
+                                <div className="flex flex-col items-start gap-1">
+                                  <PointsBadge points={baseScore} />
+                                  {baseScore === 3 && (
+                                    <span className="text-xs font-bold text-green-700 bg-green-100 border border-green-200 rounded-full px-2 py-0.5 animate-pop whitespace-nowrap">
+                                      Nailed it! ⚽
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-400">–</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+        </>
       )}
     </div>
   )
