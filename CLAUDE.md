@@ -61,4 +61,6 @@ Infrastructure is provisioned with Terraform in `terraform/`. Every push to `mai
 - Cloud Run connects to Cloud SQL via Unix socket (`DATABASE_URL` contains `?host=/cloudsql/<instance>`)
 - CI migrations use a TCP URL via Cloud SQL Auth Proxy (`DB_MIGRATION_URL`)
 - `AUTH_URL` is set automatically to the Cloud Run service URL after each deploy
+- Cloud Scheduler calls `POST /api/cron/resolve` every 30 min (Bearer `CRON_SECRET`) —
+  fixture transitions, result proposal pre-fetch, and deadline reminder emails
 - See `.github/workflows/deploy.yml` for the full pipeline and `README.md` for required secrets

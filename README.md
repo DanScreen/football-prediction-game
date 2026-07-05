@@ -92,11 +92,19 @@ Cross-league sync: if the same real-world match exists in multiple leagues a use
 | Correct result only                       | 1      |
 | Wrong result                              | 0      |
 
-An optional **Grand Slam** bonus awards extra points (configurable per league) if a player gets every fixture in a round correct.
+An optional **Grand Slam** bonus awards extra points (configurable per league in **Admin → Settings**) if a player gets every fixture in a round correct. Bonuses are stored separately from base prediction points (`BonusAward` table) and shown with a 🏆 badge on the leaderboard.
 
 ### Result Resolution
 
-Commissioners mark results manually, or use **Admin → Results** to trigger a lookup via football-data.org which proposes the final score for review before saving.
+Results flow through a confirm-before-save pipeline:
+
+1. **Automated sweep** — a Cloud Scheduler job calls `POST /api/cron/resolve` every 30 minutes. It moves fixtures ≥2.5h past kickoff to the *Pending Results* queue and pre-fetches the final score from football-data.org (one API call per competition, shared across leagues).
+2. **Commissioner confirms** — **Admin → Results** shows pre-fetched scores ready to Accept, Edit, or Retry. Nothing is scored until a Commissioner confirms — the human check keeps bad data (postponements, ambiguous team names) off the leaderboard.
+3. **Fallbacks** — the "Check for Updates" button runs the same sweep on demand, manual score entry always works, and per-fixture API lookup remains available.
+
+### Deadline Reminders
+
+The same cron sweep emails league members who haven't predicted a fixture kicking off within the next 3 hours — one email per user listing their open fixtures, sent via [Resend](https://resend.com). Requires the optional `RESEND_API_KEY` and `EMAIL_FROM` secrets; silently skipped without them. Each fixture only ever triggers one reminder batch (`reminderSentAt` guard).
 
 ## Admin Guide
 
@@ -106,7 +114,8 @@ All admin routes are behind `/admin` and require the **COMMISSIONER** role in th
 | ------------------ | ------------------------------------------------ |
 | `/admin/fixtures`  | Add, edit, and manage fixtures                   |
 | `/admin/import`    | Import upcoming fixtures from football-data.org  |
-| `/admin/results`   | Resolve results (manual entry or API lookup)     |
+| `/admin/results`   | Resolve results (confirm pre-fetched scores, manual entry, or API lookup) |
+| `/admin/settings`  | Rename league, Grand Slam toggle + points, invite code management |
 
 ## Public API
 
@@ -121,6 +130,8 @@ All endpoints require `Authorization: Bearer <apiKey>`. API keys are generated o
 
 Add `?leagueId=<id>` to any endpoint to scope it to a specific league (defaults to your first league).
 
+Full reference with curl examples and a Python starter bot lives in-app at `/api-docs` (linked from the profile page).
+
 ## Deployment
 
 Every push to `main` triggers the GitHub Actions workflow at `.github/workflows/deploy.yml`.
@@ -134,9 +145,16 @@ Provisioned in `terraform/`:
 | Cloud Run         | `football-prediction-app`, europe-west2                    |
 | Cloud SQL         | PostgreSQL 16, ENTERPRISE edition, `db-f1-micro`           |
 | Artifact Registry | Docker image repository                                    |
+| Cloud Scheduler   | `football-prediction-resolve` — calls `/api/cron/resolve` every 30 min |
 | Service accounts  | Separate deploy SA and Cloud Run SA (minimal IAM roles)    |
 
 To provision from scratch: `cd terraform && terraform init && terraform apply`
+
+The scheduler job is created only once the `app_url` (Cloud Run URL, known after the first deploy) and `cron_secret` variables are set in `terraform.tfvars` — re-run `terraform apply` at that point. `cron_secret` must equal the `CRON_SECRET` GitHub secret. Trigger a manual test run with:
+
+```bash
+gcloud scheduler jobs run football-prediction-resolve --location europe-west2
+```
 
 ### GitHub Secrets
 

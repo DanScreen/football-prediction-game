@@ -41,11 +41,19 @@ the season/competition.
 - id, leagueId, competition, round, homeTeam, awayTeam, kickoffTime
 - status: `SCHEDULED` / `AWAITING_RESULT` / `COMPLETED`
 - actualHomeScore, actualAwayScore (nullable)
+- proposedHomeScore, proposedAwayScore (nullable — pre-fetched by the automated
+  sweep, awaiting Commissioner confirmation)
+- reminderSentAt (nullable — set once deadline-reminder emails have gone out)
 - resultSource: `MANUAL` / `API_CONFIRMED` (nullable until completed)
 
 **Prediction**
 - id, userId, fixtureId, predictedHomeScore, predictedAwayScore
-- pointsAwarded (nullable until fixture completed)
+- pointsAwarded (nullable until fixture completed; always *base* points — bonuses
+  live in BonusAward)
+
+**BonusAward**
+- id, userId, leagueId, competition, round, points
+- unique on (userId, leagueId, competition, round) — one Grand Slam per round
 - submittedVia: `WEB` / `API`
 - unique on (userId, fixtureId) — one prediction per user per fixture, editable
   until the deadline
@@ -76,19 +84,26 @@ last few rounds. Styled like a real football table for the playful vibe.
 - Manage league settings (invite code, Grand Slam toggle)
 
 ### 5.5 Result Resolution
-1. Once a fixture is ~2.5 hours past kickoff, it moves to `AWAITING_RESULT`
-   and appears in the Commissioner's queue.
-2. Commissioner clicks "Look Up Result" → server queries football-data.org for
-   finished matches in the relevant competition on the fixture date, then fuzzy-
-   matches team names to find the right match and return the final score.
+1. A Cloud Scheduler job calls `POST /api/cron/resolve` (secured by
+   `CRON_SECRET`) every 30 minutes. It moves fixtures ≥2.5 hours past kickoff
+   to `AWAITING_RESULT` across all leagues and pre-fetches proposed scores from
+   football-data.org — one API call per competition + date window, fuzzy-matched
+   by team name, shared by cross-league copies of the same match.
+2. Pre-fetched scores appear in the Commissioner's queue with a "score found"
+   badge; the confirm page loads with the proposal ready to review. The
+   Commissioner's "Check for Updates" button runs the same sweep on demand, and
+   per-fixture "Look Up Result" remains as a manual fallback.
 3. The proposed score is shown to the Commissioner, who can **Accept**
    (locks in the score and triggers scoring for all predictions), **Edit**
    (enter the correct score manually), or **Retry**.
-4. If `FOOTBALL_DATA_API_KEY` is not set, the lookup button is hidden and the
+4. If `FOOTBALL_DATA_API_KEY` is not set, lookups are skipped and the
    Commissioner enters scores manually.
 5. This confirmation step exists because results can occasionally be wrong
    (postponements, ambiguous team names) — a quick human check keeps bad data
-   off the leaderboard.
+   off the leaderboard. Nothing is ever scored without Commissioner sign-off.
+6. The same cron sweep also sends deadline-reminder emails (via Resend, when
+   `RESEND_API_KEY`/`EMAIL_FROM` are configured) to members who haven't
+   predicted a fixture kicking off within the next 3 hours.
 
 ### 5.6 Public Prediction API (for bots)
 All endpoints under `/api/v1/`, authenticated via `Authorization: Bearer <apiKey>`.
@@ -101,7 +116,8 @@ All endpoints under `/api/v1/`, authenticated via `Authorization: Bearer <apiKey
 - `GET /leaderboard` — current standings
 
 This lets your automated models submit picks the same way a human would via
-the dashboard.
+the dashboard. An in-app reference with curl examples and a Python starter bot
+lives at `/api-docs`, linked from the profile page.
 
 ## 6. Scoring Rules (Superbru-style)
 
@@ -114,10 +130,11 @@ For each prediction, once the fixture's real result is confirmed:
 | Correct result (W/D/L) only | 1 |
 | Incorrect result | 0 |
 
-**Grand Slam bonus (optional, toggleable in League Settings):** if a user
+**Grand Slam bonus (optional, toggleable in Admin → Settings):** if a user
 correctly predicts the *result* of every fixture in a round, they earn a bonus
-(default 3 points, configurable). Off by default — flip on in Commissioner
-settings if you want it.
+(default 3 points, configurable 1–20). Off by default. Awarded once the whole
+round is confirmed, stored as a `BonusAward` row (never folded into a
+prediction's points), and shown as a 🏆 badge on the leaderboard.
 
 ## 7. Design Direction — Playful & Creative
 
@@ -147,6 +164,13 @@ See `TODO.md` for the full checklist with completion status. Phases completed:
 11. **Multi-league architecture** — League model, LeagueMembership, active league cookie, cross-league sync
 12. **Fixture import** — football-data.org integration, round selector, Admin → Import page
 13. **Infrastructure & deployment** — Terraform + Cloud Run + Cloud SQL + GitHub Actions CI/CD
+14. **League Settings page** — Grand Slam toggle/points, rename, invite code management
+15. **Automated result resolution** — Cloud Scheduler + `/api/cron/resolve`, proposal pre-fetch
+16. **Deadline reminder emails** — Resend integration in the cron sweep
+17. **Grand Slam transparency** — BonusAward model, leaderboard badge
+18. **Bot API docs** — in-app `/api-docs` reference
+19. **My Predictions round breakdown** — per-round subtotals and summary
+20. **Unit test expansion** — 95 tests across scoring, football-data matching, auth, cron, API routes
 
 ## 9. Prerequisites
 
@@ -157,7 +181,6 @@ See `TODO.md` for the full checklist with completion status. Phases completed:
 
 ## 10. Future Enhancements
 
-- Email/push reminders before deadlines
 - Social feed / comments between rounds
 - PWA / mobile-friendly install prompt
 - Additional competitions beyond PL and WC (requires paid football-data.org tier)
