@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { upsertPredictionWithSync } from "@/lib/predictions"
 
 export type PredictionState = { error?: string; success?: boolean }
 
@@ -29,38 +30,8 @@ export async function upsertPrediction(
     return { error: "Please enter valid scores (0 or above)." }
   }
 
-  // Upsert prediction for this fixture
-  await prisma.prediction.upsert({
-    where: { userId_fixtureId: { userId, fixtureId } },
-    create: { userId, fixtureId, predictedHomeScore: home, predictedAwayScore: away, submittedVia: "WEB" },
-    update: { predictedHomeScore: home, predictedAwayScore: away },
-  })
-
-  // Sync to identical fixtures in the user's other leagues (same match, same kickoff)
-  const leagueIds = (
-    await prisma.leagueMembership.findMany({ where: { userId }, select: { leagueId: true } })
-  ).map((m) => m.leagueId)
-
-  if (leagueIds.length > 1) {
-    const matchingFixtures = await prisma.fixture.findMany({
-      where: {
-        leagueId: { in: leagueIds },
-        id: { not: fixtureId },
-        homeTeam: fixture.homeTeam,
-        awayTeam: fixture.awayTeam,
-        kickoffTime: fixture.kickoffTime,
-        status: "SCHEDULED",
-      },
-    })
-
-    for (const f of matchingFixtures) {
-      await prisma.prediction.upsert({
-        where: { userId_fixtureId: { userId, fixtureId: f.id } },
-        create: { userId, fixtureId: f.id, predictedHomeScore: home, predictedAwayScore: away, submittedVia: "WEB" },
-        update: { predictedHomeScore: home, predictedAwayScore: away },
-      })
-    }
-  }
+  // Upsert prediction and sync to identical fixtures in the user's other leagues
+  await upsertPredictionWithSync(userId, fixture, home, away, "WEB")
 
   revalidatePath("/")
   revalidatePath("/predictions")

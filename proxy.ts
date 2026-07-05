@@ -15,6 +15,7 @@ export default auth((req) => {
 
   if (
     pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/v1") || // authenticated per-request via Bearer API key
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon")
   ) {

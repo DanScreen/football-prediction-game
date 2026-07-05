@@ -2,6 +2,7 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { getActiveLeagueId } from "@/lib/activeLeague"
+import { scoreOnePrediction } from "@/lib/scoring"
 import Link from "next/link"
 import Countdown from "@/app/components/Countdown"
 import PredictionInput from "@/app/components/PredictionInput"
@@ -73,7 +74,13 @@ export default async function DashboardPage() {
         fixture: { leagueId: activeLeagueId },
         pointsAwarded: { not: null },
       },
-      select: { userId: true, pointsAwarded: true },
+      select: {
+        userId: true,
+        pointsAwarded: true,
+        predictedHomeScore: true,
+        predictedAwayScore: true,
+        fixture: { select: { actualHomeScore: true, actualAwayScore: true } },
+      },
     }),
     prisma.user.findMany({
       where: { id: { in: leagueMemberIds } },
@@ -98,17 +105,18 @@ export default async function DashboardPage() {
     else break
   }
 
-  const myExact = await prisma.prediction.count({
-    where: {
-      userId,
-      pointsAwarded: { not: null },
-      fixture: {
-        leagueId: activeLeagueId,
-        actualHomeScore: { not: null },
-        actualAwayScore: { not: null },
-      },
-    },
-  })
+  const myExact = scoredPredictions.filter(
+    (p) =>
+      p.userId === userId &&
+      p.fixture.actualHomeScore !== null &&
+      p.fixture.actualAwayScore !== null &&
+      scoreOnePrediction(
+        p.predictedHomeScore,
+        p.predictedAwayScore,
+        p.fixture.actualHomeScore,
+        p.fixture.actualAwayScore,
+      ) === 3,
+  ).length
 
   const open = fixtures.filter((f) => new Date(f.kickoffTime) > now)
   const locked = fixtures.filter((f) => new Date(f.kickoffTime) <= now)

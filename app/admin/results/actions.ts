@@ -2,26 +2,11 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { cookies } from "next/headers"
-import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { scoreOnePrediction, qualifiesForGrandSlam } from "@/lib/scoring"
 import { lookupResult as fetchResult } from "@/lib/footballData"
 import { FixtureStatus, ResultSource } from "@/app/generated/prisma/client"
-import { ACTIVE_LEAGUE_COOKIE } from "@/lib/activeLeague"
-
-async function requireCommissioner() {
-  const session = await auth()
-  if (!session?.user?.id) throw new Error("Unauthorised")
-  const store = await cookies()
-  const leagueId = store.get(ACTIVE_LEAGUE_COOKIE)?.value
-  if (!leagueId) throw new Error("No active league")
-  const membership = await prisma.leagueMembership.findUnique({
-    where: { userId_leagueId: { userId: session.user.id, leagueId } },
-  })
-  if (membership?.role !== "COMMISSIONER") throw new Error("Unauthorised")
-  return { userId: session.user.id, leagueId }
-}
+import { requireCommissioner } from "@/lib/adminAuth"
 
 export type ResultFormState = {
   error?: string
@@ -79,11 +64,14 @@ export async function confirmResult(
   const { leagueId } = await requireCommissioner()
 
   const fixtureId = String(formData.get("fixtureId") ?? "")
-  const homeRaw = Number(formData.get("homeScore"))
-  const awayRaw = Number(formData.get("awayScore"))
+  const homeStr = String(formData.get("homeScore") ?? "").trim()
+  const awayStr = String(formData.get("awayScore") ?? "").trim()
   const sourceRaw = String(formData.get("source") ?? "MANUAL")
 
   if (!fixtureId) return { error: "Missing fixture ID." }
+  if (!homeStr || !awayStr) return { error: "Please enter both scores." }
+  const homeRaw = Number(homeStr)
+  const awayRaw = Number(awayStr)
   if (!Number.isInteger(homeRaw) || !Number.isInteger(awayRaw) || homeRaw < 0 || awayRaw < 0) {
     return { error: "Scores must be non-negative whole numbers." }
   }
@@ -133,6 +121,17 @@ export async function confirmResult(
       where: { fixtureId: { in: roundFixtures.map((f) => f.id) } },
     })
 
+    const fixtureById = new Map(roundFixtures.map((f) => [f.id, f]))
+    const basePoints = (p: (typeof roundPredictions)[number]) => {
+      const f = fixtureById.get(p.fixtureId)!
+      return scoreOnePrediction(
+        p.predictedHomeScore,
+        p.predictedAwayScore,
+        f.actualHomeScore!,
+        f.actualAwayScore!,
+      )
+    }
+
     const byUser = new Map<string, typeof roundPredictions>()
     for (const p of roundPredictions) {
       const arr = byUser.get(p.userId) ?? []
@@ -140,14 +139,22 @@ export async function confirmResult(
       byUser.set(p.userId, arr)
     }
 
+    // Rescore the whole round from the actual results so re-confirming a
+    // fixture can never double-count or strand a previously applied bonus
     for (const [, preds] of byUser) {
-      if (preds.length < roundFixtures.length) continue
-      if (qualifiesForGrandSlam(preds.map((p) => (p.pointsAwarded ?? 0) > 0))) {
-        await tx.prediction.update({
-          where: { id: preds[0].id },
-          data: { pointsAwarded: (preds[0].pointsAwarded ?? 0) + league.grandSlamPoints },
-        })
-      }
+      const slam =
+        preds.length === roundFixtures.length &&
+        qualifiesForGrandSlam(preds.map((p) => basePoints(p) > 0))
+      await Promise.all(
+        preds.map((p, i) =>
+          tx.prediction.update({
+            where: { id: p.id },
+            data: {
+              pointsAwarded: basePoints(p) + (slam && i === 0 ? league.grandSlamPoints : 0),
+            },
+          }),
+        ),
+      )
     }
   })
 

@@ -1,20 +1,7 @@
 import { type NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { authenticateApiKey } from "@/lib/apiAuth"
-
-async function resolveLeagueId(userId: string, requested: string | null): Promise<string | null> {
-  if (requested) {
-    const m = await prisma.leagueMembership.findUnique({
-      where: { userId_leagueId: { userId, leagueId: requested } },
-    })
-    return m ? requested : null
-  }
-  const first = await prisma.leagueMembership.findFirst({
-    where: { userId },
-    orderBy: { joinedAt: "asc" },
-  })
-  return first?.leagueId ?? null
-}
+import { authenticateApiKey, resolveLeagueId } from "@/lib/apiAuth"
+import { upsertPredictionWithSync } from "@/lib/predictions"
 
 export async function GET(request: NextRequest) {
   const user = await authenticateApiKey(request)
@@ -114,28 +101,25 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const prediction = await prisma.prediction.upsert({
-    where: { userId_fixtureId: { userId: user.id, fixtureId } },
-    create: {
-      userId: user.id,
-      fixtureId,
-      predictedHomeScore: homeScore as number,
-      predictedAwayScore: awayScore as number,
-      submittedVia: "API",
-    },
-    update: {
-      predictedHomeScore: homeScore as number,
-      predictedAwayScore: awayScore as number,
-    },
-    select: {
-      id: true,
-      fixtureId: true,
-      predictedHomeScore: true,
-      predictedAwayScore: true,
-      submittedVia: true,
-      updatedAt: true,
-    },
-  })
+  const saved = await upsertPredictionWithSync(
+    user.id,
+    fixture,
+    homeScore as number,
+    awayScore as number,
+    "API",
+  )
 
-  return Response.json({ prediction }, { status: 200 })
+  return Response.json(
+    {
+      prediction: {
+        id: saved.id,
+        fixtureId: saved.fixtureId,
+        predictedHomeScore: saved.predictedHomeScore,
+        predictedAwayScore: saved.predictedAwayScore,
+        submittedVia: saved.submittedVia,
+        updatedAt: saved.updatedAt,
+      },
+    },
+    { status: 200 },
+  )
 }

@@ -32,11 +32,13 @@ export async function registerUser(
   }
 
   // Verify invite code only if one was provided
+  let joinLeagueId: string | null = null
   if (inviteCode) {
     const league = await prisma.league.findUnique({ where: { inviteCode } })
     if (!league) {
       return { error: "Invalid invite code." }
     }
+    joinLeagueId = league.id
   }
 
   // Check for duplicate email
@@ -55,6 +57,9 @@ export async function registerUser(
       passwordHash,
       displayName,
       apiKey,
+      ...(joinLeagueId
+        ? { memberships: { create: { leagueId: joinLeagueId, role: "MEMBER" } } }
+        : {}),
     },
   })
 

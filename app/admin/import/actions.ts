@@ -2,24 +2,9 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { cookies } from "next/headers"
-import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { fetchUpcomingFixtures, type ProposedFixture } from "@/lib/footballData"
-import { ACTIVE_LEAGUE_COOKIE } from "@/lib/activeLeague"
-
-async function requireCommissioner() {
-  const session = await auth()
-  if (!session?.user?.id) throw new Error("Unauthorised")
-  const store = await cookies()
-  const leagueId = store.get(ACTIVE_LEAGUE_COOKIE)?.value
-  if (!leagueId) throw new Error("No active league")
-  const membership = await prisma.leagueMembership.findUnique({
-    where: { userId_leagueId: { userId: session.user.id, leagueId } },
-  })
-  if (membership?.role !== "COMMISSIONER") throw new Error("Unauthorised")
-  return { userId: session.user.id, leagueId }
-}
+import { requireCommissioner } from "@/lib/adminAuth"
 
 export type FetchProposalState = {
   error?: string
@@ -73,11 +58,21 @@ export async function confirmImport(
   const league = await prisma.league.findUnique({ where: { id: leagueId } })
   if (!league) return { error: "League not found." }
 
+  // Skip fixtures already in this league (same teams + kickoff) so re-importing is safe
+  const existing = await prisma.fixture.findMany({
+    where: { leagueId },
+    select: { homeTeam: true, awayTeam: true, kickoffTime: true },
+  })
+  const existingKeys = new Set(
+    existing.map((f) => `${f.homeTeam}|${f.awayTeam}|${f.kickoffTime.getTime()}`),
+  )
+
   for (const f of fixtures) {
     const kickoffTime = new Date(f.kickoffTime)
     if (isNaN(kickoffTime.getTime())) {
       return { error: `Invalid kickoff time for ${f.homeTeam} vs ${f.awayTeam}.` }
     }
+    if (existingKeys.has(`${f.homeTeam}|${f.awayTeam}|${kickoffTime.getTime()}`)) continue
     await prisma.fixture.create({
       data: {
         leagueId,

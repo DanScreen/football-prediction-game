@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { authenticateApiKey } from "@/lib/apiAuth"
+import { authenticateApiKey, resolveLeagueId } from "@/lib/apiAuth"
 import { scoreOnePrediction } from "@/lib/scoring"
 
 export async function GET(request: NextRequest) {
@@ -72,18 +72,4 @@ export async function GET(request: NextRequest) {
   })
 
   return Response.json(ranked)
-}
-
-async function resolveLeagueId(userId: string, requested: string | null): Promise<string | null> {
-  if (requested) {
-    const m = await prisma.leagueMembership.findUnique({
-      where: { userId_leagueId: { userId, leagueId: requested } },
-    })
-    return m ? requested : null
-  }
-  const first = await prisma.leagueMembership.findFirst({
-    where: { userId },
-    orderBy: { joinedAt: "asc" },
-  })
-  return first?.leagueId ?? null
 }
