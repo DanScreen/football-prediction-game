@@ -10,16 +10,12 @@ the season/competition.
 
 ## 2. Tech Stack
 
-- **Framework:** Next.js (App Router) + TypeScript
-- **Styling:** Tailwind CSS
-- **Database:** SQLite via Prisma ORM — self-contained file-based DB, no
-  external service or account needed
-- **Auth:** NextAuth.js, credentials provider (email + password), sessions
-- **AI result lookup:** Anthropic API (Claude with the web search tool)
-
-Keeping everything self-contained (SQLite, no third-party data APIs) means the
-whole stack can be built and run locally tonight with nothing to sign up for
-except one thing — see "Prerequisites" below.
+- **Framework:** Next.js 16 (App Router) + TypeScript
+- **Styling:** Tailwind CSS v4
+- **Database:** PostgreSQL via Prisma 7 — Cloud SQL (ENTERPRISE, db-f1-micro) in production; local Postgres in dev
+- **Auth:** NextAuth.js v5 beta, credentials provider (email + password), JWT sessions
+- **Fixtures & results:** football-data.org v4 REST API (free tier covers Premier League + World Cup)
+- **Deployment:** Cloud Run + Cloud SQL (GCP, europe-west2); provisioned via Terraform; deployed via GitHub Actions
 
 ## 3. Users & Access
 
@@ -33,16 +29,19 @@ except one thing — see "Prerequisites" below.
 ## 4. Data Model
 
 **User**
-- id, email, passwordHash, displayName, isAdmin, isBot, apiKey, createdAt
+- id, email, passwordHash, displayName, isBot, apiKey, createdAt
 
-**LeagueSettings** (single row)
-- leagueName, inviteCode, grandSlamEnabled (bool), grandSlamPoints (int)
+**League**
+- id, name, competition, inviteCode, grandSlamEnabled (bool), grandSlamPoints (int)
+
+**LeagueMembership**
+- userId, leagueId, role: `COMMISSIONER` / `MEMBER`
 
 **Fixture**
-- id, competition, round, homeTeam, awayTeam, kickoffTime
+- id, leagueId, competition, round, homeTeam, awayTeam, kickoffTime
 - status: `SCHEDULED` / `AWAITING_RESULT` / `COMPLETED`
 - actualHomeScore, actualAwayScore (nullable)
-- resultSource: `MANUAL` / `AI_CONFIRMED` (nullable until completed)
+- resultSource: `MANUAL` / `API_CONFIRMED` (nullable until completed)
 
 **Prediction**
 - id, userId, fixtureId, predictedHomeScore, predictedAwayScore
@@ -50,6 +49,8 @@ except one thing — see "Prerequisites" below.
 - submittedVia: `WEB` / `API`
 - unique on (userId, fixtureId) — one prediction per user per fixture, editable
   until the deadline
+
+Active league is stored in an `httpOnly` cookie (`activeLeagueId`). A user can belong to multiple leagues and switch between them. Submitting a prediction auto-copies it to matching fixtures (same teams + kickoff) in the user's other leagues.
 
 ## 5. Core Features / Pages
 
@@ -71,22 +72,23 @@ last few rounds. Styled like a real football table for the playful vibe.
 - Add/edit fixtures (competition, teams, kickoff time)
 - View "Pending Results" queue (fixtures past kickoff + buffer, awaiting a
   result)
-- Trigger AI result lookup, review/confirm or manually override (see 5.5)
+- Trigger result lookup via football-data.org, review/confirm or manually override (see 5.5)
 - Manage league settings (invite code, Grand Slam toggle)
 
-### 5.5 Result Resolution (AI-assisted)
+### 5.5 Result Resolution
 1. Once a fixture is ~2.5 hours past kickoff, it moves to `AWAITING_RESULT`
    and appears in the Commissioner's queue.
-2. Commissioner clicks "Look up result" → server calls the Anthropic API
-   (Claude + web search) with a prompt asking for the final score of
-   `{homeTeam} vs {awayTeam}` on `{date}` in `{competition}`, requesting a
-   short answer plus source.
-3. The result and source are shown to the Commissioner, who can **Accept**
+2. Commissioner clicks "Look Up Result" → server queries football-data.org for
+   finished matches in the relevant competition on the fixture date, then fuzzy-
+   matches team names to find the right match and return the final score.
+3. The proposed score is shown to the Commissioner, who can **Accept**
    (locks in the score and triggers scoring for all predictions), **Edit**
    (enter the correct score manually), or **Retry**.
-4. This confirmation step exists because AI-sourced results can occasionally
-   be wrong (postponements, ambiguous team names, etc.) — a quick human check
-   keeps bad data off the leaderboard.
+4. If `FOOTBALL_DATA_API_KEY` is not set, the lookup button is hidden and the
+   Commissioner enters scores manually.
+5. This confirmation step exists because results can occasionally be wrong
+   (postponements, ambiguous team names) — a quick human check keeps bad data
+   off the leaderboard.
 
 ### 5.6 Public Prediction API (for bots)
 All endpoints under `/api/v1/`, authenticated via `Authorization: Bearer <apiKey>`.
@@ -130,37 +132,33 @@ settings if you want it.
 
 ## 8. Build Plan (phased checklist)
 
-Have Claude Code turn this into a `TODO.md` it updates as it progresses:
+See `TODO.md` for the full checklist with completion status. Phases completed:
 
-1. **Setup** — Next.js + TS + Tailwind, Prisma + SQLite schema, NextAuth
-   credentials provider
-2. **Auth & users** — registration with invite code, login, session, profile
-   page with API key generation
-3. **Fixtures** — Commissioner UI to add/edit fixtures; dashboard list view
+1. **Setup** — Next.js + TS + Tailwind, Prisma + PostgreSQL schema, NextAuth credentials provider
+2. **Auth & users** — registration, login, session, profile page with API key generation
+3. **Fixtures** — Commissioner UI; dashboard list view
 4. **Predictions** — submission UI with deadline locking; prediction storage
-5. **Scoring engine** — implement the table in Section 6 as a pure function,
-   with unit tests covering each tier and edge cases (0-0 draws, etc.)
-6. **Result resolution** — manual entry first, then the AI-assisted lookup +
-   confirmation flow
-7. **Leaderboard** — standings page, points breakdown, form strip
+5. **Scoring engine** — pure function with unit tests
+6. **Result resolution** — manual entry + football-data.org lookup with confirm flow
+7. **Leaderboard** — standings, points breakdown, form strip
 8. **Public API** — `/api/v1/*` endpoints with API key auth
-9. **Design pass** — apply the playful theme, animations, responsiveness
-10. **Seed data & QA** — seed a handful of real upcoming fixtures, run through
-    a full predict → resolve → score cycle end to end
+9. **Design pass** — pitch-green theme, animations, responsive layout
+10. **Seed data & QA** — full predict → resolve → score cycle
+11. **Multi-league architecture** — League model, LeagueMembership, active league cookie, cross-league sync
+12. **Fixture import** — football-data.org integration, round selector, Admin → Import page
+13. **Infrastructure & deployment** — Terraform + Cloud Run + Cloud SQL + GitHub Actions CI/CD
 
-## 9. Prerequisites You Need to Handle
+## 9. Prerequisites
 
-- **`ANTHROPIC_API_KEY`** — needed for the AI result lookup feature. Grab one
-  from the Anthropic Console and add it to `.env.local`. If you'd rather skip
-  this for tonight, the build can stub this out and use manual result entry
-  only — Claude can wire up the AI lookup later once the key is in place.
-- **Initial fixtures** — decide on a competition and a few real upcoming
-  matches to seed, or let Claude seed placeholder fixtures for testing.
+- **`DATABASE_URL`** — PostgreSQL connection string. Locally: `postgresql://user:pass@localhost:5432/football_prediction_app`. In production: Cloud SQL Unix socket connection string.
+- **`FOOTBALL_DATA_API_KEY`** — needed for fixture import and result lookup. Register at football-data.org (free). Without it, the app falls back to manual-only fixture entry and result entry.
+- **`AUTH_SECRET`** / **`NEXTAUTH_SECRET`** — `openssl rand -base64 32`. Both env vars are required by NextAuth v5 beta.
+- **Initial fixtures** — run `npx prisma db seed` for test data, or use Admin → Import to pull real fixtures from football-data.org.
 
-## 10. Future Enhancements (out of scope for tonight)
+## 10. Future Enhancements
 
-- Multiple private leagues per user
-- Live sports-data API as a fallback/alternative to AI lookups
 - Email/push reminders before deadlines
-- Social feed / trash talk between rounds
-- PWA / mobile-friendly install
+- Social feed / comments between rounds
+- PWA / mobile-friendly install prompt
+- Additional competitions beyond PL and WC (requires paid football-data.org tier)
+- Admin dashboard — season-level stats, export CSV

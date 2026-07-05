@@ -48,6 +48,17 @@ run them from a terminal where Homebrew is on the PATH.
 - `npm run dev` — start the dev server (http://localhost:3000)
 - `npm run build` — production build + type check
 - `npm run lint` — ESLint
-- `npx prisma migrate dev` — apply schema changes and regenerate client
+- `npx prisma migrate dev` — apply schema changes and regenerate client (requires local Postgres via `DATABASE_URL`)
 - `npx prisma generate` — regenerate the Prisma client after schema changes
-- `npx prisma studio` — inspect the SQLite DB visually (useful for spot-checks)
+- `npx prisma studio` — inspect the database visually (connects to `DATABASE_URL`)
+- `npx prisma db seed` — seed the database with test users, league, fixtures, and predictions
+
+## Deployment
+
+The app is deployed on GCP (Cloud Run + Cloud SQL, europe-west2) via GitHub Actions.
+Infrastructure is provisioned with Terraform in `terraform/`. Every push to `main` runs migrations and deploys automatically.
+
+- Cloud Run connects to Cloud SQL via Unix socket (`DATABASE_URL` contains `?host=/cloudsql/<instance>`)
+- CI migrations use a TCP URL via Cloud SQL Auth Proxy (`DB_MIGRATION_URL`)
+- `AUTH_URL` is set automatically to the Cloud Run service URL after each deploy
+- See `.github/workflows/deploy.yml` for the full pipeline and `README.md` for required secrets

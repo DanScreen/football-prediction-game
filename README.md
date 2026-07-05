@@ -106,7 +106,7 @@ All admin routes are behind `/admin` and require the **COMMISSIONER** role in th
 | ------------------ | ------------------------------------------------ |
 | `/admin/fixtures`  | Add, edit, and manage fixtures                   |
 | `/admin/import`    | Import upcoming fixtures from football-data.org  |
-| `/admin/results`   | Resolve results (manual or AI-assisted)          |
+| `/admin/results`   | Resolve results (manual entry or API lookup)     |
 
 ## Public API
 
@@ -120,3 +120,41 @@ All endpoints require `Authorization: Bearer <apiKey>`. API keys are generated o
 | `GET`   | `/api/v1/leaderboard`             | League standings      |
 
 Add `?leagueId=<id>` to any endpoint to scope it to a specific league (defaults to your first league).
+
+## Deployment
+
+Every push to `main` triggers the GitHub Actions workflow at `.github/workflows/deploy.yml`.
+
+### Infrastructure (Terraform)
+
+Provisioned in `terraform/`:
+
+| Resource          | Details                                                    |
+| ----------------- | ---------------------------------------------------------- |
+| Cloud Run         | `football-prediction-app`, europe-west2                    |
+| Cloud SQL         | PostgreSQL 16, ENTERPRISE edition, `db-f1-micro`           |
+| Artifact Registry | Docker image repository                                    |
+| Service accounts  | Separate deploy SA and Cloud Run SA (minimal IAM roles)    |
+
+To provision from scratch: `cd terraform && terraform init && terraform apply`
+
+### GitHub Secrets
+
+| Secret                  | Description                                          |
+| ----------------------- | ---------------------------------------------------- |
+| `GCP_SA_KEY`            | JSON key for the deploy service account              |
+| `DATABASE_URL`          | Cloud SQL Unix-socket connection string              |
+| `DB_MIGRATION_URL`      | TCP connection string used by Cloud SQL Auth Proxy   |
+| `CLOUD_SQL_INSTANCE`    | Cloud SQL instance connection name                   |
+| `CLOUD_RUN_SA`          | Cloud Run service account email                      |
+| `AUTH_SECRET`           | NextAuth secret                                      |
+| `NEXTAUTH_SECRET`       | NextAuth secret (both vars required)                 |
+| `FOOTBALL_DATA_API_KEY` | football-data.org API key                            |
+| `CRON_SECRET`           | Shared secret for `/api/cron/*` (also set as the `cron_secret` Terraform variable) |
+
+### Deploy pipeline
+
+1. Cloud SQL Auth Proxy tunnels to Cloud SQL so migrations run in CI (`npx prisma migrate deploy`)
+2. Multi-stage Docker build (`deps → builder → runner`) produces a standalone image
+3. Image pushed to Artifact Registry and deployed to Cloud Run
+4. `AUTH_URL` is automatically set to the Cloud Run service URL after each deploy
