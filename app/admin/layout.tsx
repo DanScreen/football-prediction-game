@@ -40,6 +40,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             Import
           </Link>
           <Link
+            href="/admin/settings"
+            className="text-sm text-gray-300 hover:text-white transition-colors"
+          >
+            Settings
+          </Link>
+          <Link
             href="/"
             className="ml-auto text-sm text-gray-500 hover:text-gray-300 transition-colors"
           >

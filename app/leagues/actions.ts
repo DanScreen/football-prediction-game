@@ -5,16 +5,12 @@ import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { ACTIVE_LEAGUE_COOKIE } from "@/lib/activeLeague"
+import { generateInviteCode } from "@/lib/inviteCode"
 
 async function requireUser() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
   return session.user.id
-}
-
-function generateInviteCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("")
 }
 
 async function setActiveCookie(leagueId: string) {

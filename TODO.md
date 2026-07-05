@@ -1,13 +1,20 @@
 # TODO — Football Prediction App
 
 ## Blocked
-_(nothing blocked yet)_
+- **No local PostgreSQL** — `.env`/`.env.local` still point `DATABASE_URL` at the old
+  SQLite file (`file:./dev.db`) and Postgres isn't installed locally, so `prisma migrate dev`,
+  seeding, and runtime testing of DB-backed flows can't run on this machine. New migrations
+  are authored offline with `prisma migrate diff --from-schema-datamodel … --script` and
+  applied by CI (`prisma migrate deploy`) on push. To unblock locally:
+  `brew install postgresql@16`, create a `football_prediction_app` DB, and update `DATABASE_URL`.
 
 ## Decisions Made
 - **Node.js installed via Homebrew** — not pre-installed; added via `brew install node` (v26.3.0).
-- **Prisma v7 + better-sqlite3 adapter** — Prisma 7 dropped no-adapter mode; `@prisma/adapter-better-sqlite3` is the local SQLite path (avoids libsql/Turso dependency).
+- **Prisma v7 + `@prisma/adapter-pg`** — Prisma 7 dropped no-adapter mode; runtime `PrismaClient` requires an explicit `pg.Pool` + `PrismaPg` adapter. Connection URL is configured via `prisma.config.ts` for CLI operations; `lib/prisma.ts` wires it at runtime.
 - **NextAuth v5 beta** — using JWT sessions (stateless) with credentials provider; no DB adapter needed for auth sessions.
-- **Fixture import via football-data.org** — switched from Claude web search to the football-data.org REST API (free tier covers PL + WC). Claude is still used for AI result lookup only. Key: `FOOTBALL_DATA_API_KEY`.
+- **Fixture import + result lookup via football-data.org** — REST API (free tier covers PL + WC) used for both fixture import and result lookup. No AI/Anthropic dependency. Key: `FOOTBALL_DATA_API_KEY`.
+- **PostgreSQL on Cloud SQL (ENTERPRISE, db-f1-micro)** — explicit `edition = "ENTERPRISE"` required in Terraform; ENTERPRISE_PLUS is the default but doesn't support `db-f1-micro`.
+- **Cloud Run connects to Cloud SQL via Unix socket** — `DATABASE_URL` uses `?host=/cloudsql/<instance>` for the running container; CI migrations use a TCP URL via Cloud SQL Auth Proxy.
 - **Active league via cookie** — league context stored in `httpOnly` cookie `activeLeagueId` rather than URL segments, keeping all existing routes unchanged.
 - **Cross-league prediction sync** — one prediction for a real-world match auto-copies to matching fixtures (same teams + kickoff) in the user's other leagues; no separate junction table needed.
 - **Commissioner role per league** — `isAdmin` removed from User/session; admin access is gated by `LeagueMembership.role = "COMMISSIONER"` for the active league.
@@ -17,7 +24,7 @@ _(nothing blocked yet)_
 
 ## Phase 1 — Setup ✅
 - [x] Scaffold Next.js (App Router) + TypeScript + Tailwind CSS
-- [x] Configure Prisma with SQLite (better-sqlite3 adapter for Prisma v7)
+- [x] Configure Prisma with PostgreSQL (`@prisma/adapter-pg` for Prisma v7)
 - [x] Define Prisma schema (User, LeagueSettings, Fixture, Prediction)
 - [x] Set up NextAuth.js v5 credentials provider (`auth.ts`)
 - [x] Create `.env.local.example` with required keys
@@ -49,10 +56,9 @@ _(nothing blocked yet)_
 - [x] Manual result entry by Commissioner
 - [x] Fixture status transitions: SCHEDULED → AWAITING_RESULT → COMPLETED
 - [x] Auto-move fixtures to AWAITING_RESULT ~2.5 h after kickoff (on-demand check)
-- [x] AI-assisted result lookup via Anthropic API (Claude + web search tool)
+- [x] football-data.org result lookup — date-range query for finished matches with fuzzy team name matching
 - [x] Review/confirm flow: Accept / Edit / Retry
-- [x] Graceful stub when ANTHROPIC_API_KEY is absent (manual-only mode)
-- [x] AI-assisted fixture import — Commissioner enters competition + round, Claude fetches upcoming fixtures and proposes a list to confirm before inserting
+- [x] Graceful degradation when FOOTBALL_DATA_API_KEY is absent (manual-only mode)
 
 ## Phase 7 — Leaderboard ✅
 - [x] Standings page: total points, exact predictions count
@@ -83,7 +89,7 @@ _(nothing blocked yet)_
 - [x] Remove global invite-code gate — registration is now open; invite code optional (links user to a league on sign-up)
 - [x] Schema: `League`, `LeagueMembership` (role: COMMISSIONER / MEMBER); `Fixture.leagueId`
 - [x] Active league stored in `httpOnly` cookie; helper `lib/activeLeague.ts`
-- [x] League creation: choose competition (Premier League / World Cup 2026), auto-import next round via AI, confirm fixtures before saving
+- [x] League creation: choose competition (Premier League / World Cup 2026), redirect to Admin → Import for fixture setup
 - [x] League join via invite code; invite code shown on My Leagues page
 - [x] "My Leagues" tab — list leagues, switch active league, view member/fixture counts
 - [x] Dashboard scoped to active league — performance summary (rank, points, exact ⚽), upcoming fixtures with prediction inputs
@@ -101,4 +107,51 @@ _(nothing blocked yet)_
 - [x] Rounds selector (1 / 2 / 3) replaces free-text competition / round / season inputs
 - [x] Admin import page reads competition from the active league (no user input needed)
 - [x] `FOOTBALL_DATA_API_KEY` added to `.env.local.example`
-- [x] Claude web search retained only for AI result lookup (not fixture import)
+
+## Phase 13 — Infrastructure & Deployment ✅
+- [x] Terraform: Cloud Run, Cloud SQL (PostgreSQL 16, ENTERPRISE, db-f1-micro), Artifact Registry, service accounts
+- [x] Multi-stage Dockerfile (`deps → builder → runner`; `output: "standalone"`; Prisma client copied from deps stage)
+- [x] GitHub Actions deploy workflow: Cloud SQL Auth Proxy for migrations, Docker build + push, Cloud Run deploy
+- [x] `AUTH_URL` auto-set to Cloud Run service URL after each deploy
+- [x] `@prisma/adapter-pg` + `pg.Pool` wired in `lib/prisma.ts` and `prisma/seed.ts`
+- [x] Cloud SQL Unix socket connection via `?host=/cloudsql/...` in `DATABASE_URL`
+
+## Phase 14 — League Settings page (spec §5.4 gap)
+- [ ] `app/admin/settings/` — page + form: rename league, Grand Slam toggle, Grand Slam points
+- [ ] Show invite code with a "Regenerate" action (invalidates the old code)
+- [ ] Move invite-code generator to `lib/inviteCode.ts`, shared with league creation
+- [ ] Add "Settings" link to the admin nav
+
+## Phase 15 — Automated result resolution
+- [ ] Schema: add `proposedHomeScore`/`proposedAwayScore` (Int?) to `Fixture`
+- [ ] `lib/resolution.ts` — shared logic: transition SCHEDULED → AWAITING_RESULT (≥2.5 h past
+      kickoff, all leagues) and fetch proposed scores — one football-data.org call per
+      competition + date window, fuzzy-matched to all awaiting fixtures (incl. cross-league copies)
+- [ ] `POST /api/cron/resolve` secured by `Authorization: Bearer $CRON_SECRET`
+- [ ] Results UI: pre-fetched proposal shown ready to Accept; proposals cleared on confirm
+- [ ] Terraform: Cloud Scheduler job (every 30 min) + `CRON_SECRET` env var on Cloud Run
+- [ ] Commissioner's manual "Look Up Result" stays as fallback
+
+## Phase 16 — Deadline reminder emails
+- [ ] Reminder step in the cron route: for fixtures kicking off within 3 h, email each league
+      member who hasn't predicted yet (one email per user per run, listing their open fixtures)
+- [ ] `Fixture.reminderSentAt` timestamp guards against duplicate sends
+- [ ] Send via Resend HTTP API using fetch (no new dependency); silently skipped unless
+      `RESEND_API_KEY` + `EMAIL_FROM` are configured
+
+## Phase 17 — Grand Slam transparency (BonusAward)
+- [ ] Schema: `BonusAward` model — userId, leagueId, competition, round, points;
+      unique on (userId, leagueId, competition, round)
+- [ ] `confirmResult` upserts/removes BonusAward rows instead of folding the bonus into one
+      prediction's `pointsAwarded` (which becomes pure base points)
+- [ ] Leaderboard page, `/api/v1/leaderboard`, and dashboard totals = base points + bonuses;
+      🏆 Grand Slam count shown on the leaderboard
+- [ ] Legacy baked-in bonuses (if any) self-correct when any fixture in the round is re-confirmed
+
+## Phase 18 — Bot API documentation
+- [ ] `/api-docs` page documenting `/api/v1/*`: auth header, endpoints, params, curl + Python examples
+- [ ] Link from the profile page next to the API key
+
+## Phase 19 — My Predictions round breakdown
+- [ ] Group prediction history by competition + round with per-round subtotals
+- [ ] Show Grand Slam bonuses per round; summary strip (total, best round, exact count)
