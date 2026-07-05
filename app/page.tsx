@@ -6,6 +6,8 @@ import { scoreOnePrediction } from "@/lib/scoring"
 import Link from "next/link"
 import Countdown from "@/app/components/Countdown"
 import PredictionInput from "@/app/components/PredictionInput"
+import RequestResultButton from "@/app/components/RequestResultButton"
+import { RESULT_DELAY_MS } from "@/lib/resolution"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -261,7 +263,20 @@ export default async function DashboardPage() {
                         })}
                       </p>
                     </div>
-                    <span className="text-xs text-red-500 font-semibold shrink-0">🔒 Locked</span>
+                    <div className="text-right shrink-0">
+                      {f.proposedHomeScore !== null && f.proposedAwayScore !== null ? (
+                        <>
+                          <p className="font-bold text-lg tabular-nums text-gray-900">
+                            {f.proposedHomeScore} – {f.proposedAwayScore}
+                          </p>
+                          <p className="text-xs text-amber-600 font-medium">
+                            ⏳ awaiting confirmation
+                          </p>
+                        </>
+                      ) : (
+                        <span className="text-xs text-red-500 font-semibold">🔒 Locked</span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
@@ -291,6 +306,13 @@ export default async function DashboardPage() {
                       <p className="text-xs text-gray-400 italic">No predictions submitted.</p>
                     )}
                   </div>
+
+                  {f.proposedHomeScore === null &&
+                    f.kickoffTime.getTime() + RESULT_DELAY_MS <= now.getTime() && (
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <RequestResultButton fixtureId={f.id} />
+                      </div>
+                    )}
                 </div>
               )
             })}

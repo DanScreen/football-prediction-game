@@ -14,7 +14,7 @@ export type ResultFormState = {
   proposed?: { homeScore: number; awayScore: number }
 }
 
-/** Move SCHEDULED fixtures ≥2.5h past kickoff to AWAITING_RESULT and pre-fetch proposals */
+/** Move SCHEDULED fixtures ≥1h45m past kickoff to AWAITING_RESULT and pre-fetch proposals */
 export async function checkTransitions(): Promise<void> {
   const { leagueId } = await requireCommissioner()
   await transitionDueFixtures(leagueId)

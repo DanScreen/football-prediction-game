@@ -58,7 +58,11 @@ afterEach(() => {
 })
 
 describe("transitionDueFixtures", () => {
-  it("moves SCHEDULED fixtures at least 2.5h past kickoff to AWAITING_RESULT", async () => {
+  it("uses a 1h45m post-kickoff delay", () => {
+    expect(RESULT_DELAY_MS).toBe(1.75 * 60 * 60 * 1000)
+  })
+
+  it("moves SCHEDULED fixtures past the delay to AWAITING_RESULT", async () => {
     fixtureUpdateMany.mockResolvedValue({ count: 2 })
     const before = Date.now()
     const count = await transitionDueFixtures()

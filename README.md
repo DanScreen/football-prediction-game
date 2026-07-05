@@ -98,9 +98,9 @@ An optional **Grand Slam** bonus awards extra points (configurable per league in
 
 Results flow through a confirm-before-save pipeline:
 
-1. **Automated sweep** — a Cloud Scheduler job calls `POST /api/cron/resolve` every 30 minutes. It moves fixtures ≥2.5h past kickoff to the *Pending Results* queue and pre-fetches the final score from football-data.org (one API call per competition, shared across leagues).
+1. **Automated sweep** — a Cloud Scheduler job calls `POST /api/cron/resolve` every 30 minutes. It moves fixtures ≥1h45m past kickoff to the *Pending Results* queue and pre-fetches the final score from football-data.org (one API call per competition, shared across leagues).
 2. **Commissioner confirms** — **Admin → Results** shows pre-fetched scores ready to Accept, Edit, or Retry. Nothing is scored until a Commissioner confirms — the human check keeps bad data (postponements, ambiguous team names) off the leaderboard.
-3. **Fallbacks** — the "Check for Updates" button runs the same sweep on demand, manual score entry always works, and per-fixture API lookup remains available.
+3. **Fallbacks** — any league member can hit **Request result** on a kicked-off fixture from the dashboard if the sweep hasn't found a score yet (shown as "⏳ awaiting confirmation" once found); the Commissioner's "Check for Updates" button runs the same sweep on demand, manual score entry always works, and per-fixture API lookup remains available.
 
 ### Deadline Reminders
 

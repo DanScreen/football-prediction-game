@@ -85,14 +85,17 @@ last few rounds. Styled like a real football table for the playful vibe.
 
 ### 5.5 Result Resolution
 1. A Cloud Scheduler job calls `POST /api/cron/resolve` (secured by
-   `CRON_SECRET`) every 30 minutes. It moves fixtures ≥2.5 hours past kickoff
+   `CRON_SECRET`) every 30 minutes. It moves fixtures ≥1h45m past kickoff
    to `AWAITING_RESULT` across all leagues and pre-fetches proposed scores from
    football-data.org — one API call per competition + date window, fuzzy-matched
    by team name, shared by cross-league copies of the same match.
 2. Pre-fetched scores appear in the Commissioner's queue with a "score found"
-   badge; the confirm page loads with the proposal ready to review. The
-   Commissioner's "Check for Updates" button runs the same sweep on demand, and
-   per-fixture "Look Up Result" remains as a manual fallback.
+   badge; the confirm page loads with the proposal ready to review. Any league
+   member can also press "Request result" on a kicked-off fixture from the
+   dashboard to trigger the same lookup early; a fetched score shows there as
+   "awaiting confirmation". The Commissioner's "Check for Updates" button runs
+   the sweep on demand, and per-fixture "Look Up Result" remains as a manual
+   fallback.
 3. The proposed score is shown to the Commissioner, who can **Accept**
    (locks in the score and triggers scoring for all predictions), **Edit**
    (enter the correct score manually), or **Retry**.

@@ -167,3 +167,12 @@
 - [x] `app/api/v1/predictions/route.test.ts` — validation, membership 404, deadline 422, success shape
 - [x] Total: 95 tests (was 25, scoring only). Still untested: server actions (confirmResult
       transaction, registration) and UI — integration-test territory needing a real database.
+
+## Phase 21 — Member result requests + faster transitions ✅
+- [x] `RESULT_DELAY_MS` reduced 2.5 h → 1 h 45 m (kickoff + full time + stoppage)
+- [x] "Request result" button on kicked-off dashboard fixtures — any league member can
+      trigger the transition + proposal fetch if the cron hasn't found a score yet
+- [x] Proposed scores show on the dashboard as "⏳ awaiting confirmation" (Commissioner
+      confirmation still required before anything is scored)
+- [x] 8 unit tests for the `requestResult` action (auth, membership hiding, timing gate,
+      transition, pending/found/error paths)

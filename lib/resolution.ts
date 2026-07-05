@@ -2,11 +2,11 @@ import { prisma } from "@/lib/prisma"
 import { FixtureStatus } from "@/app/generated/prisma/client"
 import { competitionCode, fetchFinishedMatches, findMatchScore, isoDate } from "@/lib/footballData"
 
-/** Fixtures become eligible for a result this long after kickoff. */
-export const RESULT_DELAY_MS = 2.5 * 60 * 60 * 1000
+/** Fixtures become eligible for a result this long after kickoff (1h45m ≈ full time + stoppage). */
+export const RESULT_DELAY_MS = 1.75 * 60 * 60 * 1000
 
 /**
- * Move SCHEDULED fixtures ≥2.5h past kickoff to AWAITING_RESULT.
+ * Move SCHEDULED fixtures ≥1h45m past kickoff to AWAITING_RESULT.
  * Scoped to one league when leagueId is given, otherwise all leagues.
  */
 export async function transitionDueFixtures(leagueId?: string): Promise<number> {

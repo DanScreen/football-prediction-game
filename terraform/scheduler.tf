@@ -1,5 +1,5 @@
 # ── Cloud Scheduler — automated result resolution ─────────────────────────────
-# Calls /api/cron/resolve every 30 minutes: moves fixtures past kickoff+2.5h to
+# Calls /api/cron/resolve every 30 minutes: moves fixtures past kickoff+1h45m to
 # AWAITING_RESULT and pre-fetches proposed scores from football-data.org.
 # app_url is only known after the first Cloud Run deploy, so the job is skipped
 # until it's set in terraform.tfvars.
