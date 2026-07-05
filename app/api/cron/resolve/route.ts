@@ -1,8 +1,10 @@
 import { runResolutionSweep } from "@/lib/resolution"
+import { sendDeadlineReminders } from "@/lib/reminders"
 
 /**
  * Called by Cloud Scheduler (see terraform/scheduler.tf). Moves due fixtures to
- * AWAITING_RESULT and pre-fetches proposed scores for Commissioner confirmation.
+ * AWAITING_RESULT, pre-fetches proposed scores for Commissioner confirmation,
+ * and emails deadline reminders to members who haven't predicted yet.
  */
 export async function POST(request: Request) {
   const secret = process.env.CRON_SECRET
@@ -13,6 +15,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const summary = await runResolutionSweep()
-  return Response.json(summary)
+  const resolution = await runResolutionSweep()
+  const reminders = await sendDeadlineReminders()
+  return Response.json({ ...resolution, reminders })
 }

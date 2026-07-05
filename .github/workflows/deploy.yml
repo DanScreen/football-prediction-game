@@ -67,6 +67,8 @@ jobs:
             --set-env-vars "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
             --set-env-vars "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" \
             --set-env-vars "CRON_SECRET=${{ secrets.CRON_SECRET }}" \
+            --set-env-vars "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" \
+            --set-env-vars "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" \
             --min-instances 0 \
             --max-instances 3 \
             --allow-unauthenticated \

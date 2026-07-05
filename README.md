@@ -151,6 +151,8 @@ To provision from scratch: `cd terraform && terraform init && terraform apply`
 | `NEXTAUTH_SECRET`       | NextAuth secret (both vars required)                 |
 | `FOOTBALL_DATA_API_KEY` | football-data.org API key                            |
 | `CRON_SECRET`           | Shared secret for `/api/cron/*` (also set as the `cron_secret` Terraform variable) |
+| `RESEND_API_KEY`        | Optional — Resend API key for deadline reminder emails (reminders are skipped without it) |
+| `EMAIL_FROM`            | Optional — sender address for reminders, e.g. `Football Predictions <predictions@yourdomain.com>` |
 
 ### Deploy pipeline
 
