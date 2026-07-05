@@ -81,7 +81,12 @@ export default async function AdminResultsPage() {
                       minute: "2-digit",
                     })}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    {f.proposedHomeScore !== null && f.proposedAwayScore !== null && (
+                      <span className="mr-3 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                        ✓ {f.proposedHomeScore}–{f.proposedAwayScore} found
+                      </span>
+                    )}
                     <Link
                       href={`/admin/results/${f.id}`}
                       className="text-[#1a7a3c] hover:underline font-medium"

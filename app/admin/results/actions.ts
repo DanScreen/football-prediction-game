@@ -7,21 +7,18 @@ import { scoreOnePrediction, qualifiesForGrandSlam } from "@/lib/scoring"
 import { lookupResult as fetchResult } from "@/lib/footballData"
 import { FixtureStatus, ResultSource } from "@/app/generated/prisma/client"
 import { requireCommissioner } from "@/lib/adminAuth"
+import { transitionDueFixtures, fetchProposals } from "@/lib/resolution"
 
 export type ResultFormState = {
   error?: string
   proposed?: { homeScore: number; awayScore: number }
 }
 
-/** Move SCHEDULED fixtures ≥2.5h past kickoff to AWAITING_RESULT */
+/** Move SCHEDULED fixtures ≥2.5h past kickoff to AWAITING_RESULT and pre-fetch proposals */
 export async function checkTransitions(): Promise<void> {
   const { leagueId } = await requireCommissioner()
-  const now = new Date()
-  const cutoff = new Date(now.getTime() - 2.5 * 60 * 60 * 1000)
-  await prisma.fixture.updateMany({
-    where: { leagueId, status: FixtureStatus.SCHEDULED, kickoffTime: { lte: cutoff } },
-    data: { status: FixtureStatus.AWAITING_RESULT },
-  })
+  await transitionDueFixtures(leagueId)
+  await fetchProposals().catch(() => {}) // best-effort; manual lookup remains available
   revalidatePath("/admin/results")
 }
 
@@ -87,6 +84,8 @@ export async function confirmResult(
         actualAwayScore: awayRaw,
         status: FixtureStatus.COMPLETED,
         resultSource: source,
+        proposedHomeScore: null,
+        proposedAwayScore: null,
       },
     })
 

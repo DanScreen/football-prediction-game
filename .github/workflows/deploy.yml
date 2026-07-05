@@ -66,6 +66,7 @@ jobs:
             --set-env-vars "FOOTBALL_DATA_API_KEY=${{ secrets.FOOTBALL_DATA_API_KEY }}" \
             --set-env-vars "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
             --set-env-vars "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" \
+            --set-env-vars "CRON_SECRET=${{ secrets.CRON_SECRET }}" \
             --min-instances 0 \
             --max-instances 3 \
             --allow-unauthenticated \

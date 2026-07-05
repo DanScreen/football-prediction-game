@@ -8,6 +8,8 @@ interface Props {
   homeTeam: string
   awayTeam: string
   apiEnabled: boolean
+  /** Score pre-fetched by the automated sweep, shown before any manual lookup */
+  initialProposed?: { homeScore: number; awayScore: number }
   lookupResult: (prev: ResultFormState, formData: FormData) => Promise<ResultFormState>
   confirmResult: (prev: ResultFormState, formData: FormData) => Promise<ResultFormState>
 }
@@ -23,6 +25,7 @@ export default function ConfirmResultForm({
   homeTeam,
   awayTeam,
   apiEnabled,
+  initialProposed,
   lookupResult,
   confirmResult,
 }: Props) {
@@ -30,7 +33,7 @@ export default function ConfirmResultForm({
   const [confirmState, confirmAction, confirmPending] = useActionState(confirmResult, {})
   const [editState, setEditState] = useState<EditState | null>(null)
 
-  const proposed = lookupState.proposed
+  const proposed = lookupState.proposed ?? initialProposed
   const isEditing = editState !== null && editState.forProposed === proposed
 
   return (

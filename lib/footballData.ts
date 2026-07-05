@@ -118,6 +118,47 @@ function teamNameMatches(team: FDTeam, query: string): boolean {
   return candidates.some((c) => c.includes(q) || q.includes(c))
 }
 
+/** API code for a competition name, or null if not supported by the free tier. */
+export function competitionCode(competition: string): string | null {
+  return COMPETITION_CODES[competition] ?? null
+}
+
+/** All finished matches for a competition between two dates (single API call). */
+export async function fetchFinishedMatches(
+  code: string,
+  dateFrom: string,
+  dateTo: string,
+): Promise<FDMatch[]> {
+  const res = await fdFetch(
+    `/competitions/${code}/matches?status=FINISHED&dateFrom=${dateFrom}&dateTo=${dateTo}`,
+  )
+  const data = (await res.json()) as { matches: FDMatch[] }
+  return data.matches ?? []
+}
+
+/** Fuzzy-match a fixture's team names against fetched matches; null if not found. */
+export function findMatchScore(
+  matches: FDMatch[],
+  homeTeam: string,
+  awayTeam: string,
+): { homeScore: number; awayScore: number } | null {
+  const match = matches.find(
+    (m) =>
+      teamNameMatches(m.homeTeam, homeTeam) &&
+      teamNameMatches(m.awayTeam, awayTeam) &&
+      m.score?.fullTime?.home != null,
+  )
+  if (!match) return null
+  return {
+    homeScore: match.score!.fullTime!.home!,
+    awayScore: match.score!.fullTime!.away!,
+  }
+}
+
+export function isoDate(d: Date): string {
+  return d.toISOString().split("T")[0]
+}
+
 export async function lookupResult(
   homeTeam: string,
   awayTeam: string,
@@ -128,32 +169,16 @@ export async function lookupResult(
   const code = COMPETITION_CODES[competition]
   if (!code) throw new Error(`No API mapping for "${competition}".`)
 
-  const dateFrom = kickoffTime.toISOString().split("T")[0]
-  const dateTo = new Date(kickoffTime.getTime() + 2 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0]
+  const dateFrom = isoDate(kickoffTime)
+  const dateTo = isoDate(new Date(kickoffTime.getTime() + 2 * 24 * 60 * 60 * 1000))
 
-  const res = await fdFetch(
-    `/competitions/${code}/matches?status=FINISHED&dateFrom=${dateFrom}&dateTo=${dateTo}`,
-  )
-  const data = (await res.json()) as { matches: FDMatch[] }
-  const matches = data.matches ?? []
+  const matches = await fetchFinishedMatches(code, dateFrom, dateTo)
+  const score = findMatchScore(matches, homeTeam, awayTeam)
 
-  const match = matches.find(
-    (m) =>
-      teamNameMatches(m.homeTeam, homeTeam) &&
-      teamNameMatches(m.awayTeam, awayTeam) &&
-      m.score?.fullTime?.home != null,
-  )
-
-  if (!match) {
+  if (!score) {
     throw new Error(
       `No finished result found for ${homeTeam} vs ${awayTeam} around ${dateFrom}. The match may not have been played yet.`,
     )
   }
-
-  return {
-    homeScore: match.score!.fullTime!.home!,
-    awayScore: match.score!.fullTime!.away!,
-  }
+  return score
 }

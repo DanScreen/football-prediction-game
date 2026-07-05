@@ -37,6 +37,11 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
         homeTeam={fixture.homeTeam}
         awayTeam={fixture.awayTeam}
         apiEnabled={apiEnabled}
+        initialProposed={
+          fixture.proposedHomeScore !== null && fixture.proposedAwayScore !== null
+            ? { homeScore: fixture.proposedHomeScore, awayScore: fixture.proposedAwayScore }
+            : undefined
+        }
         lookupResult={lookupResult}
         confirmResult={confirmResult}
       />

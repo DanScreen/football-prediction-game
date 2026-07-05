@@ -19,3 +19,16 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "app_url" {
+  description = "Cloud Run service URL (known after first deploy); leave empty to skip the Cloud Scheduler job"
+  type        = string
+  default     = ""
+}
+
+variable "cron_secret" {
+  description = "Shared secret for /api/cron/* endpoints — must match the CRON_SECRET GitHub secret"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

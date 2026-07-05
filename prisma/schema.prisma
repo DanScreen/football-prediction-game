@@ -70,6 +70,11 @@ model Fixture {
   status          FixtureStatus @default(SCHEDULED)
   actualHomeScore Int?
   actualAwayScore Int?
+  // Score proposed by the automated football-data.org sweep, awaiting Commissioner confirmation
+  proposedHomeScore Int?
+  proposedAwayScore Int?
+  // When deadline-reminder emails were sent for this fixture (one batch per fixture)
+  reminderSentAt  DateTime?
   resultSource    ResultSource?
   createdAt       DateTime      @default(now())
   league          League        @relation(fields: [leagueId], references: [id])
