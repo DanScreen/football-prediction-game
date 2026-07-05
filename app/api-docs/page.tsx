@@ -1,0 +1,142 @@
+import Link from "next/link"
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
+
+export const metadata = { title: "API Docs — Football Prediction App" }
+
+const CURL_FIXTURES = `curl -H "Authorization: Bearer YOUR_API_KEY" \\
+  "$BASE_URL/api/v1/fixtures?status=open"`
+
+const CURL_SUBMIT = `curl -X POST \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"fixtureId": "FIXTURE_ID", "homeScore": 2, "awayScore": 1}' \\
+  "$BASE_URL/api/v1/predictions"`
+
+const PYTHON_BOT = `import requests
+
+BASE_URL = "https://your-app-url"  # no trailing slash
+HEADERS = {"Authorization": "Bearer YOUR_API_KEY"}
+
+# 1. Fetch fixtures still open for predictions
+fixtures = requests.get(
+    f"{BASE_URL}/api/v1/fixtures", params={"status": "open"}, headers=HEADERS
+).json()
+
+# 2. Predict 2-1 to the home side in every match (your model goes here!)
+for f in fixtures:
+    r = requests.post(
+        f"{BASE_URL}/api/v1/predictions",
+        json={"fixtureId": f["id"], "homeScore": 2, "awayScore": 1},
+        headers=HEADERS,
+    )
+    print(f["homeTeam"], "vs", f["awayTeam"], "->", r.status_code)
+
+# 3. Check the standings
+print(requests.get(f"{BASE_URL}/api/v1/leaderboard", headers=HEADERS).json())`
+
+export default async function ApiDocsPage() {
+  const session = await auth()
+  if (!session?.user?.id) redirect("/login")
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-zinc-900 mb-2">🤖 Bot API</h1>
+        <p className="text-sm text-zinc-600">
+          Submit predictions programmatically — point your model at the same league as everyone
+          else. All endpoints live under <code className="bg-zinc-100 px-1.5 py-0.5 rounded text-xs">/api/v1/</code>{" "}
+          and authenticate with the API key from your{" "}
+          <Link href="/profile" className="text-[#1a7a3c] font-medium hover:underline">
+            profile page
+          </Link>
+          :
+        </p>
+        <pre className="mt-3 bg-zinc-900 text-zinc-100 rounded-xl p-4 text-xs overflow-x-auto">
+          Authorization: Bearer YOUR_API_KEY
+        </pre>
+      </div>
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-bold text-zinc-900">Endpoints</h2>
+
+        <Endpoint method="GET" path="/api/v1/fixtures?status=open">
+          Fixtures still open for predictions (kickoff in the future), oldest first. Omit{" "}
+          <code className="bg-zinc-100 px-1 rounded">status=open</code> to include locked and
+          completed fixtures. Optional <code className="bg-zinc-100 px-1 rounded">?leagueId=</code>{" "}
+          scopes to a specific league you belong to (defaults to your first league).
+        </Endpoint>
+
+        <Endpoint method="POST" path="/api/v1/predictions">
+          Create or update your prediction. Body:{" "}
+          <code className="bg-zinc-100 px-1 rounded">
+            {"{ fixtureId, homeScore, awayScore }"}
+          </code>{" "}
+          — non-negative integers. Rejected with 422 once the fixture has kicked off. Your pick
+          auto-copies to matching fixtures in your other leagues.
+        </Endpoint>
+
+        <Endpoint method="GET" path="/api/v1/predictions">
+          Your own predictions with fixture details, actual scores, and points awarded.
+        </Endpoint>
+
+        <Endpoint method="GET" path="/api/v1/leaderboard">
+          Current standings: rank, total points (including Grand Slam bonuses),{" "}
+          exact-score count, and Grand Slam count per player.
+        </Endpoint>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-bold text-zinc-900 mb-3">Quick start — curl</h2>
+        <pre className="bg-zinc-900 text-zinc-100 rounded-xl p-4 text-xs overflow-x-auto mb-3">
+          {CURL_FIXTURES}
+        </pre>
+        <pre className="bg-zinc-900 text-zinc-100 rounded-xl p-4 text-xs overflow-x-auto">
+          {CURL_SUBMIT}
+        </pre>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-bold text-zinc-900 mb-3">A minimal Python bot</h2>
+        <pre className="bg-zinc-900 text-zinc-100 rounded-xl p-4 text-xs overflow-x-auto">
+          {PYTHON_BOT}
+        </pre>
+      </section>
+
+      <section className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <h2 className="text-sm font-semibold text-amber-900 mb-1">Notes</h2>
+        <ul className="text-xs text-amber-800 space-y-1 list-disc pl-4">
+          <li>Predictions lock at kickoff — submit (or update) any time before then.</li>
+          <li>One prediction per fixture; POSTing again overwrites your previous pick.</li>
+          <li>Keep your key secret — anyone holding it can submit picks as you.</li>
+        </ul>
+      </section>
+    </div>
+  )
+}
+
+function Endpoint({
+  method,
+  path,
+  children,
+}: {
+  method: "GET" | "POST"
+  path: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="bg-white border border-zinc-200 rounded-xl p-4">
+      <p className="font-mono text-sm mb-1.5">
+        <span
+          className={`inline-block w-14 text-center text-xs font-bold rounded px-1.5 py-0.5 mr-2 ${
+            method === "GET" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
+          }`}
+        >
+          {method}
+        </span>
+        {path}
+      </p>
+      <p className="text-xs text-zinc-600 leading-relaxed">{children}</p>
+    </div>
+  )
+}

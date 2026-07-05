@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
@@ -28,8 +29,12 @@ export default async function ProfilePage() {
       <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6 space-y-3">
         <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">API Key</h2>
         <p className="text-xs text-zinc-500">
-          Use this key to submit predictions programmatically via the public API.
-          Keep it secret — anyone with this key can submit picks on your behalf.
+          Use this key to submit predictions programmatically via the public API — see the{" "}
+          <Link href="/api-docs" className="text-[#1a7a3c] font-medium hover:underline">
+            API docs
+          </Link>{" "}
+          for endpoints and a starter bot. Keep it secret — anyone with this key can submit
+          picks on your behalf.
         </p>
         <div className="flex items-center gap-3">
           <code className="flex-1 rounded-md bg-zinc-100 px-3 py-2 text-sm font-mono text-zinc-800 break-all">
