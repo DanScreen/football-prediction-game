@@ -155,3 +155,15 @@
 ## Phase 19 — My Predictions round breakdown ✅
 - [x] Group prediction history by competition + round with per-round subtotals
 - [x] Show Grand Slam bonuses per round; summary strip (total, best round, exact count)
+
+## Phase 20 — Unit test coverage ✅
+- [x] `vitest.config.ts` — `@/` path alias + node environment for mocked-module tests
+- [x] `lib/footballData.test.ts` — fuzzy team matching, round selection/labels, API error paths (fetch mocked)
+- [x] `lib/apiAuth.test.ts` — Bearer parsing and league resolution (Prisma mocked)
+- [x] `lib/resolution.test.ts` — transition cutoff, one API call per competition, partial-failure handling
+- [x] `lib/reminders.test.ts` — env gating, reminderSentAt claim, bot/predicted exclusion, one email per user
+- [x] `lib/predictions.test.ts` — cross-league sync criteria and single-league fast path
+- [x] `app/api/cron/resolve/route.test.ts` — 503/401/200 auth matrix
+- [x] `app/api/v1/predictions/route.test.ts` — validation, membership 404, deadline 422, success shape
+- [x] Total: 95 tests (was 25, scoring only). Still untested: server actions (confirmResult
+      transaction, registration) and UI — integration-test territory needing a real database.
