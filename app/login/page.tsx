@@ -5,9 +5,9 @@ export const metadata = { title: "Sign In — Football Prediction App" }
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string; registered?: string }>
+  searchParams: Promise<{ callbackUrl?: string; registered?: string; reset?: string }>
 }) {
-  const { callbackUrl, registered } = await searchParams
+  const { callbackUrl, registered, reset } = await searchParams
 
   return (
     <div className="flex min-h-[calc(100vh-60px)] items-center justify-center px-4 py-12">
@@ -17,7 +17,7 @@ export default async function LoginPage({
           <p className="mt-2 text-zinc-500 text-sm">Sign in to make your predictions.</p>
         </div>
         <div className="bg-white rounded-xl shadow-md border border-zinc-200 px-8 py-8">
-          <LoginForm callbackUrl={callbackUrl} registered={registered === "1"} />
+          <LoginForm callbackUrl={callbackUrl} registered={registered === "1"} reset={reset === "1"} />
         </div>
       </div>
     </div>

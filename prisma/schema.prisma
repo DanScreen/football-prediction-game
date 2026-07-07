@@ -24,16 +24,29 @@ enum SubmitVia {
 }
 
 model User {
-  id           String             @id @default(cuid())
-  email        String             @unique
+  id           String                @id @default(cuid())
+  email        String                @unique
   passwordHash String
   displayName  String
-  isBot        Boolean            @default(false)
-  apiKey       String             @unique @default(cuid())
-  createdAt    DateTime           @default(now())
+  isBot        Boolean               @default(false)
+  apiKey       String                @unique @default(cuid())
+  createdAt    DateTime              @default(now())
   memberships  LeagueMembership[]
   predictions  Prediction[]
   bonusAwards  BonusAward[]
+  resetTokens  PasswordResetToken[]
+}
+
+// Single-use, expiring token for the forgot-password flow. Only the SHA-256
+// hash of the token is stored — the raw value only ever exists in the email link.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
 }
 
 model League {

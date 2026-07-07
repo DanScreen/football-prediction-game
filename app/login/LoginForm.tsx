@@ -9,9 +9,11 @@ const initial: LoginState = {}
 export default function LoginForm({
   callbackUrl,
   registered,
+  reset,
 }: {
   callbackUrl?: string
   registered?: boolean
+  reset?: boolean
 }) {
   const [state, formAction, isPending] = useActionState(loginUser, initial)
 
@@ -20,6 +22,11 @@ export default function LoginForm({
       {registered && (
         <div className="rounded-md bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm">
           Account created! Sign in to continue.
+        </div>
+      )}
+      {reset && (
+        <div className="rounded-md bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm">
+          Password reset! Sign in with your new password.
         </div>
       )}
       {state.error && (
@@ -46,9 +53,14 @@ export default function LoginForm({
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-zinc-700 mb-1">
-          Password
-        </label>
+        <div className="flex items-center justify-between mb-1">
+          <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
+            Password
+          </label>
+          <Link href="/forgot-password" className="text-xs text-[#1a7a3c] hover:underline">
+            Forgot password?
+          </Link>
+        </div>
         <input
           id="password"
           name="password"

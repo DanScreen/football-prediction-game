@@ -176,3 +176,17 @@
       confirmation still required before anything is scored)
 - [x] 8 unit tests for the `requestResult` action (auth, membership hiding, timing gate,
       transition, pending/found/error paths)
+
+## Phase 22 — Forgot password / reset ✅
+- [x] Schema: `PasswordResetToken` (userId, tokenHash unique, expiresAt, usedAt)
+- [x] `lib/email.ts` — generic Resend send helper (throws if unconfigured, unlike the
+      reminder sweep which silently skips)
+- [x] `lib/passwordReset.ts` — `requestPasswordReset` (generic response regardless of
+      whether the email exists, 5-min per-user cooldown to prevent spam/enumeration),
+      `isResetTokenValid`, `resetPassword` (single-use, 1h expiry, invalidates all
+      outstanding tokens for the user on success)
+- [x] `/forgot-password` + `/reset-password/[token]` pages, "Forgot password?" link on
+      the login form
+- [x] 11 unit tests in `lib/passwordReset.test.ts`
+- [x] `RESEND_API_KEY`/`EMAIL_FROM` are now effectively required (reset requests fail
+      without them) rather than optional as they were for reminders

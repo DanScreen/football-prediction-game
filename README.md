@@ -106,6 +106,10 @@ Results flow through a confirm-before-save pipeline:
 
 The same cron sweep emails league members who haven't predicted a fixture kicking off within the next 3 hours — one email per user listing their open fixtures, sent via [Resend](https://resend.com). Requires the optional `RESEND_API_KEY` and `EMAIL_FROM` secrets; silently skipped without them. Each fixture only ever triggers one reminder batch (`reminderSentAt` guard).
 
+### Forgot Password
+
+A "Forgot password?" link on the login page leads to `/forgot-password`. Submitting an email always shows the same generic confirmation (so the app can't be used to check which emails are registered); if the address matches an account, a single-use reset link valid for 1 hour is emailed via the same Resend integration used for reminders. The link opens `/reset-password/<token>`, which validates the token server-side before showing the new-password form. Setting a new password invalidates all other outstanding reset tokens for that user. Unlike reminders, this flow requires `RESEND_API_KEY`/`EMAIL_FROM` to be configured — it errors rather than silently skipping if they're missing, since account recovery isn't optional.
+
 ## Admin Guide
 
 All admin routes are behind `/admin` and require the **COMMISSIONER** role in the active league.
@@ -131,6 +135,16 @@ All endpoints require `Authorization: Bearer <apiKey>`. API keys are generated o
 Add `?leagueId=<id>` to any endpoint to scope it to a specific league (defaults to your first league).
 
 Full reference with curl examples and a Python starter bot lives in-app at `/api-docs` (linked from the profile page).
+
+## Future Ideas
+
+Not yet built — noted here for later scoping:
+
+- **Chips** — one-off boosts/wildcards a user can play on a fixture or round (e.g. double points, safety net against a wrong score), borrowed from fantasy football-style games. Needs a per-user/per-season budget and a way to flag which chip is active on a prediction.
+- **Double-down pick** — each week a user nominates one fixture to earn double points, raising the stakes on a single prediction instead of a whole round.
+- **Model arena** — pit AI models (or bot strategies) against human players in the same league, ranked on the same leaderboard, for fun/comparison.
+- **Downloadable summaries** — end-of-season (or end-of-round) exportable recap (image or PDF) with standings, best/worst predictions, streaks, etc. — shareable for bragging rights.
+- **Nicknames with personality** — fun, generated or user-chosen nicknames/titles shown next to leaderboard entries instead of just plain usernames.
 
 ## Deployment
 
@@ -169,8 +183,8 @@ gcloud scheduler jobs run football-prediction-resolve --location europe-west2
 | `NEXTAUTH_SECRET`       | NextAuth secret (both vars required)                 |
 | `FOOTBALL_DATA_API_KEY` | football-data.org API key                            |
 | `CRON_SECRET`           | Shared secret for `/api/cron/*` (also set as the `cron_secret` Terraform variable) |
-| `RESEND_API_KEY`        | Optional — Resend API key for deadline reminder emails (reminders are skipped without it) |
-| `EMAIL_FROM`            | Optional — sender address for reminders, e.g. `Football Predictions <predictions@yourdomain.com>` |
+| `RESEND_API_KEY`        | Resend API key. Optional for deadline reminders (skipped without it), but required for password reset emails to send |
+| `EMAIL_FROM`            | Sender address, e.g. `Football Predictions <predictions@yourdomain.com>` — same requirement as `RESEND_API_KEY` |
 
 ### Deploy pipeline
 
