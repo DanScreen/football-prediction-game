@@ -186,9 +186,13 @@ gcloud scheduler jobs run football-prediction-resolve --location europe-west2
 | `RESEND_API_KEY`        | Resend API key. Optional for deadline reminders (skipped without it), but required for password reset emails to send |
 | `EMAIL_FROM`            | Sender address, e.g. `Football Predictions <predictions@yourdomain.com>` — same requirement as `RESEND_API_KEY` |
 
+### Custom domain
+
+The app is served at **https://scorersonline.uk** via a Cloudflare Worker (`cloudflare/worker.js`) that proxies to the Cloud Run URL — Cloud Run's native domain mappings don't support europe-west2. The Worker is deployed through the Cloudflare dashboard with `scorersonline.uk` attached as its custom domain; the copy in `cloudflare/` is the source of truth if it needs editing. `AUTH_URL` is pinned to the domain in `deploy.yml` (`APP_URL` env), and `next.config.ts` allowlists the domain for Server Actions since the Host header Cloud Run sees is still `*.run.app`. The same domain is verified in Resend for outbound email (`EMAIL_FROM`).
+
 ### Deploy pipeline
 
 1. Cloud SQL Auth Proxy tunnels to Cloud SQL so migrations run in CI (`npx prisma migrate deploy`)
 2. Multi-stage Docker build (`deps → builder → runner`) produces a standalone image
 3. Image pushed to Artifact Registry and deployed to Cloud Run
-4. `AUTH_URL` is automatically set to the Cloud Run service URL after each deploy
+4. `AUTH_URL` is pinned to `APP_URL` (the custom domain) in the deploy workflow

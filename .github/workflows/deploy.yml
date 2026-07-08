@@ -10,6 +10,9 @@ env:
   SERVICE: football-prediction-app
   REGISTRY: europe-west2-docker.pkg.dev
   REPOSITORY: football-prediction-app
+  # Public URL — a Cloudflare Worker proxies this domain to the Cloud Run service
+  # (europe-west2 doesn't support Cloud Run domain mappings). See cloudflare/worker.js.
+  APP_URL: https://scorersonline.uk
 
 jobs:
   deploy:
@@ -69,15 +72,8 @@ jobs:
             --set-env-vars "CRON_SECRET=${{ secrets.CRON_SECRET }}" \
             --set-env-vars "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" \
             --set-env-vars "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" \
+            --set-env-vars "AUTH_URL=${{ env.APP_URL }}" \
             --min-instances 0 \
             --max-instances 3 \
             --allow-unauthenticated \
-            --quiet
-
-          URL=$(gcloud run services describe ${{ env.SERVICE }} \
-            --region ${{ env.REGION }} \
-            --format 'value(status.url)')
-          gcloud run services update ${{ env.SERVICE }} \
-            --region ${{ env.REGION }} \
-            --update-env-vars "AUTH_URL=$URL" \
             --quiet
