@@ -3,6 +3,7 @@ import { auth, signOut } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { getActiveLeagueId } from "@/lib/activeLeague"
 import NavLinks from "./NavLinks"
+import Logo from "./Logo"
 
 export default async function Header() {
   const session = await auth()
@@ -27,12 +28,7 @@ export default async function Header() {
             href="/"
             className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-ink"
           >
-            <span
-              aria-hidden
-              className="grid h-6 w-6 place-items-center rounded-lg bg-pitch text-[11px] font-extrabold text-white"
-            >
-              S
-            </span>
+            <Logo />
             Scorers
           </Link>
           {session && (
