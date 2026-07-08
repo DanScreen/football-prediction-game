@@ -146,6 +146,7 @@ Not yet built — noted here for later scoping:
 - **Downloadable summaries** — end-of-season (or end-of-round) exportable recap (image or PDF) with standings, best/worst predictions, streaks, etc. — shareable for bragging rights.
 - **Nicknames with personality** — fun, generated or user-chosen nicknames/titles shown next to leaderboard entries instead of just plain usernames.
 - **"Accept all results" button** — on Admin → Results, let the Commissioner accept every pre-fetched score in one click instead of confirming fixtures one at a time.
+- **Staging environment** — a non-prod deployment (e.g. a second Cloud Run service + DB deployed from a `staging` branch) to review visual/functional changes before they hit the live site, instead of pushing straight to production.
 
 ## Deployment
 
