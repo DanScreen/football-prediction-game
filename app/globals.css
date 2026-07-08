@@ -1,22 +1,59 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f9fafb;
-  --foreground: #111827;
-  --green-primary: #1a7a3c;
-}
+/* ──────────────────────────────────────────────────────────────
+   Scorers design system — "Quiet Product" foundation with
+   broadcast scoreboard moments.
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+   Neutrals are green-biased (never pure grey). One accent (pitch),
+   one urgency colour (clock amber) for deadlines, and a dark
+   "board" palette reserved for scoreboard/match-header moments.
+   Semantic colours (red errors, green success) stay Tailwind stock.
+   ────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Ground & surfaces */
+  --color-ground: #f7f8f7;
+  --color-surface: #ffffff;
+  --color-chip: #eef1ee;
+
+  /* Ink (green-biased neutrals) */
+  --color-ink: #17201b;
+  --color-ink-mid: #3d4842;
+  --color-ink-muted: #5e6b63;
+  --color-ink-faint: #9aa69f;
+
+  /* Lines */
+  --color-line: #e4e8e4;
+  --color-line-soft: #eef1ee;
+  --color-line-strong: #d7ded9;
+
+  /* Accent — pitch green */
+  --color-pitch: #128749;
+  --color-pitch-deep: #0d6b3a;
+  --color-pitch-tint: #eaf4ee;
+
+  /* Deadline urgency */
+  --color-clock: #b45309;
+  --color-clock-tint: #fdf3e7;
+
+  /* Broadcast board (scoreboard moments only) */
+  --color-board: #0a1020;
+  --color-board-panel: #111a30;
+  --color-board-fore: #edf2ff;
+  --color-board-muted: #8b96b8;
+  --color-board-gold: #f2c74e;
+  --color-board-cyan: #57c7ff;
+
   --font-sans: var(--font-inter);
-  --font-display: var(--font-nunito);
   --font-mono: var(--font-mono);
+
+  --shadow-card: 0 1px 2px rgb(16 24 20 / 0.04);
+  --shadow-raised: 0 1px 3px rgb(16 24 20 / 0.08), 0 4px 12px rgb(16 24 20 / 0.06);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-ground);
+  color: var(--color-ink);
   font-family: var(--font-inter), system-ui, sans-serif;
 }
 
@@ -24,7 +61,19 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-nunito), system-ui, sans-serif;
+  letter-spacing: -0.015em;
+}
+
+/* Scoreboard digits — the broadcast moment. Mono, heavy, tabular. */
+.score-digits {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Animations ── */
@@ -74,4 +123,13 @@ h4 {
 .animate-slide-up {
   opacity: 0;
   animation: slideUp 0.3s ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop,
+  .animate-slide-up {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }

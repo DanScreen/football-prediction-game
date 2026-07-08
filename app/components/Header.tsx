@@ -2,6 +2,7 @@ import Link from "next/link"
 import { auth, signOut } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { getActiveLeagueId } from "@/lib/activeLeague"
+import NavLinks from "./NavLinks"
 
 export default async function Header() {
   const session = await auth()
@@ -19,45 +20,43 @@ export default async function Header() {
       : false
 
   return (
-    <header className="bg-[#1a7a3c] text-white shadow-md">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-6">
+    <header className="bg-surface border-b border-line">
+      <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
+        <div className="flex items-center gap-5">
           <Link
             href="/"
-            className="text-xl font-bold tracking-tight hover:text-green-200 transition-colors"
+            className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-ink"
           >
-            ⚽ Football Prediction App
+            <span
+              aria-hidden
+              className="grid h-6 w-6 place-items-center rounded-lg bg-pitch text-[11px] font-extrabold text-white"
+            >
+              S
+            </span>
+            Scorers
           </Link>
           {session && (
-            <nav className="hidden sm:flex items-center gap-4 text-sm font-medium">
-              <Link href="/" className="hover:text-green-200 transition-colors">
-                Dashboard
-              </Link>
-              <Link href="/predictions" className="hover:text-green-200 transition-colors">
-                My Predictions
-              </Link>
-              <Link href="/leaderboard" className="hover:text-green-200 transition-colors">
-                Leaderboard
-              </Link>
-              <Link href="/leagues" className="hover:text-green-200 transition-colors">
-                My Leagues
-              </Link>
+            <div className="flex items-center gap-2">
+              <NavLinks />
               {isCommissioner && (
                 <Link
                   href="/admin"
-                  className="bg-yellow-400 text-green-900 px-3 py-1 rounded-full text-xs font-bold hover:bg-yellow-300 transition-colors"
+                  className="rounded-full border border-pitch/25 bg-pitch-tint px-2.5 py-0.5 text-xs font-semibold text-pitch-deep transition-colors hover:border-pitch/50"
                 >
                   Admin
                 </Link>
               )}
-            </nav>
+            </div>
           )}
         </div>
 
         <div className="flex items-center gap-3 text-sm">
           {session ? (
             <>
-              <Link href="/profile" className="hover:text-green-200 transition-colors">
+              <Link
+                href="/profile"
+                className="font-medium text-ink-muted transition-colors hover:text-ink"
+              >
                 {session.user.name ?? session.user.email}
               </Link>
               <form
@@ -68,7 +67,7 @@ export default async function Header() {
               >
                 <button
                   type="submit"
-                  className="bg-white/20 hover:bg-white/30 transition-colors px-3 py-1 rounded-full text-xs font-medium"
+                  className="rounded-lg border border-line-strong px-3 py-1 text-xs font-medium text-ink-mid transition-colors hover:bg-chip"
                 >
                   Logout
                 </button>
@@ -76,12 +75,15 @@ export default async function Header() {
             </>
           ) : (
             <>
-              <Link href="/login" className="hover:text-green-200 transition-colors">
+              <Link
+                href="/login"
+                className="font-medium text-ink-muted transition-colors hover:text-ink"
+              >
                 Login
               </Link>
               <Link
                 href="/register"
-                className="bg-white/20 hover:bg-white/30 transition-colors px-3 py-1 rounded-full text-xs font-medium"
+                className="rounded-lg bg-pitch px-3 py-1.5 text-xs font-semibold text-white shadow-card transition-colors hover:bg-pitch-deep"
               >
                 Register
               </Link>

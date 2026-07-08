@@ -32,14 +32,14 @@ export default function SettingsForm({ defaultValues }: Props) {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">League Name</label>
+        <label className="block text-sm font-medium text-ink-mid mb-1">League Name</label>
         <input
           type="text"
           name="name"
           defaultValue={defaultValues.name}
           required
           maxLength={50}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="w-full border border-line-strong rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pitch"
         />
       </div>
 
@@ -50,16 +50,16 @@ export default function SettingsForm({ defaultValues }: Props) {
             name="grandSlamEnabled"
             checked={slamEnabled}
             onChange={(e) => setSlamEnabled(e.target.checked)}
-            className="w-4 h-4 accent-[#1a7a3c]"
+            className="w-4 h-4 accent-pitch"
           />
-          <span className="text-sm font-semibold text-gray-900">🏆 Grand Slam bonus</span>
+          <span className="text-sm font-semibold text-ink">🏆 Grand Slam bonus</span>
         </label>
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-ink-muted">
           Awards bonus points to anyone who predicts the correct result (win/draw/loss) for
           every fixture in a round.
         </p>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Bonus points</label>
+          <label className="block text-sm font-medium text-ink-mid mb-1">Bonus points</label>
           <input
             type="number"
             name="grandSlamPoints"
@@ -68,7 +68,7 @@ export default function SettingsForm({ defaultValues }: Props) {
             defaultValue={defaultValues.grandSlamPoints}
             required
             disabled={!slamEnabled}
-            className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:bg-gray-100"
+            className="w-24 border border-line-strong rounded-lg px-3 py-2 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-pitch disabled:opacity-50 disabled:bg-chip"
           />
         </div>
       </div>
@@ -76,7 +76,7 @@ export default function SettingsForm({ defaultValues }: Props) {
       <button
         type="submit"
         disabled={pending}
-        className="bg-[#1a7a3c] text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+        className="bg-pitch text-white px-6 py-2 rounded-lg font-semibold hover:bg-pitch disabled:opacity-50 transition-colors"
       >
         {pending ? "Saving…" : "Save Settings"}
       </button>

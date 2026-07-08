@@ -28,8 +28,12 @@ export default function Countdown({ kickoffTime }: { kickoffTime: string }) {
 
   const locked = label === "Locked"
   return (
-    <span className={locked ? "text-red-500 font-semibold" : "text-amber-600 font-semibold"}>
-      {locked ? "🔒 Locked" : `⏱ ${label}`}
+    <span
+      className={`score-digits inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-sm ${
+        locked ? "bg-red-50 text-red-600" : "bg-clock-tint text-clock"
+      }`}
+    >
+      {locked ? "🔒 Locked" : label}
     </span>
   )
 }

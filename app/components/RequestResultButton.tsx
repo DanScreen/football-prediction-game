@@ -9,7 +9,7 @@ export default function RequestResultButton({ fixtureId }: { fixtureId: string }
 
   if (state.pending) {
     return (
-      <span className="text-xs text-gray-500 italic">
+      <span className="text-xs text-ink-muted italic">
         No result published yet — try again in a bit.
       </span>
     )
@@ -20,7 +20,7 @@ export default function RequestResultButton({ fixtureId }: { fixtureId: string }
       <button
         type="submit"
         disabled={pending}
-        className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:border-[#1a7a3c] hover:text-[#1a7a3c] disabled:opacity-50 transition-colors"
+        className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-line-strong text-ink-muted hover:border-pitch hover:text-pitch disabled:opacity-50 transition-colors"
       >
         {pending ? "Checking…" : "🔍 Request result"}
       </button>

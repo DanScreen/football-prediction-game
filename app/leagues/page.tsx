@@ -24,8 +24,8 @@ export default async function LeaguesPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">My Leagues</h1>
-      <p className="text-gray-500 text-sm mb-8">
+      <h1 className="text-2xl font-bold text-ink mb-1">My Leagues</h1>
+      <p className="text-ink-muted text-sm mb-8">
         Create a new league or join one with an invite code.
       </p>
 
@@ -34,13 +34,13 @@ export default async function LeaguesPage() {
           {memberships.map((m) => (
             <div
               key={m.leagueId}
-              className={`bg-white rounded-xl border shadow-sm px-5 py-4 flex items-center justify-between gap-4 ${
-                m.leagueId === activeLeagueId ? "border-[#1a7a3c]" : "border-gray-200"
+              className={`bg-surface rounded-xl border shadow-card px-5 py-4 flex items-center justify-between gap-4 ${
+                m.leagueId === activeLeagueId ? "border-pitch" : "border-line"
               }`}
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-bold text-gray-900 truncate">{m.league.name}</p>
+                  <p className="font-bold text-ink truncate">{m.league.name}</p>
                   {m.role === "COMMISSIONER" && (
                     <span className="text-xs bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-full px-2 py-0.5 font-medium shrink-0">
                       Commissioner
@@ -52,7 +52,7 @@ export default async function LeaguesPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-ink-muted">
                   {m.league.competition && <span className="mr-2">{m.league.competition}</span>}
                   {m.league._count.memberships} member{m.league._count.memberships !== 1 ? "s" : ""}
                   {" · "}
@@ -69,7 +69,7 @@ export default async function LeaguesPage() {
                 }}>
                   <button
                     type="submit"
-                    className="text-sm text-[#1a7a3c] font-semibold hover:underline shrink-0"
+                    className="text-sm text-pitch font-semibold hover:underline shrink-0"
                   >
                     Switch →
                   </button>

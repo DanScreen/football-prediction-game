@@ -35,20 +35,20 @@ export default function FixtureForm({ action, defaultValues, submitLabel }: Prop
         <Field label="Away Team" name="awayTeam" defaultValue={defaultValues?.awayTeam} placeholder="Chelsea" />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Kickoff Time</label>
+        <label className="block text-sm font-medium text-ink-mid mb-1">Kickoff Time</label>
         <input
           type="datetime-local"
           name="kickoffTime"
           defaultValue={defaultValues?.kickoffTime}
           required
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="w-full border border-line-strong rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pitch"
         />
       </div>
 
       <button
         type="submit"
         disabled={pending}
-        className="bg-[#1a7a3c] text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+        className="bg-pitch text-white px-6 py-2 rounded-lg font-semibold hover:bg-pitch disabled:opacity-50 transition-colors"
       >
         {pending ? "Saving…" : submitLabel}
       </button>
@@ -69,14 +69,14 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-ink-mid mb-1">{label}</label>
       <input
         type="text"
         name={name}
         defaultValue={defaultValue}
         placeholder={placeholder}
         required
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+        className="w-full border border-line-strong rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pitch"
       />
     </div>
   )

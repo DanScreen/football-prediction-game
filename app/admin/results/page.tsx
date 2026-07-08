@@ -25,7 +25,7 @@ export default async function AdminResultsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Pending Results</h1>
+        <h1 className="text-2xl font-bold text-ink">Pending Results</h1>
         <form action={checkTransitions}>
           <button
             type="submit"
@@ -33,7 +33,7 @@ export default async function AdminResultsPage() {
           >
             Check for Updates
             {scheduledReadyCount > 0 && (
-              <span className="bg-white text-yellow-700 rounded-full px-2 py-0.5 text-xs font-bold">
+              <span className="bg-surface text-yellow-700 rounded-full px-2 py-0.5 text-xs font-bold">
                 {scheduledReadyCount}
               </span>
             )}
@@ -42,7 +42,7 @@ export default async function AdminResultsPage() {
       </div>
 
       {awaitingFixtures.length === 0 ? (
-        <div className="text-center py-16 text-gray-500">
+        <div className="text-center py-16 text-ink-muted">
           <p className="text-4xl mb-3">✅</p>
           <p className="font-medium">No fixtures awaiting results.</p>
           {scheduledReadyCount > 0 && (
@@ -53,9 +53,9 @@ export default async function AdminResultsPage() {
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-line shadow-card">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600 uppercase text-xs tracking-wide">
+            <thead className="bg-ground text-ink-muted uppercase text-xs tracking-wide">
               <tr>
                 <th className="text-left px-4 py-3">Competition / Round</th>
                 <th className="text-left px-4 py-3">Match</th>
@@ -63,17 +63,17 @@ export default async function AdminResultsPage() {
                 <th className="px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-line-soft">
               {awaitingFixtures.map((f) => (
-                <tr key={f.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={f.id} className="hover:bg-ground transition-colors">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900">{f.competition}</p>
-                    <p className="text-gray-500 text-xs">{f.round}</p>
+                    <p className="font-medium text-ink">{f.competition}</p>
+                    <p className="text-ink-muted text-xs">{f.round}</p>
                   </td>
-                  <td className="px-4 py-3 font-medium text-gray-900">
-                    {f.homeTeam} <span className="text-gray-400 mx-1">vs</span> {f.awayTeam}
+                  <td className="px-4 py-3 font-medium text-ink">
+                    {f.homeTeam} <span className="text-ink-faint mx-1">vs</span> {f.awayTeam}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-ink-muted">
                     {new Date(f.kickoffTime).toLocaleString("en-GB", {
                       day: "2-digit",
                       month: "short",
@@ -90,7 +90,7 @@ export default async function AdminResultsPage() {
                     )}
                     <Link
                       href={`/admin/results/${f.id}`}
-                      className="text-[#1a7a3c] hover:underline font-medium"
+                      className="text-pitch hover:underline font-medium"
                     >
                       Enter Result →
                     </Link>

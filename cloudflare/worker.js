@@ -11,7 +11,7 @@
 const ORIGIN_HOST = "football-prediction-app-lze2bvdarq-nw.a.run.app";
 const PUBLIC_HOST = "scorersonline.uk";
 
-export default {
+const worker = {
   async fetch(request) {
     const url = new URL(request.url);
     url.hostname = ORIGIN_HOST;
@@ -22,3 +22,5 @@ export default {
     return fetch(proxied, { redirect: "manual" });
   },
 };
+
+export default worker;

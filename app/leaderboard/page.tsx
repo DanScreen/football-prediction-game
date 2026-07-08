@@ -12,7 +12,7 @@ function formColorClass(c: FormColor) {
     green: "bg-green-500",
     yellow: "bg-yellow-400",
     red: "bg-red-500",
-    grey: "bg-gray-200",
+    grey: "bg-line",
   }[c]
 }
 
@@ -155,15 +155,15 @@ export default async function LeaderboardPage() {
     i === 0
       ? "bg-amber-50 hover:bg-amber-100"
       : i === 1
-        ? "bg-slate-50 hover:bg-slate-100"
+        ? "bg-chip/60 hover:bg-chip"
         : i === 2
           ? "bg-orange-50 hover:bg-orange-100"
-          : "hover:bg-gray-50"
+          : "hover:bg-ground"
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">{league.name}</h1>
-      <p className="text-gray-500 text-sm mb-6">
+      <h1 className="text-2xl font-bold text-ink mb-1">{league.name}</h1>
+      <p className="text-ink-muted text-sm mb-6">
         {entries.length} player{entries.length !== 1 ? "s" : ""}
         {last5Rounds.length > 0 && (
           <>
@@ -173,61 +173,63 @@ export default async function LeaderboardPage() {
       </p>
 
       {ranked.length === 0 ? (
-        <div className="text-center py-16 text-gray-500">
+        <div className="text-center py-16 text-ink-muted">
           <p className="text-4xl mb-3">🏆</p>
           <p className="font-medium">No players yet.</p>
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm mb-4">
+          <div className="overflow-x-auto rounded-xl border border-line shadow-card mb-4 bg-surface">
             <table className="w-full text-sm">
-              <thead className="bg-gray-900 text-white text-xs uppercase tracking-wide">
+              <thead className="bg-board text-board-fore text-xs uppercase tracking-wider">
                 <tr>
-                  <th className="text-left px-4 py-3 w-10">#</th>
-                  <th className="text-left px-4 py-3">Player</th>
-                  <th className="text-right px-4 py-3">Points</th>
-                  <th className="text-right px-4 py-3 hidden sm:table-cell">Exact ⚽</th>
+                  <th className="text-left px-4 py-3 w-10 font-semibold text-board-muted">#</th>
+                  <th className="text-left px-4 py-3 font-semibold text-board-muted">Player</th>
+                  <th className="text-right px-4 py-3 font-semibold text-board-gold">Points</th>
+                  <th className="text-right px-4 py-3 hidden sm:table-cell font-semibold text-board-muted">
+                    Exact ⚽
+                  </th>
                   {last5Rounds.length > 0 && (
-                    <th className="text-right px-4 py-3 hidden md:table-cell">
+                    <th className="text-right px-4 py-3 hidden md:table-cell font-semibold text-board-muted">
                       Form{" "}
-                      <span className="normal-case font-normal text-gray-400">
+                      <span className="normal-case font-normal opacity-70">
                         (oldest → newest)
                       </span>
                     </th>
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-line-soft">
                 {ranked.map((entry, i) => (
                   <tr
                     key={entry.id}
                     className={`transition-colors animate-slide-up ${rowBg(i)}`}
                     style={{ animationDelay: `${i * 55}ms` }}
                   >
-                    <td className="px-4 py-3 font-bold text-gray-500 tabular-nums text-base">
+                    <td className="px-4 py-3 font-bold text-ink-muted tabular-nums text-base">
                       {rankDisplay(i)}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-semibold text-gray-900">{entry.displayName}</span>
+                      <span className="font-semibold text-ink">{entry.displayName}</span>
                       {entry.isBot && (
-                        <span className="ml-1.5 text-xs text-gray-400 font-normal">🤖</span>
+                        <span className="ml-1.5 text-xs text-ink-faint font-normal">🤖</span>
                       )}
                       {entry.grandSlams > 0 && (
                         <span
-                          className="ml-1.5 text-xs font-medium text-amber-600"
+                          className="ml-1.5 text-xs font-medium text-clock"
                           title={`${entry.grandSlams} Grand Slam${entry.grandSlams !== 1 ? "s" : ""}`}
                         >
                           🏆{entry.grandSlams > 1 ? `×${entry.grandSlams}` : ""}
                         </span>
                       )}
                       {entry.id === session.user.id && (
-                        <span className="ml-1.5 text-xs text-[#1a7a3c] font-medium">(you)</span>
+                        <span className="ml-1.5 text-xs text-pitch font-medium">(you)</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums text-gray-900 text-base">
+                    <td className="score-digits px-4 py-3 text-right text-ink text-base">
                       <AnimatedPoints value={entry.totalPoints} />
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-500 hidden sm:table-cell tabular-nums">
+                    <td className="px-4 py-3 text-right text-ink-muted hidden sm:table-cell tabular-nums">
                       {entry.exactCount}
                     </td>
                     {last5Rounds.length > 0 && (
@@ -250,14 +252,14 @@ export default async function LeaderboardPage() {
           </div>
 
           {last5Rounds.length > 0 && (
-            <div className="hidden md:flex items-center gap-5 text-xs text-gray-500 px-1">
-              <span className="font-semibold text-gray-700">Form key:</span>
+            <div className="hidden md:flex items-center gap-5 text-xs text-ink-muted px-1">
+              <span className="font-semibold text-ink-mid">Form key:</span>
               {(
                 [
                   ["bg-green-500", ">40% of pts"],
                   ["bg-yellow-400", "21–40%"],
                   ["bg-red-500", "≤20%"],
-                  ["bg-gray-200", "No picks"],
+                  ["bg-line", "No picks"],
                 ] as const
               ).map(([cls, label]) => (
                 <span key={label} className="flex items-center gap-1.5">

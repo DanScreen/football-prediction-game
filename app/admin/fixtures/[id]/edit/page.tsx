@@ -18,11 +18,11 @@ export default async function EditFixturePage({ params }: { params: Promise<{ id
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="mb-6">
-        <Link href="/admin/fixtures" className="text-sm text-gray-500 hover:text-gray-700">
+        <Link href="/admin/fixtures" className="text-sm text-ink-muted hover:text-ink-mid">
           ← Back to Fixtures
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 mt-2">Edit Fixture</h1>
-        <p className="text-gray-500 text-sm mt-0.5">
+        <h1 className="text-2xl font-bold text-ink mt-2">Edit Fixture</h1>
+        <p className="text-ink-muted text-sm mt-0.5">
           {fixture.homeTeam} vs {fixture.awayTeam}
         </p>
       </div>

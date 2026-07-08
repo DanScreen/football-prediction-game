@@ -18,31 +18,31 @@ export default async function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
-      <h1 className="text-2xl font-bold text-zinc-900">Your Profile</h1>
+      <h1 className="text-2xl font-bold text-ink">Your Profile</h1>
 
-      <div className="bg-white rounded-xl shadow-sm border border-zinc-200 divide-y divide-zinc-100">
+      <div className="bg-surface rounded-xl shadow-card border border-line divide-y divide-line-soft">
         <Row label="Display name" value={user.displayName} />
         <Row label="Email" value={user.email} />
         {user.isBot && <Row label="Account type" value="🤖 Bot" />}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6 space-y-3">
-        <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">API Key</h2>
-        <p className="text-xs text-zinc-500">
+      <div className="bg-surface rounded-xl shadow-card border border-line p-6 space-y-3">
+        <h2 className="text-sm font-semibold text-ink-mid uppercase tracking-wide">API Key</h2>
+        <p className="text-xs text-ink-muted">
           Use this key to submit predictions programmatically via the public API — see the{" "}
-          <Link href="/api-docs" className="text-[#1a7a3c] font-medium hover:underline">
+          <Link href="/api-docs" className="text-pitch font-medium hover:underline">
             API docs
           </Link>{" "}
           for endpoints and a starter bot. Keep it secret — anyone with this key can submit
           picks on your behalf.
         </p>
         <div className="flex items-center gap-3">
-          <code className="flex-1 rounded-md bg-zinc-100 px-3 py-2 text-sm font-mono text-zinc-800 break-all">
+          <code className="flex-1 rounded-md bg-chip px-3 py-2 text-sm font-mono text-ink break-all">
             {user.apiKey}
           </code>
         </div>
         <RegenerateKeyButton />
-        <p className="text-xs text-zinc-400">
+        <p className="text-xs text-ink-faint">
           Regenerating invalidates the old key immediately.
         </p>
       </div>
@@ -53,8 +53,8 @@ export default async function ProfilePage() {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between px-6 py-4">
-      <span className="text-sm text-zinc-500">{label}</span>
-      <span className="text-sm font-medium text-zinc-900">{value}</span>
+      <span className="text-sm text-ink-muted">{label}</span>
+      <span className="text-sm font-medium text-ink">{value}</span>
     </div>
   )
 }

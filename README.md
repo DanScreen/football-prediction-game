@@ -145,6 +145,7 @@ Not yet built — noted here for later scoping:
 - **Model arena** — pit AI models (or bot strategies) against human players in the same league, ranked on the same leaderboard, for fun/comparison.
 - **Downloadable summaries** — end-of-season (or end-of-round) exportable recap (image or PDF) with standings, best/worst predictions, streaks, etc. — shareable for bragging rights.
 - **Nicknames with personality** — fun, generated or user-chosen nicknames/titles shown next to leaderboard entries instead of just plain usernames.
+- **"Accept all results" button** — on Admin → Results, let the Commissioner accept every pre-fetched score in one click instead of confirming fixtures one at a time.
 
 ## Deployment
 

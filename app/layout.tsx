@@ -1,14 +1,7 @@
 import type { Metadata } from "next";
-import { Nunito, Inter, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/app/components/Header";
-
-const nunito = Nunito({
-  variable: "--font-nunito",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "600", "700", "800", "900"],
-});
 
 const inter = Inter({
   variable: "--font-inter",
@@ -23,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Football Prediction App",
+  title: "Scorers",
   description: "Predict match scores and compete with friends",
 };
 
@@ -35,9 +28,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${nunito.variable} ${inter.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-zinc-50">
+      <body className="min-h-full flex flex-col bg-ground">
         <Header />
         <main className="flex-1">{children}</main>
       </body>

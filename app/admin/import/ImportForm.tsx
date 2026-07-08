@@ -50,21 +50,21 @@ export default function ImportForm({
   return (
     <div className="space-y-6">
       {/* Step 1: AI fetch */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5">
-        <h2 className="font-semibold text-gray-900 mb-4">1. Find Fixtures</h2>
+      <div className="bg-surface border border-line rounded-xl p-5">
+        <h2 className="font-semibold text-ink mb-4">1. Find Fixtures</h2>
 
-        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">
+        <div className="mb-4 p-3 bg-ground rounded-lg">
+          <p className="text-xs font-medium text-ink-muted uppercase tracking-wide mb-0.5">
             Competition
           </p>
-          <p className="text-sm font-semibold text-gray-900">{leagueCompetition}</p>
+          <p className="text-sm font-semibold text-ink">{leagueCompetition}</p>
         </div>
 
         <form action={fetchAction} className="space-y-4">
           <input type="hidden" name="rounds" value={rounds} />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Rounds to fetch</label>
+            <label className="block text-sm font-medium text-ink-mid mb-2">Rounds to fetch</label>
             <div className="flex gap-2">
               {ROUNDS_OPTIONS.map((n) => (
                 <button
@@ -73,15 +73,15 @@ export default function ImportForm({
                   onClick={() => setRounds(n)}
                   className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${
                     rounds === n
-                      ? "bg-[#1a7a3c] text-white border-[#1a7a3c]"
-                      : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                      ? "bg-pitch text-white border-pitch"
+                      : "bg-surface text-ink-mid border-line-strong hover:border-ink-faint"
                   }`}
                 >
                   {n === 1 ? "1 round" : `${n} rounds`}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-400 mt-1.5">
+            <p className="text-xs text-ink-faint mt-1.5">
               Fetches upcoming unplayed fixtures for the current season
             </p>
           </div>
@@ -91,7 +91,7 @@ export default function ImportForm({
           <button
             type="submit"
             disabled={fetchPending || !apiEnabled}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="w-full bg-board-panel text-board-fore py-2 rounded-lg font-semibold text-sm hover:bg-board disabled:opacity-50 transition-colors"
           >
             {fetchPending ? "Fetching…" : "Fetch Fixtures"}
           </button>
@@ -100,9 +100,9 @@ export default function ImportForm({
 
       {/* Step 2: Review + confirm */}
       {proposed && (
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <h2 className="font-semibold text-gray-900 mb-1">2. Review & Import</h2>
-          <p className="text-gray-500 text-sm mb-4">
+        <div className="bg-surface border border-line rounded-xl p-5">
+          <h2 className="font-semibold text-ink mb-1">2. Review & Import</h2>
+          <p className="text-ink-muted text-sm mb-4">
             {proposed.competition} · {proposed.fixtures.length} fixture
             {proposed.fixtures.length !== 1 ? "s" : ""} found — deselect any to skip
           </p>
@@ -111,19 +111,19 @@ export default function ImportForm({
             {proposed.fixtures.map((f, i) => (
               <label
                 key={i}
-                className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-gray-50 cursor-pointer"
+                className="flex items-center gap-3 p-3 border border-line-soft rounded-lg hover:bg-ground cursor-pointer"
               >
                 <input
                   type="checkbox"
                   checked={!deselected.has(i)}
                   onChange={() => toggle(i)}
-                  className="h-4 w-4 accent-[#1a7a3c]"
+                  className="h-4 w-4 accent-pitch"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-ink">
                     {f.homeTeam} vs {f.awayTeam}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-ink-muted">
                     {f.round && <span className="mr-2 font-medium">{f.round}</span>}
                     {new Date(f.kickoffTime).toLocaleString("en-GB", {
                       day: "2-digit",
@@ -148,7 +148,7 @@ export default function ImportForm({
             <button
               type="submit"
               disabled={confirmPending || selectedFixtures.length === 0}
-              className="w-full bg-[#1a7a3c] text-white py-2 rounded-lg font-semibold text-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
+              className="w-full bg-pitch text-white py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
             >
               {confirmPending
                 ? "Importing…"

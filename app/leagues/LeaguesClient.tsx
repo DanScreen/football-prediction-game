@@ -19,16 +19,16 @@ export default function LeaguesClient({ hasLeagues }: { hasLeagues: boolean }) {
   const [selectedComp, setSelectedComp] = useState<string>("")
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="flex border-b border-gray-200">
+    <div className="bg-surface rounded-xl border border-line shadow-card overflow-hidden">
+      <div className="flex border-b border-line">
         {(["create", "join"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`flex-1 py-3 text-sm font-semibold transition-colors ${
               tab === t
-                ? "bg-white text-gray-900 border-b-2 border-[#1a7a3c]"
-                : "bg-gray-50 text-gray-500 hover:text-gray-700"
+                ? "bg-surface text-ink border-b-2 border-pitch"
+                : "bg-ground text-ink-muted hover:text-ink-mid"
             }`}
           >
             {t === "create" ? "⚽ Create a League" : "🔗 Join a League"}
@@ -40,26 +40,26 @@ export default function LeaguesClient({ hasLeagues }: { hasLeagues: boolean }) {
         {tab === "create" ? (
           <form action={createAction} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">League Name</label>
+              <label className="block text-sm font-medium text-ink-mid mb-1">League Name</label>
               <input
                 name="name"
                 required
                 maxLength={50}
                 placeholder="e.g. Office Predictions 2026"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a7a3c]"
+                className="w-full border border-line-strong rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pitch"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Competition</label>
+              <label className="block text-sm font-medium text-ink-mid mb-2">Competition</label>
               <div className="grid grid-cols-2 gap-3">
                 {COMPETITIONS.map((c) => (
                   <label
                     key={c.value}
                     className={`flex flex-col items-center gap-1.5 p-4 border-2 rounded-xl cursor-pointer transition-colors ${
                       selectedComp === c.value
-                        ? "border-[#1a7a3c] bg-green-50"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? "border-pitch bg-green-50"
+                        : "border-line hover:border-line-strong"
                     }`}
                   >
                     <input
@@ -71,7 +71,7 @@ export default function LeaguesClient({ hasLeagues }: { hasLeagues: boolean }) {
                       onChange={() => setSelectedComp(c.value)}
                     />
                     <span className="text-3xl">{c.flag}</span>
-                    <span className="text-sm font-semibold text-gray-900 text-center">
+                    <span className="text-sm font-semibold text-ink text-center">
                       {c.label}
                     </span>
                   </label>
@@ -79,7 +79,7 @@ export default function LeaguesClient({ hasLeagues }: { hasLeagues: boolean }) {
               </div>
             </div>
 
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-ink-muted">
               An invite code will be generated automatically. You can import fixtures from the Admin
               panel after creating your league.
             </p>
@@ -89,7 +89,7 @@ export default function LeaguesClient({ hasLeagues }: { hasLeagues: boolean }) {
             <button
               type="submit"
               disabled={createPending || !selectedComp}
-              className="w-full bg-[#1a7a3c] text-white py-2 rounded-lg font-semibold text-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
+              className="w-full bg-pitch text-white py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
             >
               {createPending ? "Creating league…" : "Create League"}
             </button>
@@ -97,23 +97,23 @@ export default function LeaguesClient({ hasLeagues }: { hasLeagues: boolean }) {
         ) : (
           <form action={joinAction} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Invite Code</label>
+              <label className="block text-sm font-medium text-ink-mid mb-1">Invite Code</label>
               <input
                 name="code"
                 required
                 maxLength={10}
                 placeholder="e.g. ABC123"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-[#1a7a3c]"
+                className="w-full border border-line-strong rounded-lg px-3 py-2 text-sm font-mono tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-pitch"
               />
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-ink-muted">
               Ask your league commissioner for the invite code.
             </p>
             {joinState.error && <p className="text-red-600 text-sm">{joinState.error}</p>}
             <button
               type="submit"
               disabled={joinPending}
-              className="w-full bg-[#1a7a3c] text-white py-2 rounded-lg font-semibold text-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
+              className="w-full bg-pitch text-white py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
             >
               {joinPending ? "Joining…" : "Join League"}
             </button>

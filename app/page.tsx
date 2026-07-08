@@ -23,13 +23,13 @@ export default async function DashboardPage() {
       return (
         <div className="max-w-md mx-auto px-4 py-24 text-center">
           <p className="text-5xl mb-4">⚽</p>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Football Prediction App</h1>
-          <p className="text-gray-500 mb-8">
+          <h1 className="text-2xl font-bold text-ink mb-2">Welcome to Scorers</h1>
+          <p className="text-ink-muted mb-8">
             Create a new league or join one with an invite code to get started.
           </p>
           <Link
             href="/leagues"
-            className="inline-block bg-[#1a7a3c] text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors"
+            className="inline-block bg-pitch text-white px-6 py-3 rounded-xl font-semibold shadow-card hover:bg-pitch-deep transition-colors"
           >
             Get Started →
           </Link>
@@ -135,12 +135,12 @@ export default async function DashboardPage() {
       {/* League header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{league.name}</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-2xl font-bold text-ink">{league.name}</h1>
+          <p className="text-sm text-ink-muted mt-0.5">
             {league.memberships.length} member{league.memberships.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Link href="/leagues" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+        <Link href="/leagues" className="text-sm text-ink-muted hover:text-ink-mid transition-colors">
           Switch league →
         </Link>
       </div>
@@ -148,31 +148,31 @@ export default async function DashboardPage() {
       {/* Performance card */}
       {scoredPredictions.length > 0 && (
         <div className="grid grid-cols-3 gap-3 mb-8">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 text-center">
-            <p className="text-2xl font-bold text-gray-900">
+          <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
+            <p className="score-digits text-2xl text-ink">
               {myRank === 1 ? "🥇" : myRank === 2 ? "🥈" : myRank === 3 ? "🥉" : `#${myRank}`}
             </p>
-            <p className="text-xs text-gray-500 mt-0.5">Rank</p>
+            <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">Rank</p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 text-center">
-            <p className="text-2xl font-bold text-gray-900">{myPoints}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Points</p>
+          <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
+            <p className="score-digits text-2xl text-ink">{myPoints}</p>
+            <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">Points</p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 text-center">
-            <p className="text-2xl font-bold text-gray-900">{myExact}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Exact ⚽</p>
+          <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
+            <p className="score-digits text-2xl text-ink">{myExact}</p>
+            <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">Exact ⚽</p>
           </div>
         </div>
       )}
 
       {/* Open fixtures */}
-      <h2 className="text-lg font-bold text-gray-900 mb-1">Upcoming Fixtures</h2>
-      <p className="text-gray-500 text-sm mb-4">Submit your predictions before each kickoff.</p>
+      <h2 className="text-lg font-bold text-ink mb-1">Upcoming Fixtures</h2>
+      <p className="text-ink-muted text-sm mb-4">Submit your predictions before each kickoff.</p>
 
       {open.length === 0 ? (
-        <div className="text-center py-12 text-gray-400 mb-8">
+        <div className="text-center py-12 text-ink-faint mb-8">
           <p className="text-4xl mb-2">📅</p>
-          <p className="font-medium text-gray-600">No upcoming fixtures.</p>
+          <p className="font-medium text-ink-muted">No upcoming fixtures.</p>
           <p className="text-sm mt-1">
             {league.memberships.some((m) => m.userId === userId)
               ? "Check back soon — the Commissioner will add matches."
@@ -186,41 +186,38 @@ export default async function DashboardPage() {
             return (
               <div
                 key={f.id}
-                className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4"
+                className="bg-surface rounded-xl border border-line shadow-card overflow-hidden"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">
-                      {f.competition} · {f.round}
-                    </p>
-                    <p className="text-lg font-bold text-gray-900">
-                      {f.homeTeam}{" "}
-                      <span className="text-gray-400 font-normal">vs</span>{" "}
-                      {f.awayTeam}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {new Date(f.kickoffTime).toLocaleString("en-GB", {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
+                <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-2.5">
+                  <p className="min-w-0 truncate text-xs font-medium text-ink-muted">
+                    {f.competition} · {f.round} ·{" "}
+                    {new Date(f.kickoffTime).toLocaleString("en-GB", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                  <div className="shrink-0">
                     <Countdown kickoffTime={f.kickoffTime.toISOString()} />
-                    <p className="text-xs text-gray-400 mt-0.5">until deadline</p>
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-3">
-                  <span className="text-xs text-gray-500 font-medium">Your pick:</span>
-                  <PredictionInput
-                    fixtureId={f.id}
-                    savedHome={myPick?.predictedHomeScore}
-                    savedAway={myPick?.predictedAwayScore}
-                  />
+                <div className="flex flex-wrap items-center gap-3 px-5 py-4">
+                  <p className="order-1 min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">
+                    {f.homeTeam}
+                  </p>
+                  <div className="order-3 flex w-full justify-center sm:order-2 sm:w-auto">
+                    <PredictionInput
+                      fixtureId={f.id}
+                      savedHome={myPick?.predictedHomeScore}
+                      savedAway={myPick?.predictedAwayScore}
+                    />
+                  </div>
+                  <p className="order-2 min-w-0 flex-1 truncate text-right text-[15px] font-semibold text-ink sm:order-3">
+                    {f.awayTeam}
+                  </p>
                 </div>
               </div>
             )
@@ -231,8 +228,8 @@ export default async function DashboardPage() {
       {/* Kicked off — show everyone's picks */}
       {locked.length > 0 && (
         <>
-          <h2 className="text-lg font-bold text-gray-900 mb-1">Kicked Off</h2>
-          <p className="text-gray-500 text-sm mb-4">Predictions locked — see what everyone picked.</p>
+          <h2 className="text-lg font-bold text-ink mb-1">Kicked Off</h2>
+          <p className="text-ink-muted text-sm mb-4">Predictions locked — see what everyone picked.</p>
           <div className="space-y-3">
             {locked.map((f) => {
               const myPick = f.predictions.find((p) => p.userId === userId)
@@ -241,58 +238,65 @@ export default async function DashboardPage() {
               return (
                 <div
                   key={f.id}
-                  className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 opacity-90"
+                  className="bg-surface rounded-xl border border-line shadow-card overflow-hidden"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">
-                        {f.competition} · {f.round}
-                      </p>
-                      <p className="text-lg font-bold text-gray-900">
-                        {f.homeTeam}{" "}
-                        <span className="text-gray-400 font-normal">vs</span>{" "}
-                        {f.awayTeam}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {new Date(f.kickoffTime).toLocaleString("en-GB", {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      {f.proposedHomeScore !== null && f.proposedAwayScore !== null ? (
-                        <>
-                          <p className="font-bold text-lg tabular-nums text-gray-900">
-                            {f.proposedHomeScore} – {f.proposedAwayScore}
-                          </p>
-                          <p className="text-xs text-amber-600 font-medium">
-                            ⏳ awaiting confirmation
-                          </p>
-                        </>
-                      ) : (
-                        <span className="text-xs text-red-500 font-semibold">🔒 Locked</span>
-                      )}
-                    </div>
+                  <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-2.5">
+                    <p className="min-w-0 truncate text-xs font-medium text-ink-muted">
+                      {f.competition} · {f.round} ·{" "}
+                      {new Date(f.kickoffTime).toLocaleString("en-GB", {
+                        weekday: "short",
+                        day: "numeric",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                    {f.proposedHomeScore === null && (
+                      <span className="shrink-0 text-xs font-semibold text-red-500">🔒 Locked</span>
+                    )}
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-3 px-5 pt-4 pb-1">
+                    <p className="order-1 min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">
+                      {f.homeTeam}
+                    </p>
+                    <div className="order-3 flex w-full flex-col items-center sm:order-2 sm:w-auto">
+                      {f.proposedHomeScore !== null && f.proposedAwayScore !== null ? (
+                        <>
+                          <span className="score-digits inline-flex items-center gap-2 rounded-lg bg-board px-3.5 py-1.5 text-xl text-board-gold">
+                            {f.proposedHomeScore}
+                            <span className="text-board-muted">–</span>
+                            {f.proposedAwayScore}
+                          </span>
+                          <span className="mt-1 text-xs font-medium text-clock">
+                            awaiting confirmation
+                          </span>
+                        </>
+                      ) : (
+                        <span className="score-digits inline-flex items-center gap-2 rounded-lg bg-board px-3.5 py-1.5 text-xl text-board-muted">
+                          ·<span>–</span>·
+                        </span>
+                      )}
+                    </div>
+                    <p className="order-2 min-w-0 flex-1 truncate text-right text-[15px] font-semibold text-ink sm:order-3">
+                      {f.awayTeam}
+                    </p>
+                  </div>
+
+                  <div className="mx-5 mt-3 mb-4 border-t border-line-soft pt-3 space-y-1.5">
                     {myPick && (
                       <div className="flex items-center gap-2 text-sm">
-                        <span className="text-[#1a7a3c] font-semibold w-24 truncate">You</span>
+                        <span className="text-pitch font-semibold w-24 truncate">You</span>
                         <span className="font-bold tabular-nums">
                           {myPick.predictedHomeScore} – {myPick.predictedAwayScore}
                         </span>
                       </div>
                     )}
                     {!myPick && (
-                      <p className="text-xs text-gray-400 italic">You didn&apos;t submit a prediction.</p>
+                      <p className="text-xs text-ink-faint italic">You didn&apos;t submit a prediction.</p>
                     )}
                     {others.map((p) => (
-                      <div key={p.id} className="flex items-center gap-2 text-sm text-gray-600">
+                      <div key={p.id} className="flex items-center gap-2 text-sm text-ink-muted">
                         <span className="w-24 truncate">
                           {p.user.isBot ? "🤖 " : ""}
                           {p.user.displayName}
@@ -303,13 +307,13 @@ export default async function DashboardPage() {
                       </div>
                     ))}
                     {f.predictions.length === 0 && (
-                      <p className="text-xs text-gray-400 italic">No predictions submitted.</p>
+                      <p className="text-xs text-ink-faint italic">No predictions submitted.</p>
                     )}
                   </div>
 
                   {f.proposedHomeScore === null &&
                     f.kickoffTime.getTime() + RESULT_DELAY_MS <= now.getTime() && (
-                      <div className="mt-3 pt-3 border-t border-gray-100">
+                      <div className="mx-5 mb-4 border-t border-line-soft pt-3">
                         <RequestResultButton fixtureId={f.id} />
                       </div>
                     )}

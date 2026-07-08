@@ -82,40 +82,40 @@ export default async function MyPredictionsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">My Predictions</h1>
-      <p className="text-gray-500 text-sm mb-6">Your full prediction history in this league.</p>
+      <h1 className="text-2xl font-bold text-ink mb-1">My Predictions</h1>
+      <p className="text-ink-muted text-sm mb-6">Your full prediction history in this league.</p>
 
       {predictions.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-ink-faint">
           <p className="text-4xl mb-3">🎯</p>
-          <p className="font-medium text-gray-600">No predictions yet.</p>
+          <p className="font-medium text-ink-muted">No predictions yet.</p>
           <p className="text-sm mt-1">Head to the dashboard to submit your first pick.</p>
         </div>
       ) : (
         <>
           <div className="grid grid-cols-3 gap-3 mb-8">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 text-center">
-              <p className="text-2xl font-bold text-gray-900 tabular-nums">{totalPoints}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Total points</p>
+            <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
+              <p className="score-digits text-2xl text-ink">{totalPoints}</p>
+              <p className="text-xs text-ink-muted mt-0.5">Total points</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 text-center">
-              <p className="text-2xl font-bold text-gray-900 tabular-nums">{totalExact}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Exact ⚽</p>
+            <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
+              <p className="score-digits text-2xl text-ink">{totalExact}</p>
+              <p className="text-xs text-ink-muted mt-0.5">Exact ⚽</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 text-center">
+            <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
               {bestRound ? (
                 <>
-                  <p className="text-2xl font-bold text-gray-900 tabular-nums">
+                  <p className="score-digits text-2xl text-ink">
                     {bestRound.subtotal}
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5 truncate" title={bestRound.round}>
+                  <p className="text-xs text-ink-muted mt-0.5 truncate" title={bestRound.round}>
                     Best: {bestRound.round}
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="text-2xl font-bold text-gray-400">–</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Best round</p>
+                  <p className="text-2xl font-bold text-ink-faint">–</p>
+                  <p className="text-xs text-ink-muted mt-0.5">Best round</p>
                 </>
               )}
             </div>
@@ -125,17 +125,17 @@ export default async function MyPredictionsPage() {
             {roundStats.map((r) => (
               <section key={r.key}>
                 <div className="flex items-baseline justify-between mb-2 px-1">
-                  <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+                  <h2 className="text-sm font-bold text-ink-mid uppercase tracking-wide">
                     {r.competition} · {r.round}
                   </h2>
                   {r.scoredCount > 0 && (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-ink-muted">
                       {r.bonus > 0 && (
-                        <span className="text-amber-600 font-semibold mr-2">
+                        <span className="text-clock font-semibold mr-2">
                           🏆 Grand Slam +{r.bonus}
                         </span>
                       )}
-                      <span className="font-bold text-gray-900 tabular-nums">{r.subtotal}</span>{" "}
+                      <span className="font-bold text-ink tabular-nums">{r.subtotal}</span>{" "}
                       pts
                     </p>
                   )}
@@ -154,21 +154,21 @@ export default async function MyPredictionsPage() {
                           ? "border-l-red-400"
                           : baseScore !== null
                             ? "border-l-blue-400"
-                            : "border-l-gray-200"
+                            : "border-l-line-strong"
 
                     return (
                       <div
                         key={p.id}
-                        className={`bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 ${accentBorder} px-5 py-4`}
+                        className={`bg-surface rounded-xl shadow-card border border-line border-l-4 ${accentBorder} px-5 py-4`}
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="font-bold text-gray-900 truncate">
+                            <p className="font-bold text-ink truncate">
                               {f.homeTeam}{" "}
-                              <span className="text-gray-400 font-normal">vs</span>{" "}
+                              <span className="text-ink-faint font-normal">vs</span>{" "}
                               {f.awayTeam}
                             </p>
-                            <p className="text-xs text-gray-500 mt-0.5">
+                            <p className="text-xs text-ink-muted mt-0.5">
                               {new Date(f.kickoffTime).toLocaleString("en-GB", {
                                 day: "numeric",
                                 month: "short",
@@ -179,25 +179,25 @@ export default async function MyPredictionsPage() {
 
                           <div className="flex items-center gap-5 shrink-0">
                             <div>
-                              <p className="text-xs text-gray-400 mb-0.5">My pick</p>
-                              <p className="font-bold text-lg tabular-nums">
+                              <p className="text-xs text-ink-faint mb-0.5">My pick</p>
+                              <p className="score-digits text-lg">
                                 {p.predictedHomeScore} – {p.predictedAwayScore}
                               </p>
                             </div>
 
                             <div>
-                              <p className="text-xs text-gray-400 mb-0.5">Result</p>
+                              <p className="text-xs text-ink-faint mb-0.5">Result</p>
                               {isCompleted ? (
-                                <p className="font-bold text-lg tabular-nums">
+                                <p className="score-digits text-lg">
                                   {f.actualHomeScore} – {f.actualAwayScore}
                                 </p>
                               ) : (
-                                <p className="text-sm text-gray-400 italic">Pending</p>
+                                <p className="text-sm text-ink-faint italic">Pending</p>
                               )}
                             </div>
 
                             <div className="min-w-[3rem]">
-                              <p className="text-xs text-gray-400 mb-0.5">Pts</p>
+                              <p className="text-xs text-ink-faint mb-0.5">Pts</p>
                               {isCompleted && baseScore !== null ? (
                                 <div className="flex flex-col items-start gap-1">
                                   <PointsBadge points={baseScore} />
@@ -208,7 +208,7 @@ export default async function MyPredictionsPage() {
                                   )}
                                 </div>
                               ) : (
-                                <p className="text-sm text-gray-400">–</p>
+                                <p className="text-sm text-ink-faint">–</p>
                               )}
                             </div>
                           </div>
@@ -234,7 +234,7 @@ function PointsBadge({ points }: { points: number }) {
         ? "bg-blue-100 text-blue-700 border border-blue-200"
         : points === 1
           ? "bg-yellow-100 text-yellow-700 border border-yellow-200"
-          : "bg-gray-100 text-gray-500 border border-gray-200"
+          : "bg-chip text-ink-muted border border-line"
 
   return (
     <span className={`inline-block px-2 py-0.5 rounded-full text-sm font-bold ${color}`}>

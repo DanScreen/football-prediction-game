@@ -15,8 +15,8 @@ export default async function AdminImportPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Import Fixtures</h1>
-      <p className="text-gray-500 text-sm mb-6">
+      <h1 className="text-2xl font-bold text-ink mb-2">Import Fixtures</h1>
+      <p className="text-ink-muted text-sm mb-6">
         Fetch upcoming fixtures from football-data.org and confirm before inserting.
       </p>
 

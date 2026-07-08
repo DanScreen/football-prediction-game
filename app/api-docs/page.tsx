@@ -42,34 +42,34 @@ export default async function ApiDocsPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900 mb-2">🤖 Bot API</h1>
-        <p className="text-sm text-zinc-600">
+        <h1 className="text-2xl font-bold text-ink mb-2">🤖 Bot API</h1>
+        <p className="text-sm text-ink-muted">
           Submit predictions programmatically — point your model at the same league as everyone
-          else. All endpoints live under <code className="bg-zinc-100 px-1.5 py-0.5 rounded text-xs">/api/v1/</code>{" "}
+          else. All endpoints live under <code className="bg-chip px-1.5 py-0.5 rounded text-xs">/api/v1/</code>{" "}
           and authenticate with the API key from your{" "}
-          <Link href="/profile" className="text-[#1a7a3c] font-medium hover:underline">
+          <Link href="/profile" className="text-pitch font-medium hover:underline">
             profile page
           </Link>
           :
         </p>
-        <pre className="mt-3 bg-zinc-900 text-zinc-100 rounded-xl p-4 text-xs overflow-x-auto">
+        <pre className="mt-3 bg-board text-board-fore rounded-xl p-4 text-xs overflow-x-auto">
           Authorization: Bearer YOUR_API_KEY
         </pre>
       </div>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-zinc-900">Endpoints</h2>
+        <h2 className="text-lg font-bold text-ink">Endpoints</h2>
 
         <Endpoint method="GET" path="/api/v1/fixtures?status=open">
           Fixtures still open for predictions (kickoff in the future), oldest first. Omit{" "}
-          <code className="bg-zinc-100 px-1 rounded">status=open</code> to include locked and
-          completed fixtures. Optional <code className="bg-zinc-100 px-1 rounded">?leagueId=</code>{" "}
+          <code className="bg-chip px-1 rounded">status=open</code> to include locked and
+          completed fixtures. Optional <code className="bg-chip px-1 rounded">?leagueId=</code>{" "}
           scopes to a specific league you belong to (defaults to your first league).
         </Endpoint>
 
         <Endpoint method="POST" path="/api/v1/predictions">
           Create or update your prediction. Body:{" "}
-          <code className="bg-zinc-100 px-1 rounded">
+          <code className="bg-chip px-1 rounded">
             {"{ fixtureId, homeScore, awayScore }"}
           </code>{" "}
           — non-negative integers. Rejected with 422 once the fixture has kicked off. Your pick
@@ -87,18 +87,18 @@ export default async function ApiDocsPage() {
       </section>
 
       <section>
-        <h2 className="text-lg font-bold text-zinc-900 mb-3">Quick start — curl</h2>
-        <pre className="bg-zinc-900 text-zinc-100 rounded-xl p-4 text-xs overflow-x-auto mb-3">
+        <h2 className="text-lg font-bold text-ink mb-3">Quick start — curl</h2>
+        <pre className="bg-board text-board-fore rounded-xl p-4 text-xs overflow-x-auto mb-3">
           {CURL_FIXTURES}
         </pre>
-        <pre className="bg-zinc-900 text-zinc-100 rounded-xl p-4 text-xs overflow-x-auto">
+        <pre className="bg-board text-board-fore rounded-xl p-4 text-xs overflow-x-auto">
           {CURL_SUBMIT}
         </pre>
       </section>
 
       <section>
-        <h2 className="text-lg font-bold text-zinc-900 mb-3">A minimal Python bot</h2>
-        <pre className="bg-zinc-900 text-zinc-100 rounded-xl p-4 text-xs overflow-x-auto">
+        <h2 className="text-lg font-bold text-ink mb-3">A minimal Python bot</h2>
+        <pre className="bg-board text-board-fore rounded-xl p-4 text-xs overflow-x-auto">
           {PYTHON_BOT}
         </pre>
       </section>
@@ -125,7 +125,7 @@ function Endpoint({
   children: React.ReactNode
 }) {
   return (
-    <div className="bg-white border border-zinc-200 rounded-xl p-4">
+    <div className="bg-surface border border-line rounded-xl p-4">
       <p className="font-mono text-sm mb-1.5">
         <span
           className={`inline-block w-14 text-center text-xs font-bold rounded px-1.5 py-0.5 mr-2 ${
@@ -136,7 +136,7 @@ function Endpoint({
         </span>
         {path}
       </p>
-      <p className="text-xs text-zinc-600 leading-relaxed">{children}</p>
+      <p className="text-xs text-ink-muted leading-relaxed">{children}</p>
     </div>
   )
 }

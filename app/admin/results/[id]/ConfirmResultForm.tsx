@@ -65,7 +65,7 @@ export default function ConfirmResultForm({
                   <button
                     type="submit"
                     disabled={confirmPending}
-                    className="w-full bg-[#1a7a3c] text-white py-2 rounded-lg font-semibold text-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
+                    className="w-full bg-pitch text-white py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
                   >
                     {confirmPending ? "Saving…" : "✓ Accept"}
                   </button>
@@ -78,7 +78,7 @@ export default function ConfirmResultForm({
                       forProposed: proposed,
                     })
                   }
-                  className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg font-semibold text-sm hover:bg-gray-50 transition-colors"
+                  className="flex-1 border border-line-strong text-ink-mid py-2 rounded-lg font-semibold text-sm hover:bg-ground transition-colors"
                 >
                   Edit
                 </button>
@@ -103,26 +103,26 @@ export default function ConfirmResultForm({
                 <input type="hidden" name="source" value="MANUAL" />
                 <div className="flex items-end gap-3 mb-4">
                   <div className="flex-1">
-                    <label className="block text-xs text-gray-500 mb-1 truncate">{homeTeam}</label>
+                    <label className="block text-xs text-ink-muted mb-1 truncate">{homeTeam}</label>
                     <input
                       type="number"
                       name="homeScore"
                       min={0}
                       value={editState!.home}
                       onChange={(e) => setEditState((s) => s && { ...s, home: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-line-strong rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                  <span className="text-gray-400 font-bold pb-2">–</span>
+                  <span className="text-ink-faint font-bold pb-2">–</span>
                   <div className="flex-1">
-                    <label className="block text-xs text-gray-500 mb-1 truncate">{awayTeam}</label>
+                    <label className="block text-xs text-ink-muted mb-1 truncate">{awayTeam}</label>
                     <input
                       type="number"
                       name="awayScore"
                       min={0}
                       value={editState!.away}
                       onChange={(e) => setEditState((s) => s && { ...s, away: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-line-strong rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -133,14 +133,14 @@ export default function ConfirmResultForm({
                   <button
                     type="submit"
                     disabled={confirmPending}
-                    className="flex-1 bg-[#1a7a3c] text-white py-2 rounded-lg font-semibold text-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
+                    className="flex-1 bg-pitch text-white py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
                   >
                     {confirmPending ? "Saving…" : "Confirm"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setEditState(null)}
-                    className="border border-gray-300 text-gray-700 py-2 px-4 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                    className="border border-line-strong text-ink-mid py-2 px-4 rounded-lg text-sm hover:bg-ground transition-colors"
                   >
                     Cancel
                   </button>
@@ -158,7 +158,7 @@ export default function ConfirmResultForm({
                 <button
                   type="submit"
                   disabled={lookupPending}
-                  className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  className="w-full bg-board-panel text-board-fore py-2 rounded-lg font-semibold text-sm hover:bg-board disabled:opacity-50 transition-colors"
                 >
                   {lookupPending ? "Searching…" : "🔍 Look Up Result"}
                 </button>
@@ -169,8 +169,8 @@ export default function ConfirmResultForm({
       )}
 
       {/* Manual Entry */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5">
-        <h2 className="font-semibold text-gray-900 mb-3">Manual Entry</h2>
+      <div className="bg-surface border border-line rounded-xl p-5">
+        <h2 className="font-semibold text-ink mb-3">Manual Entry</h2>
         {!apiEnabled && confirmState.error && (
           <p className="text-red-600 text-sm mb-3">{confirmState.error}</p>
         )}
@@ -179,24 +179,24 @@ export default function ConfirmResultForm({
           <input type="hidden" name="source" value="MANUAL" />
           <div className="flex items-end gap-3 mb-4">
             <div className="flex-1">
-              <label className="block text-xs text-gray-500 mb-1 truncate">{homeTeam}</label>
+              <label className="block text-xs text-ink-muted mb-1 truncate">{homeTeam}</label>
               <input
                 type="number"
                 name="homeScore"
                 min={0}
                 placeholder="0"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#1a7a3c]"
+                className="w-full border border-line-strong rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-pitch"
               />
             </div>
-            <span className="text-gray-400 font-bold pb-2">–</span>
+            <span className="text-ink-faint font-bold pb-2">–</span>
             <div className="flex-1">
-              <label className="block text-xs text-gray-500 mb-1 truncate">{awayTeam}</label>
+              <label className="block text-xs text-ink-muted mb-1 truncate">{awayTeam}</label>
               <input
                 type="number"
                 name="awayScore"
                 min={0}
                 placeholder="0"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#1a7a3c]"
+                className="w-full border border-line-strong rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-pitch"
               />
             </div>
           </div>
@@ -206,7 +206,7 @@ export default function ConfirmResultForm({
           <button
             type="submit"
             disabled={confirmPending}
-            className="w-full bg-[#1a7a3c] text-white py-2 rounded-lg font-semibold text-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
+            className="w-full bg-pitch text-white py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
           >
             {confirmPending ? "Saving…" : "Save Result"}
           </button>
