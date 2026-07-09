@@ -144,6 +144,22 @@ describe("API-backed fetchers", () => {
       expect(fixture.awayTeam).toBe("Chelsea FC")
     })
 
+    it("skips knockout fixtures with undecided (null) teams", async () => {
+      respondWith([
+        fdMatch({ home: fdTeam("A"), away: fdTeam("B"), stage: "GROUP_STAGE", group: "GROUP_A", matchday: 1 }),
+        // Semi-final teams not yet known — football-data.org returns null names
+        fdMatch({
+          home: { id: null, name: null, shortName: null, tla: null } as never,
+          away: { id: null, name: null, shortName: null, tla: null } as never,
+          stage: "SEMI_FINALS",
+          matchday: null,
+        }),
+      ])
+      const fixtures = await fetchUpcomingFixtures("WC", 3)
+      expect(fixtures).toHaveLength(1)
+      expect(fixtures[0].homeTeam).toBe("A")
+    })
+
     it("labels World Cup group and knockout rounds", async () => {
       respondWith([
         fdMatch({ home: fdTeam("A"), away: fdTeam("B"), stage: "GROUP_STAGE", group: "GROUP_A", matchday: 1 }),

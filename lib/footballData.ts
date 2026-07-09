@@ -92,11 +92,14 @@ export async function fetchUpcomingFixtures(
   return matches
     .filter((m) => allowedKeys.has(roundKey(m)))
     .map((m) => ({
-      homeTeam: m.homeTeam.shortName || m.homeTeam.name,
-      awayTeam: m.awayTeam.shortName || m.awayTeam.name,
+      homeTeam: m.homeTeam?.shortName || m.homeTeam?.name || "",
+      awayTeam: m.awayTeam?.shortName || m.awayTeam?.name || "",
       kickoffTime: m.utcDate,
       round: formatRound(m),
     }))
+    // Knockout fixtures with undecided teams (e.g. World Cup semi-finals) come
+    // back with null team names — skip them until the teams are known.
+    .filter((f) => f.homeTeam !== "" && f.awayTeam !== "")
 }
 
 function teamNameMatches(team: FDTeam, query: string): boolean {
