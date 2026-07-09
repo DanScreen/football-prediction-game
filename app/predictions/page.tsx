@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { getActiveLeagueId } from "@/lib/activeLeague"
 import { scoreOnePrediction } from "@/lib/scoring"
+import { provisionalScore, provisionalPoints } from "@/lib/provisional"
 
 export default async function MyPredictionsPage() {
   const session = await auth()
@@ -11,11 +12,18 @@ export default async function MyPredictionsPage() {
   const activeLeagueId = await getActiveLeagueId()
   if (!activeLeagueId) redirect("/leagues")
 
+  const league = await prisma.league.findUnique({
+    where: { id: activeLeagueId },
+    select: { competitionId: true, competition: { select: { name: true } } },
+  })
+  if (!league) redirect("/leagues")
+  const competitionName = league.competition.name
+
   const [predictions, bonusAwards] = await Promise.all([
     prisma.prediction.findMany({
       where: {
         userId: session.user.id,
-        fixture: { leagueId: activeLeagueId },
+        fixture: { competitionId: league.competitionId },
       },
       orderBy: { fixture: { kickoffTime: "desc" } },
       include: { fixture: true },
@@ -25,22 +33,21 @@ export default async function MyPredictionsPage() {
     }),
   ])
 
-  const bonusByRound = new Map(bonusAwards.map((b) => [`${b.competition}||${b.round}`, b.points]))
+  const bonusByRound = new Map(bonusAwards.map((b) => [b.round, b.points]))
 
   // Group into rounds, preserving the newest-first ordering
   type Round = {
     key: string
-    competition: string
     round: string
     predictions: typeof predictions
   }
   const rounds: Round[] = []
   const roundByKey = new Map<string, Round>()
   for (const p of predictions) {
-    const key = `${p.fixture.competition}||${p.fixture.round}`
+    const key = p.fixture.round
     let r = roundByKey.get(key)
     if (!r) {
-      r = { key, competition: p.fixture.competition, round: p.fixture.round, predictions: [] }
+      r = { key, round: p.fixture.round, predictions: [] }
       roundByKey.set(key, r)
       rounds.push(r)
     }
@@ -61,17 +68,22 @@ export default async function MyPredictionsPage() {
 
   const roundStats = rounds.map((r) => {
     const scored = r.predictions.map(baseScoreOf).filter((s): s is number => s !== null)
+    const provisional = r.predictions
+      .map((p) => provisionalPoints(p, p.fixture))
+      .filter((s): s is number => s !== null)
     const bonus = bonusByRound.get(r.key) ?? 0
     return {
       ...r,
       scoredCount: scored.length,
       exactCount: scored.filter((s) => s === 3).length,
       subtotal: scored.reduce((a, b) => a + b, 0) + bonus,
+      provisionalSubtotal: provisional.reduce((a, b) => a + b, 0),
       bonus,
     }
   })
 
   const totalPoints = roundStats.reduce((sum, r) => sum + r.subtotal, 0)
+  const totalProvisional = roundStats.reduce((sum, r) => sum + r.provisionalSubtotal, 0)
   const totalExact = roundStats.reduce((sum, r) => sum + r.exactCount, 0)
   const bestRound = roundStats
     .filter((r) => r.scoredCount > 0)
@@ -97,6 +109,11 @@ export default async function MyPredictionsPage() {
             <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
               <p className="score-digits text-2xl text-ink">{totalPoints}</p>
               <p className="text-xs text-ink-muted mt-0.5">Total points</p>
+              {totalProvisional > 0 && (
+                <p className="text-xs font-semibold text-clock mt-0.5">
+                  +{totalProvisional} prov.
+                </p>
+              )}
             </div>
             <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
               <p className="score-digits text-2xl text-ink">{totalExact}</p>
@@ -126,9 +143,9 @@ export default async function MyPredictionsPage() {
               <section key={r.key}>
                 <div className="flex items-baseline justify-between mb-2 px-1">
                   <h2 className="text-sm font-bold text-ink-mid uppercase tracking-wide">
-                    {r.competition} · {r.round}
+                    {competitionName} · {r.round}
                   </h2>
-                  {r.scoredCount > 0 && (
+                  {r.scoredCount > 0 ? (
                     <p className="text-sm text-ink-muted">
                       {r.bonus > 0 && (
                         <span className="text-clock font-semibold mr-2">
@@ -138,6 +155,12 @@ export default async function MyPredictionsPage() {
                       <span className="font-bold text-ink tabular-nums">{r.subtotal}</span>{" "}
                       pts
                     </p>
+                  ) : (
+                    r.provisionalSubtotal > 0 && (
+                      <p className="text-sm text-clock font-semibold tabular-nums">
+                        {r.provisionalSubtotal} pts prov.
+                      </p>
+                    )
                   )}
                 </div>
 
@@ -146,6 +169,8 @@ export default async function MyPredictionsPage() {
                     const f = p.fixture
                     const isCompleted = f.status === "COMPLETED"
                     const baseScore = baseScoreOf(p)
+                    const provScore = provisionalScore(f)
+                    const provPts = provisionalPoints(p, f)
 
                     const accentBorder =
                       baseScore === 3
@@ -154,7 +179,9 @@ export default async function MyPredictionsPage() {
                           ? "border-l-red-400"
                           : baseScore !== null
                             ? "border-l-blue-400"
-                            : "border-l-line-strong"
+                            : provScore !== null
+                              ? "border-l-clock"
+                              : "border-l-line-strong"
 
                     return (
                       <div
@@ -191,6 +218,15 @@ export default async function MyPredictionsPage() {
                                 <p className="score-digits text-lg">
                                   {f.actualHomeScore} – {f.actualAwayScore}
                                 </p>
+                              ) : provScore !== null ? (
+                                <div>
+                                  <p className="score-digits text-lg text-clock">
+                                    {provScore.home} – {provScore.away}
+                                  </p>
+                                  <p className="text-[10px] font-semibold text-clock uppercase tracking-wide -mt-0.5">
+                                    Provisional
+                                  </p>
+                                </div>
                               ) : (
                                 <p className="text-sm text-ink-faint italic">Pending</p>
                               )}
@@ -207,6 +243,10 @@ export default async function MyPredictionsPage() {
                                     </span>
                                   )}
                                 </div>
+                              ) : provPts !== null ? (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-sm font-bold bg-clock-tint text-clock border border-clock/25">
+                                  {provPts}
+                                </span>
                               ) : (
                                 <p className="text-sm text-ink-faint">–</p>
                               )}

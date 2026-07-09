@@ -8,6 +8,7 @@ import Countdown from "@/app/components/Countdown"
 import PredictionInput from "@/app/components/PredictionInput"
 import RequestResultButton from "@/app/components/RequestResultButton"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
+import { provisionalPoints } from "@/lib/provisional"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -42,7 +43,10 @@ export default async function DashboardPage() {
 
   const league = await prisma.league.findUnique({
     where: { id: activeLeagueId },
-    include: { memberships: { select: { userId: true } } },
+    include: {
+      memberships: { select: { userId: true } },
+      competition: { select: { name: true } },
+    },
   })
 
   if (!league) {
@@ -54,26 +58,31 @@ export default async function DashboardPage() {
   if (!isMember) redirect("/leagues")
 
   const leagueMemberIds = league.memberships.map((m) => m.userId)
+  const competitionName = league.competition.name
   const now = new Date()
   const cutoff = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
 
+  // Fixtures are canonical per competition, so every prediction query filters
+  // to league members — other leagues' users predict the same fixtures
   const [fixtures, scoredPredictions, leagueMembers, bonusAwards] = await Promise.all([
     prisma.fixture.findMany({
       where: {
-        leagueId: activeLeagueId,
+        competitionId: league.competitionId,
         status: { in: ["SCHEDULED", "AWAITING_RESULT"] },
         kickoffTime: { gte: cutoff },
       },
       orderBy: { kickoffTime: "asc" },
       include: {
         predictions: {
+          where: { userId: { in: leagueMemberIds } },
           include: { user: { select: { id: true, displayName: true, isBot: true } } },
         },
       },
     }),
     prisma.prediction.findMany({
       where: {
-        fixture: { leagueId: activeLeagueId },
+        userId: { in: leagueMemberIds },
+        fixture: { competitionId: league.competitionId },
         pointsAwarded: { not: null },
       },
       select: {
@@ -130,6 +139,12 @@ export default async function DashboardPage() {
   const open = fixtures.filter((f) => new Date(f.kickoffTime) > now)
   const locked = fixtures.filter((f) => new Date(f.kickoffTime) <= now)
 
+  // Provisional points from proposed-but-unconfirmed results (display only)
+  const myProvisional = locked.reduce((sum, f) => {
+    const myPick = f.predictions.find((p) => p.userId === userId)
+    return sum + (myPick ? (provisionalPoints(myPick, f) ?? 0) : 0)
+  }, 0)
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* League header */}
@@ -137,7 +152,8 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-ink">{league.name}</h1>
           <p className="text-sm text-ink-muted mt-0.5">
-            {league.memberships.length} member{league.memberships.length !== 1 ? "s" : ""}
+            {league.competition.name} · {league.memberships.length} member
+            {league.memberships.length !== 1 ? "s" : ""}
           </p>
         </div>
         <Link href="/leagues" className="text-sm text-ink-muted hover:text-ink-mid transition-colors">
@@ -156,7 +172,14 @@ export default async function DashboardPage() {
           </div>
           <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
             <p className="score-digits text-2xl text-ink">{myPoints}</p>
-            <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">Points</p>
+            <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">
+              Points
+              {myProvisional > 0 && (
+                <span className="ml-1 normal-case text-clock font-semibold">
+                  +{myProvisional} prov.
+                </span>
+              )}
+            </p>
           </div>
           <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
             <p className="score-digits text-2xl text-ink">{myExact}</p>
@@ -174,9 +197,7 @@ export default async function DashboardPage() {
           <p className="text-4xl mb-2">📅</p>
           <p className="font-medium text-ink-muted">No upcoming fixtures.</p>
           <p className="text-sm mt-1">
-            {league.memberships.some((m) => m.userId === userId)
-              ? "Check back soon — the Commissioner will add matches."
-              : ""}
+            Fixtures are added automatically as soon as the next rounds are announced.
           </p>
         </div>
       ) : (
@@ -190,7 +211,7 @@ export default async function DashboardPage() {
               >
                 <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-2.5">
                   <p className="min-w-0 truncate text-xs font-medium text-ink-muted">
-                    {f.competition} · {f.round} ·{" "}
+                    {competitionName} · {f.round} ·{" "}
                     {new Date(f.kickoffTime).toLocaleString("en-GB", {
                       weekday: "short",
                       day: "numeric",
@@ -242,7 +263,7 @@ export default async function DashboardPage() {
                 >
                   <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-2.5">
                     <p className="min-w-0 truncate text-xs font-medium text-ink-muted">
-                      {f.competition} · {f.round} ·{" "}
+                      {competitionName} · {f.round} ·{" "}
                       {new Date(f.kickoffTime).toLocaleString("en-GB", {
                         weekday: "short",
                         day: "numeric",
@@ -290,6 +311,11 @@ export default async function DashboardPage() {
                         <span className="font-bold tabular-nums">
                           {myPick.predictedHomeScore} – {myPick.predictedAwayScore}
                         </span>
+                        {provisionalPoints(myPick, f) !== null && (
+                          <span className="rounded-md bg-clock-tint px-1.5 py-0.5 text-xs font-semibold text-clock">
+                            +{provisionalPoints(myPick, f)} prov.
+                          </span>
+                        )}
                       </div>
                     )}
                     {!myPick && (
@@ -304,6 +330,11 @@ export default async function DashboardPage() {
                         <span className="font-medium tabular-nums">
                           {p.predictedHomeScore} – {p.predictedAwayScore}
                         </span>
+                        {provisionalPoints(p, f) !== null && (
+                          <span className="rounded-md bg-clock-tint px-1.5 py-0.5 text-xs font-medium text-clock">
+                            +{provisionalPoints(p, f)}
+                          </span>
+                        )}
                       </div>
                     ))}
                     {f.predictions.length === 0 && (

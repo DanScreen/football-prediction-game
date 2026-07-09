@@ -73,6 +73,7 @@ jobs:
             --set-env-vars "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" \
             --set-env-vars "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" \
             --set-env-vars "AUTH_URL=${{ env.APP_URL }}" \
+            --set-env-vars "^|^SITE_ADMIN_EMAILS=${{ secrets.SITE_ADMIN_EMAILS }}" \
             --min-instances 0 \
             --max-instances 3 \
             --allow-unauthenticated \

@@ -2,9 +2,16 @@
 
 import { useActionState, useState } from "react"
 import { createLeague, joinLeague, type LeagueActionState } from "./actions"
-import { COMPETITIONS } from "./data"
 
-export default function LeaguesClient({ hasLeagues }: { hasLeagues: boolean }) {
+export type CompetitionOption = { id: string; name: string; flag: string }
+
+export default function LeaguesClient({
+  hasLeagues,
+  competitions,
+}: {
+  hasLeagues: boolean
+  competitions: CompetitionOption[]
+}) {
   const [tab, setTab] = useState<"create" | "join">(hasLeagues ? "join" : "create")
 
   const [createState, createAction, createPending] = useActionState<LeagueActionState, FormData>(
@@ -53,26 +60,26 @@ export default function LeaguesClient({ hasLeagues }: { hasLeagues: boolean }) {
             <div>
               <label className="block text-sm font-medium text-ink-mid mb-2">Competition</label>
               <div className="grid grid-cols-2 gap-3">
-                {COMPETITIONS.map((c) => (
+                {competitions.map((c) => (
                   <label
-                    key={c.value}
+                    key={c.id}
                     className={`flex flex-col items-center gap-1.5 p-4 border-2 rounded-xl cursor-pointer transition-colors ${
-                      selectedComp === c.value
+                      selectedComp === c.id
                         ? "border-pitch bg-green-50"
                         : "border-line hover:border-line-strong"
                     }`}
                   >
                     <input
                       type="radio"
-                      name="competition"
-                      value={c.value}
+                      name="competitionId"
+                      value={c.id}
                       required
                       className="sr-only"
-                      onChange={() => setSelectedComp(c.value)}
+                      onChange={() => setSelectedComp(c.id)}
                     />
                     <span className="text-3xl">{c.flag}</span>
                     <span className="text-sm font-semibold text-ink text-center">
-                      {c.label}
+                      {c.name}
                     </span>
                   </label>
                 ))}
@@ -80,8 +87,8 @@ export default function LeaguesClient({ hasLeagues }: { hasLeagues: boolean }) {
             </div>
 
             <p className="text-xs text-ink-muted">
-              An invite code will be generated automatically. You can import fixtures from the Admin
-              panel after creating your league.
+              An invite code will be generated automatically. Fixtures and results are added for you
+              — just pick your competition and start predicting.
             </p>
 
             {createState.error && <p className="text-red-600 text-sm">{createState.error}</p>}

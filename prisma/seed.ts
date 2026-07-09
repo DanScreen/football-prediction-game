@@ -4,6 +4,7 @@ import { Pool } from "pg"
 import { PrismaPg } from "@prisma/adapter-pg"
 import { PrismaClient, FixtureStatus, ResultSource, SubmitVia } from "../app/generated/prisma/client"
 import { scoreOnePrediction } from "../lib/scoring"
+import { COMPETITIONS } from "../app/leagues/data"
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL! })
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) })
@@ -11,8 +12,32 @@ const prisma = new PrismaClient({ adapter: new PrismaPg(pool) })
 async function main() {
   const hash = await bcrypt.hash("password123", 10)
 
-  // ── 1. Users ──────────────────────────────────────────────────────────────
-  const [commissioner, alice, bob, robo] = await Promise.all([
+  // ── 1. Competitions (platform-owned, subscribed to by leagues) ─────────────
+  for (const c of COMPETITIONS) {
+    await prisma.competition.upsert({
+      where: { name: c.name },
+      update: { code: c.code, flag: c.flag },
+      create: { name: c.name, code: c.code, flag: c.flag },
+    })
+  }
+  const premierLeague = await prisma.competition.findUniqueOrThrow({
+    where: { name: "Premier League" },
+  })
+  console.log(`✓ Competitions (${COMPETITIONS.map((c) => c.name).join(", ")})`)
+
+  // ── 2. Users ───────────────────────────────────────────────────────────────
+  // host is seeded (site admin) but not referenced further below
+  const [, commissioner, alice, bob, robo] = await Promise.all([
+    prisma.user.upsert({
+      where: { email: "host@football.test" },
+      update: { isSiteAdmin: true },
+      create: {
+        email: "host@football.test",
+        passwordHash: hash,
+        displayName: "Host",
+        isSiteAdmin: true,
+      },
+    }),
     prisma.user.upsert({
       where: { email: "commissioner@football.test" },
       update: {},
@@ -34,15 +59,15 @@ async function main() {
       create: { email: "robo@football.test", passwordHash: hash, displayName: "Robo", isBot: true },
     }),
   ])
-  console.log("✓ Users (commissioner, alice, bob, robo)")
+  console.log("✓ Users (host, commissioner, alice, bob, robo)")
 
-  // ── 2. League ─────────────────────────────────────────────────────────────
+  // ── 3. League (subscribes to the Premier League competition) ───────────────
   const league = await prisma.league.upsert({
     where: { inviteCode: "GOAAALLL" },
     update: {},
     create: {
       name: "Test League",
-      competition: "Premier League",
+      competitionId: premierLeague.id,
       inviteCode: "GOAAALLL",
       grandSlamEnabled: false,
       grandSlamPoints: 3,
@@ -50,7 +75,7 @@ async function main() {
   })
   console.log(`✓ League "${league.name}" (code: ${league.inviteCode})`)
 
-  // ── 3. Memberships ────────────────────────────────────────────────────────
+  // ── 4. Memberships ────────────────────────────────────────────────────────
   await Promise.all([
     prisma.leagueMembership.upsert({
       where: { userId_leagueId: { userId: commissioner.id, leagueId: league.id } },
@@ -75,10 +100,12 @@ async function main() {
   ])
   console.log("✓ Memberships")
 
-  // ── 4. Fixtures ───────────────────────────────────────────────────────────
-  const existingCount = await prisma.fixture.count({ where: { leagueId: league.id } })
+  // ── 5. Canonical fixtures (owned by the competition, shared by all leagues) ─
+  const existingCount = await prisma.fixture.count({
+    where: { competitionId: premierLeague.id },
+  })
   if (existingCount > 0) {
-    console.log(`⏭  Skipping fixtures — ${existingCount} already exist in this league`)
+    console.log(`⏭  Skipping fixtures — ${existingCount} already exist for this competition`)
     return
   }
 
@@ -93,8 +120,7 @@ async function main() {
     mw38Data.map((d) =>
       prisma.fixture.create({
         data: {
-          leagueId: league.id,
-          competition: "Premier League",
+          competitionId: premierLeague.id,
           round: "Matchweek 38",
           homeTeam: d.homeTeam,
           awayTeam: d.awayTeam,
@@ -118,8 +144,7 @@ async function main() {
 
   await prisma.fixture.createMany({
     data: mw39Data.map((d) => ({
-      leagueId: league.id,
-      competition: "Premier League",
+      competitionId: premierLeague.id,
       round: "Matchweek 39",
       homeTeam: d.homeTeam,
       awayTeam: d.awayTeam,
@@ -129,7 +154,7 @@ async function main() {
   })
   console.log("✓ Upcoming fixtures  — Matchweek 39")
 
-  // ── 5. Predictions for completed fixtures ──────────────────────────────
+  // ── 6. Predictions for completed fixtures ──────────────────────────────
   //
   // Results:  Arsenal 2-1 Chelsea | Man City 1-1 Liverpool | Spurs 0-2 Man Utd
   //
@@ -169,7 +194,8 @@ async function main() {
   console.log("  Bob    2.5 pts")
   console.log("  Robo   2.5 pts  🤖")
   console.log("\nMatchweek 39 fixtures are open for predictions.")
-  console.log("Login: alice@football.test / bob@football.test / commissioner@football.test")
+  console.log("Host login: host@football.test (site admin)")
+  console.log("Members: alice@football.test / bob@football.test / commissioner@football.test")
   console.log("Password: password123  |  League invite code: GOAAALLL")
 }
 

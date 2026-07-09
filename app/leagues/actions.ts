@@ -34,25 +34,30 @@ export async function createLeague(
   const userId = await requireUser()
 
   const name = String(formData.get("name") ?? "").trim()
-  const competition = String(formData.get("competition") ?? "").trim()
+  const competitionId = String(formData.get("competitionId") ?? "").trim()
 
   if (!name) return { error: "League name is required." }
   if (name.length > 50) return { error: "League name must be 50 characters or fewer." }
-  if (!competition) return { error: "Please select a competition." }
+  if (!competitionId) return { error: "Please select a competition." }
+
+  const competition = await prisma.competition.findUnique({ where: { id: competitionId } })
+  if (!competition || !competition.isActive) {
+    return { error: "That competition isn't available." }
+  }
 
   const inviteCode = generateInviteCode()
 
   const league = await prisma.league.create({
     data: {
       name,
-      competition,
+      competitionId,
       inviteCode,
       memberships: { create: { userId, role: "COMMISSIONER" } },
     },
   })
 
   await setActiveCookie(league.id)
-  redirect("/admin/import")
+  redirect("/")
 }
 
 export async function joinLeague(

@@ -5,7 +5,10 @@ import ConfirmResultForm from "./ConfirmResultForm"
 
 export default async function ResultPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const fixture = await prisma.fixture.findUnique({ where: { id } })
+  const fixture = await prisma.fixture.findUnique({
+    where: { id },
+    include: { competition: { select: { name: true } } },
+  })
   if (!fixture) notFound()
 
   const apiEnabled = Boolean(process.env.FOOTBALL_DATA_API_KEY)
@@ -14,7 +17,7 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
     <div className="max-w-lg mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-ink mb-1">Enter Result</h1>
       <p className="text-ink-muted text-sm mb-6">
-        {fixture.competition} · {fixture.round}
+        {fixture.competition.name} · {fixture.round}
       </p>
 
       <div className="bg-surface rounded-xl border border-line shadow-card p-5 mb-6">

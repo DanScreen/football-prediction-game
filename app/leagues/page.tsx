@@ -10,17 +10,25 @@ export default async function LeaguesPage() {
 
   const activeLeagueId = await getActiveLeagueId()
 
-  const memberships = await prisma.leagueMembership.findMany({
-    where: { userId: session.user.id },
-    include: {
-      league: {
-        include: {
-          _count: { select: { memberships: true, fixtures: true } },
+  const [memberships, competitions] = await Promise.all([
+    prisma.leagueMembership.findMany({
+      where: { userId: session.user.id },
+      include: {
+        league: {
+          include: {
+            competition: { select: { name: true } },
+            _count: { select: { memberships: true } },
+          },
         },
       },
-    },
-    orderBy: { joinedAt: "asc" },
-  })
+      orderBy: { joinedAt: "asc" },
+    }),
+    prisma.competition.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, flag: true },
+      orderBy: { name: "asc" },
+    }),
+  ])
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -53,10 +61,8 @@ export default async function LeaguesPage() {
                   )}
                 </div>
                 <p className="text-xs text-ink-muted">
-                  {m.league.competition && <span className="mr-2">{m.league.competition}</span>}
+                  <span className="mr-2">{m.league.competition.name}</span>
                   {m.league._count.memberships} member{m.league._count.memberships !== 1 ? "s" : ""}
-                  {" · "}
-                  {m.league._count.fixtures} fixture{m.league._count.fixtures !== 1 ? "s" : ""}
                   {" · "}
                   Code: <span className="font-mono font-semibold">{m.league.inviteCode}</span>
                 </p>
@@ -80,7 +86,7 @@ export default async function LeaguesPage() {
         </div>
       )}
 
-      <LeaguesClient hasLeagues={memberships.length > 0} />
+      <LeaguesClient hasLeagues={memberships.length > 0} competitions={competitions} />
     </div>
   )
 }

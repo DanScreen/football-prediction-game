@@ -2,9 +2,10 @@ import { runResolutionSweep } from "@/lib/resolution"
 import { sendDeadlineReminders } from "@/lib/reminders"
 
 /**
- * Called by Cloud Scheduler (see terraform/scheduler.tf). Moves due fixtures to
- * AWAITING_RESULT, pre-fetches proposed scores for Commissioner confirmation,
- * and emails deadline reminders to members who haven't predicted yet.
+ * Called by Cloud Scheduler (see terraform/scheduler.tf). Imports upcoming
+ * fixtures for active competitions, moves due fixtures to AWAITING_RESULT,
+ * pre-fetches proposed scores for host confirmation, and emails deadline
+ * reminders to members who haven't predicted yet.
  */
 export async function POST(request: Request) {
   const secret = process.env.CRON_SECRET

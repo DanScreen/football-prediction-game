@@ -1,6 +1,6 @@
 # Football Prediction App
 
-A score-prediction game for football fans. Users join leagues, predict scorelines for upcoming fixtures, and earn points based on accuracy. Commissioners manage fixtures, import schedules, and resolve results.
+A score-prediction game for football fans. Users join leagues, predict scorelines for upcoming fixtures, and earn points based on accuracy. Site **hosts** own the competitions — fixtures and results are imported and confirmed once, centrally, and every league subscribed to a competition gets them automatically. League commissioners only manage their league's settings.
 
 ## Tech Stack
 
@@ -33,6 +33,7 @@ Edit `.env.local` and fill in:
 | `FOOTBALL_DATA_API_KEY`   | [football-data.org/client/register](https://www.football-data.org/client/register) (free) |
 | `AUTH_SECRET`             | `openssl rand -base64 32`                                                              |
 | `DATABASE_URL`            | PostgreSQL connection string (e.g. `postgresql://user:pass@localhost:5432/football_prediction_app`) |
+| `SITE_ADMIN_EMAILS`       | Comma-separated list of emails granted the site-host role (synced on login). Optional locally. |
 
 ### 3. Set up the database
 
@@ -41,16 +42,17 @@ npx prisma migrate deploy
 npx prisma db seed
 ```
 
-The seed creates four test accounts (password: `password123`) and one league with fixtures:
+The seed creates the platform competitions (Premier League, FIFA World Cup 2026), five test accounts (password: `password123`), and one league with canonical fixtures:
 
-| Email                           | Role        |
-| ------------------------------- | ----------- |
-| `commissioner@football.test`    | Commissioner |
-| `alice@football.test`           | Member      |
-| `bob@football.test`             | Member      |
-| `robo@football.test`            | Member (bot) |
+| Email                           | Role                    |
+| ------------------------------- | ----------------------- |
+| `host@football.test`            | Site host (isSiteAdmin) |
+| `commissioner@football.test`    | League commissioner     |
+| `alice@football.test`           | Member                  |
+| `bob@football.test`             | Member                  |
+| `robo@football.test`            | Member (bot)            |
 
-League invite code: **GOAAALLL**
+League invite code: **GOAAALLL**. The host account can reach the **Host** area (`/host`) to manage competitions, fixtures, imports, and result confirmation.
 
 ### 4. Run the dev server
 
@@ -68,20 +70,17 @@ Users sign up without a league, then either **create** one or **join** one with 
 
 ### Competitions
 
-When creating a league, the commissioner picks a competition:
-
-- **Premier League** — mapped to football-data.org code `PL`
-- **FIFA World Cup 2026** — mapped to `WC`
+Competitions are **platform-owned** — hosts create them in **Host → Competitions**, each with an optional football-data.org code (`PL`, `WC`, …; leave blank for a manual-only competition). A `Competition` owns its canonical fixtures and results; leagues subscribe to a competition and share those fixtures. When creating a league, the commissioner just picks one of the active competitions — no fixtures to import, nothing to confirm.
 
 ### Fixture Import
 
-Commissioners use the **Admin → Import** tab to pull upcoming fixtures directly from football-data.org. Select 1, 2, or 3 rounds ahead — the API returns structured data (exact kickoff times, team names, round labels) with no AI parsing risk.
+Fixtures are added **automatically**: the cron sweep tops up the next couple of rounds for every active competition that has a code and at least one subscribed league (`lib/autoImport.ts`), deduplicated by the canonical `(competitionId, homeTeam, awayTeam, kickoffTime)` key. Hosts can also import on demand from **Host → Import** (select 1–3 rounds ahead) as a manual override.
 
 ### Making Predictions
 
 Users predict the exact home and away score for each fixture. Predictions lock at kickoff and are hidden from other users until the deadline passes.
 
-Cross-league sync: if the same real-world match exists in multiple leagues a user belongs to, submitting a prediction in one league automatically copies it to the others.
+Because fixtures are canonical and shared across every league on a competition, there is exactly **one prediction per user per fixture** — it counts in all the leagues that user plays in that competition. No cross-league copying is needed.
 
 ### Scoring
 
@@ -92,15 +91,16 @@ Cross-league sync: if the same real-world match exists in multiple leagues a use
 | Correct result only                       | 1      |
 | Wrong result                              | 0      |
 
-An optional **Grand Slam** bonus awards extra points (configurable per league in **Admin → Settings**) if a player gets every fixture in a round correct. Bonuses are stored separately from base prediction points (`BonusAward` table) and shown with a 🏆 badge on the leaderboard.
+An optional **Grand Slam** bonus awards extra points (configurable per league in **Admin → Settings**) if a player gets every fixture in a round correct. Bonuses are stored separately from base prediction points (`BonusAward` table) and shown with a 🏆 badge on the leaderboard. Because leagues share fixtures but keep their own Grand Slam settings and members, confirming a result scores each prediction once, then fans the bonus out per subscribing league.
 
 ### Result Resolution
 
-Results flow through a confirm-before-save pipeline:
+Results flow through a confirm-before-save pipeline, with **provisional** scores shown everywhere in the meantime:
 
-1. **Automated sweep** — a Cloud Scheduler job calls `POST /api/cron/resolve` every 30 minutes. It moves fixtures ≥1h45m past kickoff to the *Pending Results* queue and pre-fetches the final score from football-data.org (one API call per competition, shared across leagues).
-2. **Commissioner confirms** — **Admin → Results** shows pre-fetched scores ready to Accept, Edit, or Retry. Nothing is scored until a Commissioner confirms — the human check keeps bad data (postponements, ambiguous team names) off the leaderboard.
-3. **Fallbacks** — any league member can hit **Request result** on a kicked-off fixture from the dashboard if the sweep hasn't found a score yet (shown as "⏳ awaiting confirmation" once found); the Commissioner's "Check for Updates" button runs the same sweep on demand, manual score entry always works, and per-fixture API lookup remains available.
+1. **Automated sweep** — a Cloud Scheduler job calls `POST /api/cron/resolve` every 10 minutes. It moves fixtures ≥1h45m past kickoff to `AWAITING_RESULT` and pre-fetches the final score from football-data.org (one API call per competition, shared across every subscribed league).
+2. **Provisional everywhere** — once a proposed score exists, the dashboard, My Predictions, leaderboard, and API show the projected scoreline and points badged amber (e.g. `+3 prov.`) until a host confirms. Standings still rank by **confirmed** points only; provisional points are never stored.
+3. **Host confirms** — **Host → Results** is a platform-wide queue of pre-fetched scores ready to Accept, Edit, or Retry, plus an **Accept All** button. Nothing is scored until a host confirms — the human check keeps bad data (postponements, ambiguous team names) off the leaderboard.
+4. **Fallbacks** — any league member can hit **Request result** on a kicked-off fixture from the dashboard if the sweep hasn't found a score yet; the host's "Check for Updates" button runs the same sweep on demand, manual score entry always works, and per-fixture API lookup remains available.
 
 ### Deadline Reminders
 
@@ -110,15 +110,23 @@ The same cron sweep emails league members who haven't predicted a fixture kickin
 
 A "Forgot password?" link on the login page leads to `/forgot-password`. Submitting an email always shows the same generic confirmation (so the app can't be used to check which emails are registered); if the address matches an account, a single-use reset link valid for 1 hour is emailed via the same Resend integration used for reminders. The link opens `/reset-password/<token>`, which validates the token server-side before showing the new-password form. Setting a new password invalidates all other outstanding reset tokens for that user. Unlike reminders, this flow requires `RESEND_API_KEY`/`EMAIL_FROM` to be configured — it errors rather than silently skipping if they're missing, since account recovery isn't optional.
 
-## Admin Guide
+## Host Guide
 
-All admin routes are behind `/admin` and require the **COMMISSIONER** role in the active league.
+The **Host** area is behind `/host` and requires the site-host role (`User.isSiteAdmin`, bootstrapped from `SITE_ADMIN_EMAILS`, re-checked against the DB on every request). Hosts own competitions platform-wide.
 
-| Route              | Purpose                                          |
-| ------------------ | ------------------------------------------------ |
-| `/admin/fixtures`  | Add, edit, and manage fixtures                   |
-| `/admin/import`    | Import upcoming fixtures from football-data.org  |
-| `/admin/results`   | Resolve results (confirm pre-fetched scores, manual entry, or API lookup) |
+| Route                 | Purpose                                                          |
+| --------------------- | ---------------------------------------------------------------- |
+| `/host/competitions`  | Create/edit competitions (name, football-data code, flag, active) |
+| `/host/fixtures`      | Add, edit, and manage canonical fixtures for a competition        |
+| `/host/import`        | Manually import upcoming fixtures from football-data.org           |
+| `/host/results`       | Platform-wide result queue — confirm pre-fetched scores (Accept All), manual entry, or API lookup |
+
+## League Admin Guide
+
+League routes are behind `/admin` and require the **COMMISSIONER** role in the active league. Fixtures and results are handled by hosts, so commissioners only manage league settings.
+
+| Route              | Purpose                                                           |
+| ------------------ | ----------------------------------------------------------------- |
 | `/admin/settings`  | Rename league, Grand Slam toggle + points, invite code management |
 
 ## Public API
@@ -145,7 +153,6 @@ Not yet built — noted here for later scoping:
 - **Model arena** — pit AI models (or bot strategies) against human players in the same league, ranked on the same leaderboard, for fun/comparison.
 - **Downloadable summaries** — end-of-season (or end-of-round) exportable recap (image or PDF) with standings, best/worst predictions, streaks, etc. — shareable for bragging rights.
 - **Nicknames with personality** — fun, generated or user-chosen nicknames/titles shown next to leaderboard entries instead of just plain usernames.
-- **"Accept all results" button** — on Admin → Results, let the Commissioner accept every pre-fetched score in one click instead of confirming fixtures one at a time.
 - **Staging environment** — a non-prod deployment (e.g. a second Cloud Run service + DB deployed from a `staging` branch) to review visual/functional changes before they hit the live site, instead of pushing straight to production.
 
 ## Deployment
@@ -187,6 +194,7 @@ gcloud scheduler jobs run football-prediction-resolve --location europe-west2
 | `CRON_SECRET`           | Shared secret for `/api/cron/*` (also set as the `cron_secret` Terraform variable) |
 | `RESEND_API_KEY`        | Resend API key. Optional for deadline reminders (skipped without it), but required for password reset emails to send |
 | `EMAIL_FROM`            | Sender address, e.g. `Football Predictions <predictions@yourdomain.com>` — same requirement as `RESEND_API_KEY` |
+| `SITE_ADMIN_EMAILS`     | Comma-separated emails granted the site-host role on login (set via a `^\|^`-delimited `--set-env-vars` in the deploy workflow so commas survive) |
 
 ### Custom domain
 

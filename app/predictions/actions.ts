@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { upsertPredictionWithSync } from "@/lib/predictions"
+import { upsertPrediction as savePrediction } from "@/lib/predictions"
 
 export type PredictionState = { error?: string; success?: boolean }
 
@@ -19,6 +19,12 @@ export async function upsertPrediction(
   const fixture = await prisma.fixture.findUnique({ where: { id: fixtureId } })
   if (!fixture) return { error: "Fixture not found." }
 
+  // Fixtures are canonical — the user must be in a league on this competition
+  const membership = await prisma.leagueMembership.findFirst({
+    where: { userId, league: { competitionId: fixture.competitionId } },
+  })
+  if (!membership) return { error: "Fixture not found." }
+
   if (new Date(fixture.kickoffTime) <= new Date()) {
     return { error: "Deadline has passed — this fixture is locked." }
   }
@@ -30,8 +36,7 @@ export async function upsertPrediction(
     return { error: "Please enter valid scores (0 or above)." }
   }
 
-  // Upsert prediction and sync to identical fixtures in the user's other leagues
-  await upsertPredictionWithSync(userId, fixture, home, away, "WEB")
+  await savePrediction(userId, fixture.id, home, away, "WEB")
 
   revalidatePath("/")
   revalidatePath("/predictions")

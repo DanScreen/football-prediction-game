@@ -1,6 +1,7 @@
 # ── Cloud Scheduler — automated result resolution ─────────────────────────────
-# Calls /api/cron/resolve every 30 minutes: moves fixtures past kickoff+1h45m to
-# AWAITING_RESULT and pre-fetches proposed scores from football-data.org.
+# Calls /api/cron/resolve every 10 minutes: imports upcoming fixtures for active
+# competitions, moves fixtures past kickoff+1h45m to AWAITING_RESULT, and
+# pre-fetches proposed scores from football-data.org for host confirmation.
 # app_url is only known after the first Cloud Run deploy, so the job is skipped
 # until it's set in terraform.tfvars.
 
@@ -10,7 +11,7 @@ resource "google_cloud_scheduler_job" "resolve" {
   project   = google_project.main.project_id
   region    = var.region
   name      = "football-prediction-resolve"
-  schedule  = "*/30 * * * *"
+  schedule  = "*/10 * * * *"
   time_zone = "Europe/London"
 
   http_target {

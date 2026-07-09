@@ -8,6 +8,14 @@ alongside human users. The full functional spec, data model, scoring rules,
 and phased build plan live in `FOOTBALL_PREDICTION_APP_SPEC.md` — read it in full
 before starting any work.
 
+**Roles.** Site **hosts** (`User.isSiteAdmin`, bootstrapped from `SITE_ADMIN_EMAILS`)
+own platform-wide `Competition`s and their canonical fixtures/results via the `/host`
+area. Leagues subscribe to a competition (`League.competitionId`) and share its fixtures,
+so fixtures and results are automatic from a league's perspective. League **commissioners**
+(`LeagueMembership.role = "COMMISSIONER"`) only manage league settings via `/admin`.
+Once the sweep pre-fetches a proposed score, provisional scores/points show everywhere
+(read-time, `lib/provisional.ts`) until a host confirms; standings rank by confirmed points.
+
 ## Working agreement
 
 - Turn the Section 8 build plan in the spec into `TODO.md` and keep it updated
@@ -61,6 +69,7 @@ Infrastructure is provisioned with Terraform in `terraform/`. Every push to `mai
 - Cloud Run connects to Cloud SQL via Unix socket (`DATABASE_URL` contains `?host=/cloudsql/<instance>`)
 - CI migrations use a TCP URL via Cloud SQL Auth Proxy (`DB_MIGRATION_URL`)
 - `AUTH_URL` is set automatically to the Cloud Run service URL after each deploy
-- Cloud Scheduler calls `POST /api/cron/resolve` every 30 min (Bearer `CRON_SECRET`) —
-  fixture transitions, result proposal pre-fetch, and deadline reminder emails
+- Cloud Scheduler calls `POST /api/cron/resolve` every 10 min (Bearer `CRON_SECRET`) —
+  auto-imports fixtures for active competitions, fixture transitions, result proposal
+  pre-fetch, and deadline reminder emails
 - See `.github/workflows/deploy.yml` for the full pipeline and `README.md` for required secrets

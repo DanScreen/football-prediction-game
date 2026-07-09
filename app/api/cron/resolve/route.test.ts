@@ -19,7 +19,7 @@ function cronRequest(auth?: string) {
 beforeEach(() => {
   vi.clearAllMocks()
   vi.stubEnv("CRON_SECRET", "s3cret")
-  sweep.mockResolvedValue({ transitioned: 1, proposed: 2, errors: [] })
+  sweep.mockResolvedValue({ transitioned: 1, proposed: 2, imported: 4, errors: [] })
   reminders.mockResolvedValue({ sent: 3 })
 })
 
@@ -47,6 +47,7 @@ describe("POST /api/cron/resolve", () => {
     expect(await res.json()).toEqual({
       transitioned: 1,
       proposed: 2,
+      imported: 4,
       errors: [],
       reminders: { sent: 3 },
     })

@@ -2,7 +2,7 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { getActiveLeagueId } from "@/lib/activeLeague"
-import { scoreOnePrediction } from "@/lib/scoring"
+import { computeLeaderboard } from "@/lib/leaderboard"
 import { AnimatedPoints } from "./AnimatedPoints"
 
 type FormColor = "green" | "yellow" | "red" | "grey"
@@ -23,7 +23,10 @@ export default async function LeaderboardPage() {
   const activeLeagueId = await getActiveLeagueId()
   if (!activeLeagueId) redirect("/leagues")
 
-  const league = await prisma.league.findUnique({ where: { id: activeLeagueId } })
+  const league = await prisma.league.findUnique({
+    where: { id: activeLeagueId },
+    select: { name: true, competitionId: true },
+  })
   if (!league) redirect("/leagues")
 
   const memberIds = (
@@ -33,120 +36,65 @@ export default async function LeaderboardPage() {
     })
   ).map((m) => m.userId)
 
-  const [users, scoredPredictions, completedFixtures, bonusAwards] = await Promise.all([
-    prisma.user.findMany({
-      where: { id: { in: memberIds } },
-      select: { id: true, displayName: true, isBot: true },
-    }),
+  const [ranked, scoredPredictions, completedFixtures] = await Promise.all([
+    computeLeaderboard(activeLeagueId),
     prisma.prediction.findMany({
       where: {
         userId: { in: memberIds },
-        fixture: { leagueId: activeLeagueId },
+        fixture: { competitionId: league.competitionId },
         pointsAwarded: { not: null },
       },
       select: {
         userId: true,
         pointsAwarded: true,
-        predictedHomeScore: true,
-        predictedAwayScore: true,
-        fixture: {
-          select: {
-            competition: true,
-            round: true,
-            kickoffTime: true,
-            actualHomeScore: true,
-            actualAwayScore: true,
-          },
-        },
+        fixture: { select: { round: true } },
       },
     }),
     prisma.fixture.findMany({
-      where: { leagueId: activeLeagueId, status: "COMPLETED" },
-      select: { competition: true, round: true, kickoffTime: true },
-    }),
-    prisma.bonusAward.findMany({
-      where: { leagueId: activeLeagueId },
-      select: { userId: true, points: true },
+      where: { competitionId: league.competitionId, status: "COMPLETED" },
+      select: { round: true, kickoffTime: true },
     }),
   ])
 
   // Build last 5 completed rounds (oldest → newest for form strip)
   const roundMaxKickoff = new Map<string, Date>()
   for (const f of completedFixtures) {
-    const key = `${f.competition}||${f.round}`
-    const existing = roundMaxKickoff.get(key)
-    if (!existing || f.kickoffTime > existing) roundMaxKickoff.set(key, f.kickoffTime)
+    const existing = roundMaxKickoff.get(f.round)
+    if (!existing || f.kickoffTime > existing) roundMaxKickoff.set(f.round, f.kickoffTime)
   }
 
   const last5Rounds = [...roundMaxKickoff.entries()]
     .sort(([, a], [, b]) => b.getTime() - a.getTime())
     .slice(0, 5)
     .reverse()
-    .map(([key, maxKickoff]) => {
-      const sep = key.indexOf("||")
-      return { key, competition: key.slice(0, sep), round: key.slice(sep + 2), maxKickoff }
-    })
+    .map(([round]) => round)
 
-  const predsByUser = new Map<string, typeof scoredPredictions>()
+  // Per-user, per-round scored totals for the form strip
+  const roundStatsByUser = new Map<string, Map<string, { scored: number; count: number }>>()
   for (const p of scoredPredictions) {
-    const arr = predsByUser.get(p.userId) ?? []
-    arr.push(p)
-    predsByUser.set(p.userId, arr)
-  }
-
-  const bonusByUser = new Map<string, { points: number; count: number }>()
-  for (const b of bonusAwards) {
-    const s = bonusByUser.get(b.userId) ?? { points: 0, count: 0 }
-    bonusByUser.set(b.userId, { points: s.points + b.points, count: s.count + 1 })
-  }
-
-  const entries = users
-    .map((user) => {
-      const preds = predsByUser.get(user.id) ?? []
-      const bonus = bonusByUser.get(user.id) ?? { points: 0, count: 0 }
-      const totalPoints =
-        preds.reduce((sum, p) => sum + (p.pointsAwarded ?? 0), 0) + bonus.points
-      const grandSlams = bonus.count
-
-      const exactCount = preds.filter(
-        (p) =>
-          p.fixture.actualHomeScore !== null &&
-          p.fixture.actualAwayScore !== null &&
-          scoreOnePrediction(
-            p.predictedHomeScore,
-            p.predictedAwayScore,
-            p.fixture.actualHomeScore,
-            p.fixture.actualAwayScore,
-          ) === 3,
-      ).length
-
-      const roundStats = new Map<string, { scored: number; count: number }>()
-      for (const p of preds) {
-        const rk = `${p.fixture.competition}||${p.fixture.round}`
-        const s = roundStats.get(rk) ?? { scored: 0, count: 0 }
-        roundStats.set(rk, { scored: s.scored + (p.pointsAwarded ?? 0), count: s.count + 1 })
-      }
-
-      const form: FormColor[] = last5Rounds.map(({ key }) => {
-        const s = roundStats.get(key)
-        if (!s || s.count === 0) return "grey"
-        const pct = s.scored / (s.count * 3)
-        if (pct > 0.4) return "green"
-        if (pct > 0.2) return "yellow"
-        return "red"
-      })
-
-      return { ...user, totalPoints, exactCount, grandSlams, form }
+    let byRound = roundStatsByUser.get(p.userId)
+    if (!byRound) {
+      byRound = new Map()
+      roundStatsByUser.set(p.userId, byRound)
+    }
+    const s = byRound.get(p.fixture.round) ?? { scored: 0, count: 0 }
+    byRound.set(p.fixture.round, {
+      scored: s.scored + (p.pointsAwarded ?? 0),
+      count: s.count + 1,
     })
-    .sort((a, b) => b.totalPoints - a.totalPoints)
+  }
 
-  type RankedEntry = (typeof entries)[number] & { rank: number }
-  const ranked = entries.reduce<RankedEntry[]>((acc, entry, i) => {
-    const rank =
-      i === 0 ? 1 : entries[i - 1].totalPoints === entry.totalPoints ? acc[i - 1].rank : i + 1
-    acc.push({ ...entry, rank })
-    return acc
-  }, [])
+  const formForUser = (userId: string): FormColor[] => {
+    const byRound = roundStatsByUser.get(userId)
+    return last5Rounds.map((round) => {
+      const s = byRound?.get(round)
+      if (!s || s.count === 0) return "grey"
+      const pct = s.scored / (s.count * 3)
+      if (pct > 0.4) return "green"
+      if (pct > 0.2) return "yellow"
+      return "red"
+    })
+  }
 
   const rankDisplay = (i: number) =>
     i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : ranked[i].rank
@@ -164,7 +112,7 @@ export default async function LeaderboardPage() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-ink mb-1">{league.name}</h1>
       <p className="text-ink-muted text-sm mb-6">
-        {entries.length} player{entries.length !== 1 ? "s" : ""}
+        {ranked.length} player{ranked.length !== 1 ? "s" : ""}
         {last5Rounds.length > 0 && (
           <>
             {" · "}form: last {last5Rounds.length} round{last5Rounds.length !== 1 ? "s" : ""}
@@ -200,53 +148,64 @@ export default async function LeaderboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-line-soft">
-                {ranked.map((entry, i) => (
-                  <tr
-                    key={entry.id}
-                    className={`transition-colors animate-slide-up ${rowBg(i)}`}
-                    style={{ animationDelay: `${i * 55}ms` }}
-                  >
-                    <td className="px-4 py-3 font-bold text-ink-muted tabular-nums text-base">
-                      {rankDisplay(i)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="font-semibold text-ink">{entry.displayName}</span>
-                      {entry.isBot && (
-                        <span className="ml-1.5 text-xs text-ink-faint font-normal">🤖</span>
-                      )}
-                      {entry.grandSlams > 0 && (
-                        <span
-                          className="ml-1.5 text-xs font-medium text-clock"
-                          title={`${entry.grandSlams} Grand Slam${entry.grandSlams !== 1 ? "s" : ""}`}
-                        >
-                          🏆{entry.grandSlams > 1 ? `×${entry.grandSlams}` : ""}
-                        </span>
-                      )}
-                      {entry.id === session.user.id && (
-                        <span className="ml-1.5 text-xs text-pitch font-medium">(you)</span>
-                      )}
-                    </td>
-                    <td className="score-digits px-4 py-3 text-right text-ink text-base">
-                      <AnimatedPoints value={entry.totalPoints} />
-                    </td>
-                    <td className="px-4 py-3 text-right text-ink-muted hidden sm:table-cell tabular-nums">
-                      {entry.exactCount}
-                    </td>
-                    {last5Rounds.length > 0 && (
-                      <td className="px-4 py-3 hidden md:table-cell">
-                        <div className="flex justify-end gap-1">
-                          {entry.form.map((color, j) => (
-                            <span
-                              key={j}
-                              title={`${last5Rounds[j].competition} · ${last5Rounds[j].round}`}
-                              className={`w-4 h-4 rounded-sm ${formColorClass(color)}`}
-                            />
-                          ))}
-                        </div>
+                {ranked.map((entry, i) => {
+                  const form = formForUser(entry.id)
+                  return (
+                    <tr
+                      key={entry.id}
+                      className={`transition-colors animate-slide-up ${rowBg(i)}`}
+                      style={{ animationDelay: `${i * 55}ms` }}
+                    >
+                      <td className="px-4 py-3 font-bold text-ink-muted tabular-nums text-base">
+                        {rankDisplay(i)}
                       </td>
-                    )}
-                  </tr>
-                ))}
+                      <td className="px-4 py-3">
+                        <span className="font-semibold text-ink">{entry.displayName}</span>
+                        {entry.isBot && (
+                          <span className="ml-1.5 text-xs text-ink-faint font-normal">🤖</span>
+                        )}
+                        {entry.grandSlams > 0 && (
+                          <span
+                            className="ml-1.5 text-xs font-medium text-clock"
+                            title={`${entry.grandSlams} Grand Slam${entry.grandSlams !== 1 ? "s" : ""}`}
+                          >
+                            🏆{entry.grandSlams > 1 ? `×${entry.grandSlams}` : ""}
+                          </span>
+                        )}
+                        {entry.id === session.user.id && (
+                          <span className="ml-1.5 text-xs text-pitch font-medium">(you)</span>
+                        )}
+                      </td>
+                      <td className="score-digits px-4 py-3 text-right text-ink text-base">
+                        <AnimatedPoints value={entry.confirmedPoints} />
+                        {entry.provisionalPoints > 0 && (
+                          <span
+                            className="ml-1.5 text-xs font-semibold text-clock"
+                            title="Provisional points from unconfirmed results"
+                          >
+                            +{entry.provisionalPoints}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-ink-muted hidden sm:table-cell tabular-nums">
+                        {entry.exactCount}
+                      </td>
+                      {last5Rounds.length > 0 && (
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <div className="flex justify-end gap-1">
+                            {form.map((color, j) => (
+                              <span
+                                key={j}
+                                title={last5Rounds[j]}
+                                className={`w-4 h-4 rounded-sm ${formColorClass(color)}`}
+                              />
+                            ))}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

@@ -16,8 +16,10 @@
 - **PostgreSQL on Cloud SQL (ENTERPRISE, db-f1-micro)** — explicit `edition = "ENTERPRISE"` required in Terraform; ENTERPRISE_PLUS is the default but doesn't support `db-f1-micro`.
 - **Cloud Run connects to Cloud SQL via Unix socket** — `DATABASE_URL` uses `?host=/cloudsql/<instance>` for the running container; CI migrations use a TCP URL via Cloud SQL Auth Proxy.
 - **Active league via cookie** — league context stored in `httpOnly` cookie `activeLeagueId` rather than URL segments, keeping all existing routes unchanged.
-- **Cross-league prediction sync** — one prediction for a real-world match auto-copies to matching fixtures (same teams + kickoff) in the user's other leagues; no separate junction table needed.
-- **Commissioner role per league** — `isAdmin` removed from User/session; admin access is gated by `LeagueMembership.role = "COMMISSIONER"` for the active league.
+- **Platform-owned competitions** — fixtures/results moved from per-league to a shared `Competition` that leagues subscribe to (`League.competitionId`, `Fixture.competitionId`). Hosts own competitions; league admins no longer import fixtures or confirm results. This replaced the old cross-league prediction sync — one prediction per user per canonical fixture now counts across all their leagues on that competition.
+- **Site-host role** — `User.isSiteAdmin` (bootstrapped from `SITE_ADMIN_EMAILS`, synced on login, re-checked against the DB per request) gates the `/host` area, separate from the per-league `COMMISSIONER` role that gates `/admin`.
+- **Provisional scores/points** — once the sweep pre-fetches a proposed score, projected scores and points are shown everywhere (dashboard, My Predictions, leaderboard, API) badged amber until a host confirms; computed at read-time (`lib/provisional.ts`), never stored. Standings rank by confirmed points only.
+- **Commissioner role per league** — `isAdmin` removed from User/session; league admin access is gated by `LeagueMembership.role = "COMMISSIONER"` for the active league.
 - **`"use server"` files export functions only** — Turbopack errors if a server-action file exports a constant; shared constants (e.g. `COMPETITIONS`) live in plain `.ts` files.
 
 ---
@@ -190,3 +192,24 @@
 - [x] 11 unit tests in `lib/passwordReset.test.ts`
 - [x] `RESEND_API_KEY`/`EMAIL_FROM` are now effectively required (reset requests fail
       without them) rather than optional as they were for reminders
+
+## Phase 23 — Platform-owned competitions ✅
+- [x] Schema: new `Competition` (name unique, code?, flag, isActive) owning canonical
+      fixtures; `League.competition` → `competitionId` FK; `Fixture` drops `leagueId` +
+      `competition` for `competitionId` + `@@unique([competitionId, homeTeam, awayTeam,
+      kickoffTime])`; `User.isSiteAdmin`; `BonusAward` drops `competition` column
+- [x] Site-host role: `requireSiteAdmin()` (session + DB re-check), `SITE_ADMIN_EMAILS`
+      synced in `auth.ts` authorize(), threaded through JWT/session, Header "Host" pill
+- [x] `/host` area — competitions, fixtures, import, platform-wide results queue with
+      **Accept All** (`lib/results.ts`); `/admin` slimmed to Settings only
+- [x] Core libs: `lib/autoImport.ts` (sweep tops up active competitions), `lib/results.ts`
+      (confirm once + Grand Slam fan-out per subscribing league), `lib/provisional.ts`,
+      `lib/leaderboard.ts` (shared by page + API); `resolution`/`footballData`/`reminders`/
+      `predictions`/`apiAuth` reworked to competition scope
+- [x] Provisional scores/points shown on dashboard, My Predictions, leaderboard, and API
+      (amber, read-time only); standings still rank by confirmed points
+- [x] Automatic fixtures — leagues get fixtures/results with no admin action; league create
+      flow picks an active competition; cron cadence 30min → 10min
+- [x] Fresh-start migration (clears predictions/bonus/fixtures, seeds competitions, backfills
+      `League.competitionId` by name); seed rewritten with `host@football.test`
+- [x] 139 unit tests green; clean production build

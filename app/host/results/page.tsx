@@ -1,44 +1,56 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
-import { getActiveLeagueId } from "@/lib/activeLeague"
-import { redirect } from "next/navigation"
-import { checkTransitions } from "./actions"
+import { checkTransitions, acceptAllAction } from "./actions"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
 
-export default async function AdminResultsPage() {
-  const leagueId = await getActiveLeagueId()
-  if (!leagueId) redirect("/leagues")
-
+export default async function HostResultsPage() {
   const now = new Date()
   const cutoff = new Date(now.getTime() - RESULT_DELAY_MS)
 
   const [awaitingFixtures, scheduledReadyCount] = await Promise.all([
     prisma.fixture.findMany({
-      where: { leagueId, status: "AWAITING_RESULT" },
+      where: { status: "AWAITING_RESULT" },
       orderBy: { kickoffTime: "asc" },
+      include: { competition: { select: { name: true, flag: true } } },
     }),
     prisma.fixture.count({
-      where: { leagueId, status: "SCHEDULED", kickoffTime: { lte: cutoff } },
+      where: { status: "SCHEDULED", kickoffTime: { lte: cutoff } },
     }),
   ])
 
+  const proposedCount = awaitingFixtures.filter(
+    (f) => f.proposedHomeScore !== null && f.proposedAwayScore !== null,
+  ).length
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <h1 className="text-2xl font-bold text-ink">Pending Results</h1>
-        <form action={checkTransitions}>
-          <button
-            type="submit"
-            className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-yellow-600 transition-colors"
-          >
-            Check for Updates
-            {scheduledReadyCount > 0 && (
-              <span className="bg-surface text-yellow-700 rounded-full px-2 py-0.5 text-xs font-bold">
-                {scheduledReadyCount}
-              </span>
-            )}
-          </button>
-        </form>
+        <div className="flex items-center gap-2">
+          <form action={checkTransitions}>
+            <button
+              type="submit"
+              className="flex items-center gap-2 rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink-mid hover:bg-chip transition-colors"
+            >
+              Check for Updates
+              {scheduledReadyCount > 0 && (
+                <span className="bg-clock-tint text-clock rounded-full px-2 py-0.5 text-xs font-bold">
+                  {scheduledReadyCount}
+                </span>
+              )}
+            </button>
+          </form>
+          {proposedCount > 0 && (
+            <form action={acceptAllAction}>
+              <button
+                type="submit"
+                className="rounded-lg bg-pitch px-4 py-2 text-sm font-semibold text-white shadow-card hover:bg-pitch-deep transition-colors"
+              >
+                Accept All ({proposedCount})
+              </button>
+            </form>
+          )}
+        </div>
       </div>
 
       {awaitingFixtures.length === 0 ? (
@@ -67,7 +79,10 @@ export default async function AdminResultsPage() {
               {awaitingFixtures.map((f) => (
                 <tr key={f.id} className="hover:bg-ground transition-colors">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-ink">{f.competition}</p>
+                    <p className="font-medium text-ink">
+                      {f.competition.flag ? `${f.competition.flag} ` : ""}
+                      {f.competition.name}
+                    </p>
                     <p className="text-ink-muted text-xs">{f.round}</p>
                   </td>
                   <td className="px-4 py-3 font-medium text-ink">
@@ -84,12 +99,12 @@ export default async function AdminResultsPage() {
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     {f.proposedHomeScore !== null && f.proposedAwayScore !== null && (
-                      <span className="mr-3 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
-                        ✓ {f.proposedHomeScore}–{f.proposedAwayScore} found
+                      <span className="score-digits mr-3 rounded-md bg-board px-2 py-0.5 text-xs text-board-gold">
+                        {f.proposedHomeScore}–{f.proposedAwayScore} found
                       </span>
                     )}
                     <Link
-                      href={`/admin/results/${f.id}`}
+                      href={`/host/results/${f.id}`}
                       className="text-pitch hover:underline font-medium"
                     >
                       Enter Result →

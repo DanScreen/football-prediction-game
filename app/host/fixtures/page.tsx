@@ -1,16 +1,11 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
-import { getActiveLeagueId } from "@/lib/activeLeague"
-import { redirect } from "next/navigation"
 import DeleteFixtureButton from "./DeleteFixtureButton"
 
-export default async function AdminFixturesPage() {
-  const leagueId = await getActiveLeagueId()
-  if (!leagueId) redirect("/leagues")
-
+export default async function HostFixturesPage() {
   const fixtures = await prisma.fixture.findMany({
-    where: { leagueId },
     orderBy: { kickoffTime: "asc" },
+    include: { competition: { select: { name: true, flag: true } } },
   })
 
   return (
@@ -18,8 +13,8 @@ export default async function AdminFixturesPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-ink">Fixtures</h1>
         <Link
-          href="/admin/fixtures/new"
-          className="bg-pitch text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-pitch transition-colors"
+          href="/host/fixtures/new"
+          className="bg-pitch text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-pitch-deep transition-colors"
         >
           + Add Fixture
         </Link>
@@ -29,7 +24,13 @@ export default async function AdminFixturesPage() {
         <div className="text-center py-16 text-ink-muted">
           <p className="text-4xl mb-3">⚽</p>
           <p className="font-medium">No fixtures yet.</p>
-          <p className="text-sm mt-1">Add some fixtures to get the league started.</p>
+          <p className="text-sm mt-1">
+            The cron sweep imports upcoming rounds automatically, or use{" "}
+            <Link href="/host/import" className="text-pitch hover:underline">
+              Import
+            </Link>{" "}
+            to pull them now.
+          </p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-line shadow-card">
@@ -47,7 +48,10 @@ export default async function AdminFixturesPage() {
               {fixtures.map((f) => (
                 <tr key={f.id} className="hover:bg-ground transition-colors">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-ink">{f.competition}</p>
+                    <p className="font-medium text-ink">
+                      {f.competition.flag ? `${f.competition.flag} ` : ""}
+                      {f.competition.name}
+                    </p>
                     <p className="text-ink-muted text-xs">{f.round}</p>
                   </td>
                   <td className="px-4 py-3 font-medium text-ink">
@@ -67,7 +71,7 @@ export default async function AdminFixturesPage() {
                   </td>
                   <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                     <Link
-                      href={`/admin/fixtures/${f.id}/edit`}
+                      href={`/host/fixtures/${f.id}/edit`}
                       className="text-pitch hover:underline font-medium"
                     >
                       Edit

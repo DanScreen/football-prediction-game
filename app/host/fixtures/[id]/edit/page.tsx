@@ -6,7 +6,13 @@ import { updateFixture } from "../../actions"
 
 export default async function EditFixturePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const fixture = await prisma.fixture.findUnique({ where: { id } })
+  const [fixture, competitions] = await Promise.all([
+    prisma.fixture.findUnique({ where: { id } }),
+    prisma.competition.findMany({
+      orderBy: { createdAt: "asc" },
+      select: { id: true, name: true, flag: true },
+    }),
+  ])
   if (!fixture) notFound()
 
   const kickoffLocal = new Date(fixture.kickoffTime.getTime() - fixture.kickoffTime.getTimezoneOffset() * 60000)
@@ -18,7 +24,7 @@ export default async function EditFixturePage({ params }: { params: Promise<{ id
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="mb-6">
-        <Link href="/admin/fixtures" className="text-sm text-ink-muted hover:text-ink-mid">
+        <Link href="/host/fixtures" className="text-sm text-ink-muted hover:text-ink-mid">
           ← Back to Fixtures
         </Link>
         <h1 className="text-2xl font-bold text-ink mt-2">Edit Fixture</h1>
@@ -28,8 +34,9 @@ export default async function EditFixturePage({ params }: { params: Promise<{ id
       </div>
       <FixtureForm
         action={boundUpdate}
+        competitions={competitions}
         defaultValues={{
-          competition: fixture.competition,
+          competitionId: fixture.competitionId,
           round: fixture.round,
           homeTeam: fixture.homeTeam,
           awayTeam: fixture.awayTeam,

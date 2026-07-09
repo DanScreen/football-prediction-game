@@ -64,7 +64,11 @@ export default async function ApiDocsPage() {
           Fixtures still open for predictions (kickoff in the future), oldest first. Omit{" "}
           <code className="bg-chip px-1 rounded">status=open</code> to include locked and
           completed fixtures. Optional <code className="bg-chip px-1 rounded">?leagueId=</code>{" "}
-          scopes to a specific league you belong to (defaults to your first league).
+          scopes to a league you belong to (defaults to your first league) — fixtures come from
+          that league&apos;s competition. Completed fixtures carry{" "}
+          <code className="bg-chip px-1 rounded">actualHomeScore/actualAwayScore</code>; a fixture
+          awaiting host confirmation carries provisional scores in{" "}
+          <code className="bg-chip px-1 rounded">provisionalHomeScore/provisionalAwayScore</code>.
         </Endpoint>
 
         <Endpoint method="POST" path="/api/v1/predictions">
@@ -72,17 +76,24 @@ export default async function ApiDocsPage() {
           <code className="bg-chip px-1 rounded">
             {"{ fixtureId, homeScore, awayScore }"}
           </code>{" "}
-          — non-negative integers. Rejected with 422 once the fixture has kicked off. Your pick
-          auto-copies to matching fixtures in your other leagues.
+          — non-negative integers. Rejected with 422 once the fixture has kicked off. Fixtures are
+          shared across every league on the competition, so one pick counts everywhere you play.
         </Endpoint>
 
         <Endpoint method="GET" path="/api/v1/predictions">
-          Your own predictions with fixture details, actual scores, and points awarded.
+          Your own predictions with fixture details and actual scores. Confirmed points are in{" "}
+          <code className="bg-chip px-1 rounded">pointsAwarded</code>; before the host confirms a
+          result, <code className="bg-chip px-1 rounded">provisionalPoints</code> and the{" "}
+          <code className="bg-chip px-1 rounded">provisional*</code> score fields show the
+          projected outcome.
         </Endpoint>
 
         <Endpoint method="GET" path="/api/v1/leaderboard">
-          Current standings: rank, total points (including Grand Slam bonuses),{" "}
-          exact-score count, and Grand Slam count per player.
+          Current standings ranked by confirmed points.{" "}
+          <code className="bg-chip px-1 rounded">totalPoints</code> is confirmed points (including
+          Grand Slam bonuses); <code className="bg-chip px-1 rounded">provisionalPoints</code> and{" "}
+          <code className="bg-chip px-1 rounded">projectedPoints</code> add points from
+          unconfirmed results. Also returns exact-score count and Grand Slam count per player.
         </Endpoint>
       </section>
 

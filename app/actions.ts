@@ -11,7 +11,8 @@ export type RequestResultState = { error?: string; found?: boolean; pending?: bo
 /**
  * Any league member can ask for a fixture's result if the cron sweep hasn't
  * fetched one yet. Transitions the fixture (once due) and runs a proposal
- * fetch — the result still needs Commissioner confirmation before scoring.
+ * fetch — the result still needs host confirmation before scoring, but shows
+ * as provisional immediately.
  */
 export async function requestResult(fixtureId: string): Promise<RequestResultState> {
   const session = await auth()
@@ -20,8 +21,8 @@ export async function requestResult(fixtureId: string): Promise<RequestResultSta
   const fixture = await prisma.fixture.findUnique({ where: { id: fixtureId } })
   if (!fixture) return { error: "Fixture not found." }
 
-  const membership = await prisma.leagueMembership.findUnique({
-    where: { userId_leagueId: { userId: session.user.id, leagueId: fixture.leagueId } },
+  const membership = await prisma.leagueMembership.findFirst({
+    where: { userId: session.user.id, league: { competitionId: fixture.competitionId } },
   })
   if (!membership) return { error: "Fixture not found." }
 

@@ -9,7 +9,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }))
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     fixture: { findUnique: vi.fn(), updateMany: vi.fn() },
-    leagueMembership: { findUnique: vi.fn() },
+    leagueMembership: { findFirst: vi.fn() },
   },
 }))
 vi.mock("@/lib/resolution", async (importOriginal) => {
@@ -20,13 +20,13 @@ vi.mock("@/lib/resolution", async (importOriginal) => {
 const authMock = vi.mocked(auth)
 const fixtureFindUnique = vi.mocked(prisma.fixture.findUnique)
 const fixtureUpdateMany = vi.mocked(prisma.fixture.updateMany)
-const membershipFindUnique = vi.mocked(prisma.leagueMembership.findUnique)
+const membershipFindFirst = vi.mocked(prisma.leagueMembership.findFirst)
 const fetchProposalsMock = vi.mocked(fetchProposals)
 
 function fixture(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: "fx1",
-    leagueId: "l1",
+    competitionId: "c1",
     status: "AWAITING_RESULT",
     // due: kicked off well past the delay
     kickoffTime: new Date(Date.now() - RESULT_DELAY_MS - 60_000),
@@ -39,7 +39,7 @@ function fixture(overrides: Partial<Record<string, unknown>> = {}) {
 beforeEach(() => {
   vi.clearAllMocks()
   authMock.mockResolvedValue({ user: { id: "u1" } } as never)
-  membershipFindUnique.mockResolvedValue({ id: "m1" } as never)
+  membershipFindFirst.mockResolvedValue({ id: "m1" } as never)
   fetchProposalsMock.mockResolvedValue({ proposed: 0, errors: [] })
   fixtureUpdateMany.mockResolvedValue({ count: 1 })
 })
@@ -52,7 +52,7 @@ describe("requestResult", () => {
 
   it("hides fixtures from non-members", async () => {
     fixtureFindUnique.mockResolvedValue(fixture() as never)
-    membershipFindUnique.mockResolvedValue(null)
+    membershipFindFirst.mockResolvedValue(null)
     expect(await requestResult("fx1")).toEqual({ error: "Fixture not found." })
     expect(fetchProposalsMock).not.toHaveBeenCalled()
   })

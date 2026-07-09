@@ -5,7 +5,7 @@ import type { FetchProposalState, ConfirmImportState } from "./actions"
 import type { ProposedFixture } from "@/lib/footballData"
 
 interface Props {
-  leagueCompetition: string
+  competitions: { id: string; name: string; flag: string }[]
   apiEnabled: boolean
   fetchImportProposal: (prev: FetchProposalState, formData: FormData) => Promise<FetchProposalState>
   confirmImport: (prev: ConfirmImportState, formData: FormData) => Promise<ConfirmImportState>
@@ -19,7 +19,7 @@ type DeselectedState = {
 const ROUNDS_OPTIONS = [1, 2, 3] as const
 
 export default function ImportForm({
-  leagueCompetition,
+  competitions,
   apiEnabled,
   fetchImportProposal,
   confirmImport,
@@ -53,15 +53,23 @@ export default function ImportForm({
       <div className="bg-surface border border-line rounded-xl p-5">
         <h2 className="font-semibold text-ink mb-4">1. Find Fixtures</h2>
 
-        <div className="mb-4 p-3 bg-ground rounded-lg">
-          <p className="text-xs font-medium text-ink-muted uppercase tracking-wide mb-0.5">
-            Competition
-          </p>
-          <p className="text-sm font-semibold text-ink">{leagueCompetition}</p>
-        </div>
-
         <form action={fetchAction} className="space-y-4">
           <input type="hidden" name="rounds" value={rounds} />
+
+          <div>
+            <label className="block text-sm font-medium text-ink-mid mb-1">Competition</label>
+            <select
+              name="competitionId"
+              required
+              className="w-full border border-line-strong rounded-lg px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-pitch"
+            >
+              {competitions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.flag ? `${c.flag} ` : ""}{c.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-ink-mid mb-2">Rounds to fetch</label>
@@ -144,6 +152,7 @@ export default function ImportForm({
           )}
 
           <form action={confirmAction}>
+            <input type="hidden" name="competitionId" value={proposed.competitionId} />
             <input type="hidden" name="fixtures" value={JSON.stringify(selectedFixtures)} />
             <button
               type="submit"
