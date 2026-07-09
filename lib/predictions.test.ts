@@ -1,25 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { upsertPredictionWithSync } from "./predictions"
+import { upsertPrediction } from "./predictions"
 import { prisma } from "@/lib/prisma"
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     prediction: { upsert: vi.fn() },
-    leagueMembership: { findMany: vi.fn() },
-    fixture: { findMany: vi.fn() },
   },
 }))
 
 const predictionUpsert = vi.mocked(prisma.prediction.upsert)
-const membershipFindMany = vi.mocked(prisma.leagueMembership.findMany)
-const fixtureFindMany = vi.mocked(prisma.fixture.findMany)
-
-const fixture = {
-  id: "fx1",
-  homeTeam: "Arsenal",
-  awayTeam: "Chelsea",
-  kickoffTime: new Date("2026-08-15T14:00:00Z"),
-}
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -28,11 +17,9 @@ beforeEach(() => {
   )
 })
 
-describe("upsertPredictionWithSync", () => {
-  it("upserts the primary prediction with the given source", async () => {
-    membershipFindMany.mockResolvedValue([{ leagueId: "l1" }] as never)
-
-    await upsertPredictionWithSync("u1", fixture, 2, 1, "API")
+describe("upsertPrediction", () => {
+  it("upserts on the (userId, fixtureId) key with the given source", async () => {
+    await upsertPrediction("u1", "fx1", 2, 1, "API")
 
     expect(predictionUpsert).toHaveBeenCalledTimes(1)
     expect(predictionUpsert).toHaveBeenCalledWith({
@@ -48,43 +35,8 @@ describe("upsertPredictionWithSync", () => {
     })
   })
 
-  it("skips the sync lookup entirely for single-league users", async () => {
-    membershipFindMany.mockResolvedValue([{ leagueId: "l1" }] as never)
-    await upsertPredictionWithSync("u1", fixture, 1, 0, "WEB")
-    expect(fixtureFindMany).not.toHaveBeenCalled()
-  })
-
-  it("copies the pick to matching SCHEDULED fixtures in other leagues", async () => {
-    membershipFindMany.mockResolvedValue([{ leagueId: "l1" }, { leagueId: "l2" }] as never)
-    fixtureFindMany.mockResolvedValue([{ id: "fx2" }] as never)
-
-    await upsertPredictionWithSync("u1", fixture, 1, 0, "WEB")
-
-    expect(fixtureFindMany).toHaveBeenCalledWith({
-      where: {
-        leagueId: { in: ["l1", "l2"] },
-        id: { not: "fx1" },
-        homeTeam: "Arsenal",
-        awayTeam: "Chelsea",
-        kickoffTime: fixture.kickoffTime,
-        status: "SCHEDULED",
-      },
-    })
-    expect(predictionUpsert).toHaveBeenCalledTimes(2)
-    expect(predictionUpsert).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        where: { userId_fixtureId: { userId: "u1", fixtureId: "fx2" } },
-      }),
-    )
-  })
-
-  it("returns the primary prediction, not a synced copy", async () => {
-    membershipFindMany.mockResolvedValue([{ leagueId: "l1" }, { leagueId: "l2" }] as never)
-    fixtureFindMany.mockResolvedValue([{ id: "fx2" }] as never)
-
-    const result = (await upsertPredictionWithSync("u1", fixture, 3, 2, "API")) as {
-      fixtureId: string
-    }
+  it("returns the upserted prediction", async () => {
+    const result = (await upsertPrediction("u1", "fx1", 3, 2, "WEB")) as { fixtureId: string }
     expect(result.fixtureId).toBe("fx1")
   })
 })

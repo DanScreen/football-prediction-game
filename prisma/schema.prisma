@@ -29,12 +29,30 @@ model User {
   passwordHash String
   displayName  String
   isBot        Boolean               @default(false)
+  // Site host — may manage competitions, canonical fixtures, and confirm
+  // results platform-wide. Synced from SITE_ADMIN_EMAILS at login.
+  isSiteAdmin  Boolean               @default(false)
   apiKey       String                @unique @default(cuid())
   createdAt    DateTime              @default(now())
   memberships  LeagueMembership[]
   predictions  Prediction[]
   bonusAwards  BonusAward[]
   resetTokens  PasswordResetToken[]
+}
+
+// A real-world competition (Premier League, World Cup…) owned by site hosts.
+// Fixtures are canonical per competition; leagues subscribe to one competition.
+model Competition {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  // football-data.org competition code ("PL", "WC"); null = manual-only
+  code      String?
+  flag      String    @default("")
+  // Included in auto-import and selectable at league creation
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  leagues   League[]
+  fixtures  Fixture[]
 }
 
 // Single-use, expiring token for the forgot-password flow. Only the SHA-256
@@ -52,13 +70,13 @@ model PasswordResetToken {
 model League {
   id               String             @id @default(cuid())
   name             String
-  competition      String             @default("")
+  competitionId    String
   inviteCode       String             @unique
   grandSlamEnabled Boolean            @default(false)
   grandSlamPoints  Int                @default(3)
   createdAt        DateTime           @default(now())
+  competition      Competition        @relation(fields: [competitionId], references: [id])
   memberships      LeagueMembership[]
-  fixtures         Fixture[]
   bonusAwards      BonusAward[]
 }
 
@@ -74,10 +92,11 @@ model LeagueMembership {
   @@unique([userId, leagueId])
 }
 
+// Canonical fixture — one row per real-world match, shared by every league
+// subscribed to the competition.
 model Fixture {
   id              String        @id @default(cuid())
-  leagueId        String
-  competition     String
+  competitionId   String
   round           String
   homeTeam        String
   awayTeam        String
@@ -85,31 +104,36 @@ model Fixture {
   status          FixtureStatus @default(SCHEDULED)
   actualHomeScore Int?
   actualAwayScore Int?
-  // Score proposed by the automated football-data.org sweep, awaiting Commissioner confirmation
+  // Score proposed by the automated football-data.org sweep — shown to users
+  // as provisional until a site host confirms
   proposedHomeScore Int?
   proposedAwayScore Int?
   // When deadline-reminder emails were sent for this fixture (one batch per fixture)
   reminderSentAt  DateTime?
   resultSource    ResultSource?
   createdAt       DateTime      @default(now())
-  league          League        @relation(fields: [leagueId], references: [id])
+  competition     Competition   @relation(fields: [competitionId], references: [id])
   predictions     Prediction[]
+
+  // Canonical dedupe key — auto-import relies on createMany(skipDuplicates)
+  @@unique([competitionId, homeTeam, awayTeam, kickoffTime])
 }
 
 // A per-round bonus (currently only the Grand Slam), kept separate from
 // Prediction.pointsAwarded so base points stay pure and bonuses are visible
 model BonusAward {
-  id          String   @id @default(cuid())
-  userId      String
-  leagueId    String
-  competition String
-  round       String
-  points      Int
-  createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
-  league      League   @relation(fields: [leagueId], references: [id])
+  id        String   @id @default(cuid())
+  userId    String
+  leagueId  String
+  // Round labels are unique within a league's competition, so (user, league,
+  // round) fully identifies a bonus
+  round     String
+  points    Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  league    League   @relation(fields: [leagueId], references: [id])
 
-  @@unique([userId, leagueId, competition, round])
+  @@unique([userId, leagueId, round])
 }
 
 model Prediction {

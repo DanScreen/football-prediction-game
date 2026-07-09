@@ -8,10 +8,12 @@ declare module "next-auth" {
       email: string
       name: string
       isBot: boolean
+      isSiteAdmin: boolean
     }
   }
   interface User {
     isBot: boolean
+    isSiteAdmin: boolean
   }
 }
 
@@ -19,5 +21,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string
     isBot: boolean
+    isSiteAdmin: boolean
   }
 }

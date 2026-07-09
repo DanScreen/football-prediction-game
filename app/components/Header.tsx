@@ -42,6 +42,14 @@ export default async function Header() {
                   Admin
                 </Link>
               )}
+              {session.user.isSiteAdmin && (
+                <Link
+                  href="/host"
+                  className="rounded-full border border-clock/25 bg-clock-tint px-2.5 py-0.5 text-xs font-semibold text-clock transition-colors hover:border-clock/50"
+                >
+                  Host
+                </Link>
+              )}
             </div>
           )}
         </div>

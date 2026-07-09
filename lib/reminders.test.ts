@@ -21,13 +21,15 @@ function member(id: string, opts: { isBot?: boolean } = {}) {
 function dueFixture(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: "f1",
-    competition: "Premier League",
     round: "Matchweek 1",
     homeTeam: "Arsenal",
     awayTeam: "Chelsea",
     kickoffTime: new Date(Date.now() + 60 * 60 * 1000),
     predictions: [],
-    league: { name: "Test League", memberships: [member("alice"), member("bob")] },
+    competition: {
+      name: "Premier League",
+      leagues: [{ memberships: [member("alice"), member("bob")] }],
+    },
     ...overrides,
   }
 }
@@ -77,9 +79,11 @@ describe("sendDeadlineReminders", () => {
     fixtureFindMany.mockResolvedValue([
       dueFixture({
         predictions: [{ userId: "alice" }],
-        league: {
-          name: "Test League",
-          memberships: [member("alice"), member("bob"), member("robo", { isBot: true })],
+        competition: {
+          name: "Premier League",
+          leagues: [
+            { memberships: [member("alice"), member("bob"), member("robo", { isBot: true })] },
+          ],
         },
       }),
     ] as never)
@@ -90,6 +94,28 @@ describe("sendDeadlineReminders", () => {
     const body = JSON.parse(fetchMock.mock.calls[0][1].body)
     expect(body.to).toBe("bob@test.com")
     expect(body.html).toContain("Arsenal vs Chelsea")
+  })
+
+  it("emails a user once even when they belong to several leagues on the competition", async () => {
+    fixtureFindMany.mockResolvedValue([
+      dueFixture({
+        competition: {
+          name: "Premier League",
+          leagues: [
+            { memberships: [member("alice")] },
+            { memberships: [member("alice"), member("bob")] },
+          ],
+        },
+      }),
+    ] as never)
+
+    const result = await sendDeadlineReminders()
+    expect(result.sent).toBe(2)
+    const bodies = fetchMock.mock.calls.map((c) => JSON.parse(c[1].body))
+    const aliceEmails = bodies.filter((b) => b.to === "alice@test.com")
+    expect(aliceEmails).toHaveLength(1)
+    // The shared fixture appears once in alice's email, not once per league
+    expect(aliceEmails[0].html.match(/Arsenal vs Chelsea/g)).toHaveLength(1)
   })
 
   it("sends one email per user covering all their open fixtures", async () => {

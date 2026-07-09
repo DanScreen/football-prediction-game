@@ -29,3 +29,20 @@ export async function resolveLeagueId(
   })
   return first?.leagueId ?? null
 }
+
+/**
+ * Like resolveLeagueId, but also returns the league's competitionId so routes
+ * can scope fixture queries without a second lookup.
+ */
+export async function resolveLeague(
+  userId: string,
+  requested: string | null,
+): Promise<{ id: string; competitionId: string } | null> {
+  const leagueId = await resolveLeagueId(userId, requested)
+  if (!leagueId) return null
+  const league = await prisma.league.findUnique({
+    where: { id: leagueId },
+    select: { id: true, competitionId: true },
+  })
+  return league
+}

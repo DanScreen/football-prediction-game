@@ -23,11 +23,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const valid = await bcrypt.compare(String(credentials.password), user.passwordHash)
         if (!valid) return null
 
+        // Lazily sync host status against SITE_ADMIN_EMAILS so grants and
+        // revocations both take effect at next login
+        const adminEmails = (process.env.SITE_ADMIN_EMAILS ?? "")
+          .split(",")
+          .map((e) => e.trim().toLowerCase())
+          .filter(Boolean)
+        const shouldBeAdmin = adminEmails.includes(user.email.toLowerCase())
+        let isSiteAdmin = user.isSiteAdmin
+        if (shouldBeAdmin !== user.isSiteAdmin) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { isSiteAdmin: shouldBeAdmin },
+          })
+          isSiteAdmin = shouldBeAdmin
+        }
+
         return {
           id: user.id,
           email: user.email,
           name: user.displayName,
           isBot: user.isBot,
+          isSiteAdmin,
         }
       },
     }),

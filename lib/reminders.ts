@@ -6,7 +6,7 @@ const REMINDER_WINDOW_MS = 3 * 60 * 60 * 1000
 
 type ReminderFixture = {
   id: string
-  competition: string
+  competitionName: string
   round: string
   homeTeam: string
   awayTeam: string
@@ -36,11 +36,17 @@ export async function sendDeadlineReminders(): Promise<{ sent: number; skipped?:
     },
     include: {
       predictions: { select: { userId: true } },
-      league: {
+      competition: {
         select: {
           name: true,
-          memberships: {
-            select: { user: { select: { id: true, email: true, displayName: true, isBot: true } } },
+          leagues: {
+            select: {
+              memberships: {
+                select: {
+                  user: { select: { id: true, email: true, displayName: true, isBot: true } },
+                },
+              },
+            },
           },
         },
       },
@@ -57,15 +63,22 @@ export async function sendDeadlineReminders(): Promise<{ sent: number; skipped?:
   const byUser = new Map<string, { email: string; displayName: string; fixtures: ReminderFixture[] }>()
   for (const f of due) {
     const predicted = new Set(f.predictions.map((p) => p.userId))
-    for (const { user } of f.league.memberships) {
-      if (user.isBot || predicted.has(user.id)) continue
-      const entry = byUser.get(user.id) ?? {
-        email: user.email,
-        displayName: user.displayName,
-        fixtures: [],
+    const fixture: ReminderFixture = { ...f, competitionName: f.competition.name }
+    // A user in several leagues on this competition appears once — the map
+    // dedupes, and a fixture is only added on their first appearance
+    const seenForFixture = new Set<string>()
+    for (const league of f.competition.leagues) {
+      for (const { user } of league.memberships) {
+        if (user.isBot || predicted.has(user.id) || seenForFixture.has(user.id)) continue
+        seenForFixture.add(user.id)
+        const entry = byUser.get(user.id) ?? {
+          email: user.email,
+          displayName: user.displayName,
+          fixtures: [],
+        }
+        entry.fixtures.push(fixture)
+        byUser.set(user.id, entry)
       }
-      entry.fixtures.push(f)
-      byUser.set(user.id, entry)
     }
   }
 
@@ -79,7 +92,7 @@ export async function sendDeadlineReminders(): Promise<{ sent: number; skipped?:
           `<li><strong>${f.homeTeam} vs ${f.awayTeam}</strong> — kicks off ${f.kickoffTime.toLocaleString(
             "en-GB",
             { timeZone: "Europe/London", weekday: "short", hour: "2-digit", minute: "2-digit" },
-          )} (${f.competition} · ${f.round})</li>`,
+          )} (${f.competitionName} · ${f.round})</li>`,
       )
       .join("")
 

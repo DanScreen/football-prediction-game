@@ -1,15 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { authenticateApiKey, resolveLeagueId } from "./apiAuth"
+import { authenticateApiKey, resolveLeagueId, resolveLeague } from "./apiAuth"
 import { prisma } from "@/lib/prisma"
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: { findUnique: vi.fn() },
+    league: { findUnique: vi.fn() },
     leagueMembership: { findUnique: vi.fn(), findFirst: vi.fn() },
   },
 }))
 
 const userFindUnique = vi.mocked(prisma.user.findUnique)
+const leagueFindUnique = vi.mocked(prisma.league.findUnique)
 const membershipFindUnique = vi.mocked(prisma.leagueMembership.findUnique)
 const membershipFindFirst = vi.mocked(prisma.leagueMembership.findFirst)
 
@@ -79,5 +81,27 @@ describe("resolveLeagueId", () => {
   it("returns null when the user has no memberships", async () => {
     membershipFindFirst.mockResolvedValue(null)
     expect(await resolveLeagueId("u1", null)).toBeNull()
+  })
+})
+
+describe("resolveLeague", () => {
+  it("returns the league id and competitionId", async () => {
+    membershipFindUnique.mockResolvedValue({ id: "m1" } as never)
+    leagueFindUnique.mockResolvedValue({ id: "league-a", competitionId: "comp-pl" } as never)
+
+    expect(await resolveLeague("u1", "league-a")).toEqual({
+      id: "league-a",
+      competitionId: "comp-pl",
+    })
+    expect(leagueFindUnique).toHaveBeenCalledWith({
+      where: { id: "league-a" },
+      select: { id: true, competitionId: true },
+    })
+  })
+
+  it("returns null when membership resolution fails", async () => {
+    membershipFindUnique.mockResolvedValue(null)
+    expect(await resolveLeague("u1", "league-b")).toBeNull()
+    expect(leagueFindUnique).not.toHaveBeenCalled()
   })
 })

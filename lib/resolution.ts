@@ -1,19 +1,16 @@
 import { prisma } from "@/lib/prisma"
 import { FixtureStatus } from "@/app/generated/prisma/client"
-import { competitionCode, fetchFinishedMatches, findMatchScore, isoDate } from "@/lib/footballData"
+import { fetchFinishedMatches, findMatchScore, isoDate } from "@/lib/footballData"
+import { autoImportFixtures } from "@/lib/autoImport"
 
 /** Fixtures become eligible for a result this long after kickoff (1h45m ≈ full time + stoppage). */
 export const RESULT_DELAY_MS = 1.75 * 60 * 60 * 1000
 
-/**
- * Move SCHEDULED fixtures ≥1h45m past kickoff to AWAITING_RESULT.
- * Scoped to one league when leagueId is given, otherwise all leagues.
- */
-export async function transitionDueFixtures(leagueId?: string): Promise<number> {
+/** Move SCHEDULED fixtures ≥1h45m past kickoff to AWAITING_RESULT (platform-wide). */
+export async function transitionDueFixtures(): Promise<number> {
   const cutoff = new Date(Date.now() - RESULT_DELAY_MS)
   const { count } = await prisma.fixture.updateMany({
     where: {
-      ...(leagueId ? { leagueId } : {}),
       status: FixtureStatus.SCHEDULED,
       kickoffTime: { lte: cutoff },
     },
@@ -24,30 +21,30 @@ export async function transitionDueFixtures(leagueId?: string): Promise<number> 
 
 /**
  * Fetch proposed scores for AWAITING_RESULT fixtures that don't have one yet —
- * one football-data.org call per competition, fuzzy-matched to every awaiting
- * fixture (cross-league copies of the same match share the one lookup).
- * Proposals wait for Commissioner confirmation; nothing is scored here.
+ * one football-data.org call per competition. Proposed scores surface to users
+ * as provisional results/points until a site host confirms; nothing is scored here.
  */
 export async function fetchProposals(): Promise<{ proposed: number; errors: string[] }> {
   if (!process.env.FOOTBALL_DATA_API_KEY) return { proposed: 0, errors: [] }
 
   const fixtures = await prisma.fixture.findMany({
     where: { status: FixtureStatus.AWAITING_RESULT, proposedHomeScore: null },
+    include: { competition: { select: { id: true, name: true, code: true } } },
   })
   if (fixtures.length === 0) return { proposed: 0, errors: [] }
 
   const byCompetition = new Map<string, typeof fixtures>()
   for (const f of fixtures) {
-    const arr = byCompetition.get(f.competition) ?? []
+    const arr = byCompetition.get(f.competitionId) ?? []
     arr.push(f)
-    byCompetition.set(f.competition, arr)
+    byCompetition.set(f.competitionId, arr)
   }
 
   let proposed = 0
   const errors: string[] = []
 
-  for (const [competition, comps] of byCompetition) {
-    const code = competitionCode(competition)
+  for (const [, comps] of byCompetition) {
+    const { name, code } = comps[0].competition
     if (!code) continue
 
     const kickoffs = comps.map((f) => f.kickoffTime.getTime())
@@ -58,7 +55,7 @@ export async function fetchProposals(): Promise<{ proposed: number; errors: stri
     try {
       matches = await fetchFinishedMatches(code, dateFrom, dateTo)
     } catch (err) {
-      errors.push(err instanceof Error ? err.message : `Lookup failed for ${competition}.`)
+      errors.push(err instanceof Error ? err.message : `Lookup failed for ${name}.`)
       continue
     }
 
@@ -77,7 +74,13 @@ export async function fetchProposals(): Promise<{ proposed: number; errors: stri
 }
 
 export async function runResolutionSweep() {
+  const imported = await autoImportFixtures()
   const transitioned = await transitionDueFixtures()
   const { proposed, errors } = await fetchProposals()
-  return { transitioned, proposed, errors }
+  return {
+    transitioned,
+    proposed,
+    imported: imported.imported,
+    errors: [...imported.errors, ...errors],
+  }
 }

@@ -1,10 +1,5 @@
 const BASE_URL = "https://api.football-data.org/v4"
 
-const COMPETITION_CODES: Record<string, string> = {
-  "Premier League": "PL",
-  "FIFA World Cup 2026": "WC",
-}
-
 export interface ProposedFixture {
   homeTeam: string
   awayTeam: string
@@ -77,17 +72,11 @@ async function fdFetch(path: string): Promise<Response> {
   return res
 }
 
+/** Upcoming fixtures for a competition's football-data.org code (e.g. "PL"). */
 export async function fetchUpcomingFixtures(
-  competition: string,
+  code: string,
   rounds: number,
 ): Promise<ProposedFixture[]> {
-  const code = COMPETITION_CODES[competition]
-  if (!code) {
-    throw new Error(
-      `No API mapping for "${competition}". Supported: ${Object.keys(COMPETITION_CODES).join(", ")}.`,
-    )
-  }
-
   const res = await fdFetch(`/competitions/${code}/matches?status=SCHEDULED`)
   const data = (await res.json()) as { matches: FDMatch[] }
   const matches = data.matches ?? []
@@ -116,11 +105,6 @@ function teamNameMatches(team: FDTeam, query: string): boolean {
     .filter(Boolean)
     .map((s) => s.toLowerCase())
   return candidates.some((c) => c.includes(q) || q.includes(c))
-}
-
-/** API code for a competition name, or null if not supported by the free tier. */
-export function competitionCode(competition: string): string | null {
-  return COMPETITION_CODES[competition] ?? null
 }
 
 /** All finished matches for a competition between two dates (single API call). */
@@ -162,13 +146,9 @@ export function isoDate(d: Date): string {
 export async function lookupResult(
   homeTeam: string,
   awayTeam: string,
-  competition: string,
-  _round: string,
+  code: string,
   kickoffTime: Date,
 ): Promise<{ homeScore: number; awayScore: number }> {
-  const code = COMPETITION_CODES[competition]
-  if (!code) throw new Error(`No API mapping for "${competition}".`)
-
   const dateFrom = isoDate(kickoffTime)
   const dateTo = isoDate(new Date(kickoffTime.getTime() + 2 * 24 * 60 * 60 * 1000))
 

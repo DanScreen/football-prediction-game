@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import {
-  competitionCode,
   isoDate,
   findMatchScore,
   fetchUpcomingFixtures,
@@ -33,17 +32,6 @@ function fdMatch(overrides: {
     ...(overrides.score ? { score: { fullTime: overrides.score } } : {}),
   }
 }
-
-describe("competitionCode", () => {
-  it("maps supported competitions", () => {
-    expect(competitionCode("Premier League")).toBe("PL")
-    expect(competitionCode("FIFA World Cup 2026")).toBe("WC")
-  })
-
-  it("returns null for unknown competitions", () => {
-    expect(competitionCode("Serie A")).toBeNull()
-  })
-})
 
 describe("isoDate", () => {
   it("formats as YYYY-MM-DD", () => {
@@ -120,18 +108,14 @@ describe("API-backed fetchers", () => {
   describe("fetchUpcomingFixtures", () => {
     it("throws when the API key is missing", async () => {
       vi.stubEnv("FOOTBALL_DATA_API_KEY", "")
-      await expect(fetchUpcomingFixtures("Premier League", 1)).rejects.toThrow(
+      await expect(fetchUpcomingFixtures("PL", 1)).rejects.toThrow(
         /FOOTBALL_DATA_API_KEY/,
       )
     })
 
-    it("throws for an unsupported competition", async () => {
-      await expect(fetchUpcomingFixtures("Serie A", 1)).rejects.toThrow(/No API mapping/)
-    })
-
     it("sends the API key header and requests scheduled matches", async () => {
       respondWith([])
-      await fetchUpcomingFixtures("Premier League", 1)
+      await fetchUpcomingFixtures("PL", 1)
       const [url, init] = fetchMock.mock.calls[0]
       expect(url).toContain("/competitions/PL/matches?status=SCHEDULED")
       expect(init.headers["X-Auth-Token"]).toBe("test-key")
@@ -143,11 +127,11 @@ describe("API-backed fetchers", () => {
         fdMatch({ home: fdTeam("C"), away: fdTeam("D"), matchday: 1 }),
         fdMatch({ home: fdTeam("E"), away: fdTeam("F"), matchday: 2 }),
       ])
-      const one = await fetchUpcomingFixtures("Premier League", 1)
+      const one = await fetchUpcomingFixtures("PL", 1)
       expect(one).toHaveLength(2)
       expect(one.every((f) => f.round === "Matchweek 1")).toBe(true)
 
-      const two = await fetchUpcomingFixtures("Premier League", 2)
+      const two = await fetchUpcomingFixtures("PL", 2)
       expect(two).toHaveLength(3)
     })
 
@@ -155,7 +139,7 @@ describe("API-backed fetchers", () => {
       respondWith([
         fdMatch({ home: fdTeam("Arsenal FC", "Arsenal"), away: fdTeam("Chelsea FC", "") }),
       ])
-      const [fixture] = await fetchUpcomingFixtures("Premier League", 1)
+      const [fixture] = await fetchUpcomingFixtures("PL", 1)
       expect(fixture.homeTeam).toBe("Arsenal")
       expect(fixture.awayTeam).toBe("Chelsea FC")
     })
@@ -165,13 +149,13 @@ describe("API-backed fetchers", () => {
         fdMatch({ home: fdTeam("A"), away: fdTeam("B"), stage: "GROUP_STAGE", group: "GROUP_A", matchday: 1 }),
         fdMatch({ home: fdTeam("C"), away: fdTeam("D"), stage: "FINAL", matchday: null }),
       ])
-      const fixtures = await fetchUpcomingFixtures("FIFA World Cup 2026", 2)
+      const fixtures = await fetchUpcomingFixtures("WC", 2)
       expect(fixtures.map((f) => f.round)).toEqual(["Group Stage - Group A", "Final"])
     })
 
     it("surfaces API errors with status code", async () => {
       fetchMock.mockResolvedValue({ ok: false, status: 429, text: async () => "rate limited" })
-      await expect(fetchUpcomingFixtures("Premier League", 1)).rejects.toThrow(/429/)
+      await expect(fetchUpcomingFixtures("PL", 1)).rejects.toThrow(/429/)
     })
   })
 
@@ -195,14 +179,14 @@ describe("API-backed fetchers", () => {
         }),
       ])
       await expect(
-        lookupResult("Arsenal", "Chelsea", "Premier League", "Matchweek 1", new Date("2026-07-01T15:00:00Z")),
+        lookupResult("Arsenal", "Chelsea", "PL", new Date("2026-07-01T15:00:00Z")),
       ).resolves.toEqual({ homeScore: 4, awayScore: 2 })
     })
 
     it("throws a helpful error when no result is found", async () => {
       respondWith([])
       await expect(
-        lookupResult("Arsenal", "Chelsea", "Premier League", "Matchweek 1", new Date("2026-07-01T15:00:00Z")),
+        lookupResult("Arsenal", "Chelsea", "PL", new Date("2026-07-01T15:00:00Z")),
       ).rejects.toThrow(/No finished result found for Arsenal vs Chelsea/)
     })
   })
