@@ -1,6 +1,6 @@
 import ForgotPasswordForm from "./ForgotPasswordForm"
 
-export const metadata = { title: "Forgot Password — Football Prediction App" }
+export const metadata = { title: "Forgot password — Scorers" }
 
 export default function ForgotPasswordPage() {
   return (

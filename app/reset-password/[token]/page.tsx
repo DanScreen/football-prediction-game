@@ -2,7 +2,7 @@ import Link from "next/link"
 import { isResetTokenValid } from "@/lib/passwordReset"
 import ResetPasswordForm from "./ResetPasswordForm"
 
-export const metadata = { title: "Reset Password — Football Prediction App" }
+export const metadata = { title: "Reset password — Scorers" }
 
 export default async function ResetPasswordPage({
   params,

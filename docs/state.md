@@ -58,6 +58,18 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Known rough edges
 
+- **⚠️ Google Safe Browsing flag on `scorersonline.uk`** (observed 2026-07-10) —
+  Chrome shows a "Dangerous site" / social-engineering warning. The app is **not
+  compromised** (serves correctly on both the domain and the run.app URL, no injected
+  content); this is a domain-reputation flag, most likely inherited prior use of the
+  purchased `.uk` domain or a new-domain + credential-form heuristic. **Fix:** verify
+  the domain in Google Search Console → Security Issues → Request Review (social-eng
+  reviews clear in ~72h). Interim: the direct Cloud Run URL is a separate domain and
+  unlikely to be flagged. Also hurts Resend email deliverability until cleared.
+  **Mitigation done (not yet deployed):** login/register/forgot/reset page titles
+  fixed to the "Scorers" brand, and the login/register pages now carry a clear "what
+  this site is" explainer to reduce the credential-page phishing false-positive.
+  **Still needed from the owner:** the Search Console verification + review request.
 - The GitHub Actions workflow logs a **Node 20 deprecation warning** (actions are
   forced onto Node 24). Harmless; bump `actions/checkout`/`setup-node` when convenient.
 - **No local PostgreSQL** on the dev machine — migrations are authored offline and

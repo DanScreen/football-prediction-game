@@ -1,6 +1,10 @@
 import LoginForm from "./LoginForm"
 
-export const metadata = { title: "Sign In — Football Prediction App" }
+export const metadata = {
+  title: "Sign in — Scorers",
+  description:
+    "Sign in to Scorers, a private football score-prediction game where friends predict match results and compete on a leaderboard.",
+}
 
 export default async function LoginPage({
   searchParams,
@@ -13,12 +17,20 @@ export default async function LoginPage({
     <div className="flex min-h-[calc(100vh-60px)] items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-ink">Welcome Back</h1>
-          <p className="mt-2 text-ink-muted text-sm">Sign in to make your predictions.</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-pitch">Scorers ⚽</p>
+          <h1 className="mt-2 text-3xl font-bold text-ink">Welcome back</h1>
+          <p className="mt-2 text-ink-muted text-sm">
+            Sign in to <span className="font-semibold text-ink-mid">Scorers</span> to make your
+            predictions.
+          </p>
         </div>
         <div className="bg-surface rounded-xl shadow-card border border-line px-8 py-8">
           <LoginForm callbackUrl={callbackUrl} registered={registered === "1"} reset={reset === "1"} />
         </div>
+        <p className="mt-6 text-center text-xs text-ink-faint">
+          Scorers is a private, invite-only game where friends predict football scorelines and
+          compete on a leaderboard. We only ask for your email and a password to sign you in.
+        </p>
       </div>
     </div>
   )
