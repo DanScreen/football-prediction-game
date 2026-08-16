@@ -6,6 +6,22 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — Polish & UX pass (incl. dark mode)
+- **Dark theme.** Follows the OS setting. Added `good`/`bad`/`info` semantic token
+  families plus `pitch-on`/`clock-line`, and swept 137 stock Tailwind colour classes
+  across 26 files into tokens — so the dark theme is one `prefers-color-scheme` block
+  redefining values, with no per-component `dark:` variants.
+- **Mobile navigation.** The top nav was `hidden sm:flex` with no mobile alternative,
+  leaving Predictions/Leaderboard/Leagues unreachable below 640px. Added a bottom tab bar.
+- **Loading / error / not-found boundaries** — the app previously had none.
+- **Form strip accessibility** — dual-encoded with glyphs + `aria-label` instead of
+  colour alone, and now visible on mobile. Raised `ink-faint` to clear WCAG AA (it was
+  2.52:1 on white while carrying real copy).
+- **Dashboard** — performance tiles from round one, plus a "N fixtures still to predict"
+  nudge with the next deadline and amber edges on the fixtures it means.
+- **Titles** — `title.template` in the root layout; two pages still said "Football
+  Prediction App" and six had no title at all.
+
 ## 2026-08-16 — CI hardening + local Postgres
 - **Tests now gate the deploy.** `deploy.yml` runs `prisma generate` + `vitest run`
   before touching Cloud SQL or Cloud Run, so a red suite can't reach production.

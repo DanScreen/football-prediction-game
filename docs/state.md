@@ -39,7 +39,9 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   a fixture kicking off within 3 hours (via Resend).
 - **Public bot API** — `/api/v1/fixtures`, `/predictions`, `/leaderboard`.
 - **Design** — "Quiet Product" system with broadcast-scoreboard moments (see
-  [design-system.md](design-system.md)).
+  [design-system.md](design-system.md)), fully tokenised with a **dark theme** that
+  follows the OS setting.
+- **Mobile** — bottom tab bar; skeleton loading states, an error boundary and a 404 page.
 
 ## Deployment state
 

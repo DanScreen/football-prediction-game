@@ -3,6 +3,20 @@
 How each part of the app behaves, from the user's side and the code's. **Update this
 when behaviour changes.** For the public bot API see [api.md](api.md).
 
+## Navigation & shell
+
+- **Desktop (≥640px):** top-bar links (Dashboard, My Predictions, Leaderboard, My
+  Leagues), plus Admin/Host chips when the user holds those roles.
+- **Mobile (<640px):** a fixed **bottom tab bar** (`app/components/MobileNav.tsx`) with
+  the same four destinations. The top-bar nav is hidden at this width, so before this
+  existed there was no way to reach any page but the dashboard. Both share their link
+  list and active-state logic from `NavLinks.tsx`.
+- **Loading states:** `loading.tsx` skeletons for the dashboard, leaderboard and
+  predictions pages — these matter because Cloud Run runs at `--min-instances 0`, so a
+  cold start is a visible wait.
+- **Errors:** `app/error.tsx` (retry + dashboard link; the error text is logged, not
+  rendered, since it can carry connection strings) and `app/not-found.tsx`.
+
 ## Roles
 
 | Role | Flag/check | Can do |
@@ -28,7 +42,11 @@ switched from this page.
 - **Kicked-off fixtures** — predictions lock at kickoff and everyone's picks reveal.
   If a proposed score exists, the fixture shows the **provisional** scoreline and each
   pick's provisional points (amber `+X prov.`), plus an "awaiting confirmation" note.
-- **Performance tiles** — rank, points (with `+X prov.` sub-label), exact count.
+- **Performance tiles** — rank, points (with `+X prov.` sub-label), exact count. Shown
+  from the first round; before anything is scored the rank reads `–` with a note that
+  it fills in once results are confirmed.
+- **"N fixtures still to predict"** banner with the next deadline. The fixtures it
+  refers to carry an amber left edge (predicted ones a green edge).
 - Fixtures are queried by the active league's `competitionId`; predictions are scoped
   to league members so you see your league-mates' picks.
 - If no score has been fetched yet, a member can press **Request result** on a
@@ -45,8 +63,12 @@ separately until confirmed.
 
 Standings ranked by **confirmed** points (ties share a rank). Built on
 `computeLeaderboard()` (shared with the API). Shows exact-score count, Grand Slam
-badges (🏆), a per-player **form strip** (last 5 completed rounds, colour-coded by
-points ratio), and a `+X` provisional chip per row. Provisional never changes rank.
+badges (🏆), a per-player **form strip** (last 5 completed rounds, oldest → newest) and
+a `+X` provisional chip per row. Provisional never changes rank.
+
+Each form cell is **dual-encoded** — a glyph (▲ strong / ■ mixed / ▼ poor / · no picks)
+as well as a colour — so it's readable without colour vision, and carries an
+`aria-label` naming the round and points scored. The strip shows at every breakpoint.
 
 ## Host area (`/host`) — site hosts only
 

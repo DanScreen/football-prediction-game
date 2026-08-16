@@ -63,6 +63,38 @@ removed. Verified against a throwaway Docker Postgres before shipping.
 
 ---
 
+## 2026-08-16 — Dark mode via token swap, not `dark:` variants
+
+Tailwind's usual answer is a `dark:` variant per element. That was rejected: the app
+had 137 stock colour classes across 26 files, so it would have meant ~137 paired
+variants to write and keep in sync forever, and the design system already said "use the
+tokens, don't hardcode".
+
+Instead every stock colour became a semantic token (`good`/`bad`/`info` alongside the
+existing `pitch`/`clock`), and the dark theme is a single `@media (prefers-color-scheme:
+dark)` block redefining the variable *values*. No component has a dark-mode branch, and
+new UI is dark-ready for free as long as it uses tokens.
+
+Two consequences worth knowing:
+- **`pitch-on`** exists because the accent inverts. In light, labels on a green button
+  are white; in dark the green brightens for legibility as text, so labels must go
+  near-black. `text-white` on a button is therefore always wrong.
+- **`pitch-deep` is lighter than `pitch` in dark mode** — hover should still move toward
+  the light.
+
+**No in-app toggle** — it follows the OS. A toggle needs persisted per-user state and a
+cookie read in the server layout to avoid a flash of the wrong theme; not worth it until
+someone asks.
+
+## 2026-08-16 — Bottom tab bar for mobile navigation
+
+Chosen over a hamburger drawer. The app has exactly four destinations and is checked in
+short bursts around match times, so keeping all four one thumb-tap away beats hiding
+them behind a menu that costs a tap and needs open/close state. The desktop top-bar nav
+is unchanged; both render from one link list in `NavLinks.tsx`.
+
+---
+
 ## Foundational stack decisions (earlier)
 
 - **Prisma 7 + `@prisma/adapter-pg`** — Prisma 7 dropped no-adapter mode; the runtime

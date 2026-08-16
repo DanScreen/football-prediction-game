@@ -15,15 +15,20 @@ export default function PredictionInput({ fixtureId, savedHome, savedAway }: Pro
 
   const hasSaved = savedHome !== undefined && savedAway !== undefined
 
-  // "✓ Saved" used to stick around forever. Clear it after a moment so the
-  // control returns to a resting state and doesn't imply an unsaved edit is saved.
-  const [showSaved, setShowSaved] = useState(false)
+  // "✓ Saved" used to stick around forever. Clear it after a moment so the control
+  // returns to a resting state and doesn't imply an unsaved edit has been saved.
+  //
+  // Visibility is derived rather than mirrored in state: we only record which result
+  // has been dismissed, so the effect's setState happens in the timer callback (a
+  // genuine external event) instead of synchronously during the effect.
+  const [dismissed, setDismissed] = useState<PredictionState | null>(null)
+  const showSaved = Boolean(state.success) && dismissed !== state
+
   useEffect(() => {
-    if (!state.success) return
-    setShowSaved(true)
-    const t = setTimeout(() => setShowSaved(false), 2500)
+    if (!showSaved) return
+    const t = setTimeout(() => setDismissed(state), 2500)
     return () => clearTimeout(t)
-  }, [state])
+  }, [showSaved, state])
 
   return (
     <form action={formAction} className="flex items-center gap-3">
