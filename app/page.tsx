@@ -1,7 +1,7 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { getActiveLeagueId } from "@/lib/activeLeague"
+import { resolveActiveLeagueId } from "@/lib/activeLeague"
 import { scoreOnePrediction } from "@/lib/scoring"
 import Link from "next/link"
 import Countdown from "@/app/components/Countdown"
@@ -15,30 +15,26 @@ export default async function DashboardPage() {
   if (!session?.user?.id) redirect("/login")
   const userId = session.user.id
 
-  const activeLeagueId = await getActiveLeagueId()
+  const activeLeagueId = await resolveActiveLeagueId(userId)
 
-  // No league yet — prompt to create or join
+  // Null here means the user genuinely belongs to no leagues — resolveActiveLeagueId
+  // already falls back to their first membership when the cookie is missing or stale.
   if (!activeLeagueId) {
-    const anyMembership = await prisma.leagueMembership.findFirst({ where: { userId } })
-    if (!anyMembership) {
-      return (
-        <div className="max-w-md mx-auto px-4 py-24 text-center">
-          <p className="text-5xl mb-4">⚽</p>
-          <h1 className="text-2xl font-bold text-ink mb-2">Welcome to Scorers</h1>
-          <p className="text-ink-muted mb-8">
-            Create a new league or join one with an invite code to get started.
-          </p>
-          <Link
-            href="/leagues"
-            className="inline-block bg-pitch text-pitch-on px-6 py-3 rounded-xl font-semibold shadow-card hover:bg-pitch-deep transition-colors"
-          >
-            Get Started →
-          </Link>
-        </div>
-      )
-    }
-    // Has leagues but no cookie — auto-select first
-    redirect("/leagues")
+    return (
+      <div className="max-w-md mx-auto px-4 py-24 text-center">
+        <p className="text-5xl mb-4">⚽</p>
+        <h1 className="text-2xl font-bold text-ink mb-2">Welcome to Scorers</h1>
+        <p className="text-ink-muted mb-8">
+          Create a new league or join one with an invite code to get started.
+        </p>
+        <Link
+          href="/leagues"
+          className="inline-block bg-pitch text-pitch-on px-6 py-3 rounded-xl font-semibold shadow-card hover:bg-pitch-deep transition-colors"
+        >
+          Get Started →
+        </Link>
+      </div>
+    )
   }
 
   const league = await prisma.league.findUnique({

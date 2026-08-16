@@ -1,7 +1,7 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { getActiveLeagueId } from "@/lib/activeLeague"
+import { resolveActiveLeagueId } from "@/lib/activeLeague"
 import LeaguesClient from "./LeaguesClient"
 
 export const metadata = { title: "My Leagues" }
@@ -10,7 +10,9 @@ export default async function LeaguesPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
 
-  const activeLeagueId = await getActiveLeagueId()
+  // Resolved, not the raw cookie, so the "Active" badge matches the league the rest
+  // of the app is actually using when no cookie has been written yet.
+  const activeLeagueId = await resolveActiveLeagueId(session.user.id)
 
   const [memberships, competitions] = await Promise.all([
     prisma.leagueMembership.findMany({

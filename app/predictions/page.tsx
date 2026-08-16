@@ -1,7 +1,7 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { getActiveLeagueId } from "@/lib/activeLeague"
+import { resolveActiveLeagueId } from "@/lib/activeLeague"
 import { scoreOnePrediction } from "@/lib/scoring"
 import { provisionalScore, provisionalPoints } from "@/lib/provisional"
 
@@ -11,7 +11,7 @@ export default async function MyPredictionsPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
 
-  const activeLeagueId = await getActiveLeagueId()
+  const activeLeagueId = await resolveActiveLeagueId(session.user.id)
   if (!activeLeagueId) redirect("/leagues")
 
   const league = await prisma.league.findUnique({

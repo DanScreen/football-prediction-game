@@ -1,14 +1,14 @@
 import Link from "next/link"
 import { auth, signOut } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { getActiveLeagueId } from "@/lib/activeLeague"
+import { resolveActiveLeagueId } from "@/lib/activeLeague"
 import NavLinks from "./NavLinks"
 import MobileNav from "./MobileNav"
 import Logo from "./Logo"
 
 export default async function Header() {
   const session = await auth()
-  const activeLeagueId = session?.user?.id ? await getActiveLeagueId() : null
+  const activeLeagueId = session?.user?.id ? await resolveActiveLeagueId(session.user.id) : null
 
   const isCommissioner =
     session?.user?.id && activeLeagueId

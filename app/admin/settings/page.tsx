@@ -1,13 +1,19 @@
 import { redirect } from "next/navigation"
+import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { getActiveLeagueId } from "@/lib/activeLeague"
+import { resolveActiveLeagueId } from "@/lib/activeLeague"
 import SettingsForm from "./SettingsForm"
 import InviteCodeCard from "./InviteCodeCard"
 
 export const metadata = { title: "League Settings" }
 
 export default async function SettingsPage() {
-  const activeLeagueId = await getActiveLeagueId()
+  // AdminLayout already gates on commissioner; this resolves the same league again
+  // so the page never renders against a different one than the layout authorised.
+  const session = await auth()
+  if (!session?.user?.id) redirect("/login")
+
+  const activeLeagueId = await resolveActiveLeagueId(session.user.id)
   if (!activeLeagueId) redirect("/leagues")
 
   const league = await prisma.league.findUnique({ where: { id: activeLeagueId } })
