@@ -16,6 +16,23 @@ when behaviour changes.** For the public bot API see [api.md](api.md).
   cold start is a visible wait.
 - **Errors:** `app/error.tsx` (retry + dashboard link; the error text is logged, not
   rendered, since it can carry connection strings) and `app/not-found.tsx`.
+- **Theme toggle:** cycles System → Light → Dark, in the header on every page including
+  the auth pages. See [design-system.md](design-system.md#dark-theme).
+
+### Active league resolution
+
+Pages need an active league and redirect to `/leagues` without one. The `activeLeagueId`
+cookie is only written when a user creates, joins or switches a league, so
+`resolveActiveLeagueId(userId)` (`lib/activeLeague.ts`) resolves it per request:
+
+1. the cookie, if the user is still a member of that league
+2. otherwise their earliest-joined league
+3. otherwise `null` — a genuine "you have no leagues yet" state
+
+Without step 2, any member without the cookie (fresh sign-in, new browser, cleared
+cookies) was bounced to `/leagues` from every page. Step 1's membership check also
+recovers from a stale cookie pointing at a league they've left. It deliberately does
+**not** write the cookie back — Server Components can't set cookies during render.
 
 ## Roles
 

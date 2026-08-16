@@ -6,6 +6,17 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — Navigation fix + theme toggle
+- **Fixed: every page bounced back to `/leagues`.** The `activeLeagueId` cookie is only
+  written on create/join/switch, and every page redirected when it was missing — so a
+  member signing in without one couldn't navigate anywhere. New
+  `resolveActiveLeagueId()` falls back to the earliest-joined league and also recovers
+  from a stale cookie pointing at a league the user has left. 5 tests.
+- **Theme toggle** — System / Light / Dark in the header, persisted in a cookie and read
+  server-side so there's no flash of the wrong theme.
+- **Softened the board navy in light mode** (`#0a1020` → `#28334c`); the near-black
+  leaderboard header read as a hole against the white page.
+
 ## 2026-08-16 — Polish & UX pass (incl. dark mode)
 - **Dark theme.** Follows the OS setting. Added `good`/`bad`/`info` semantic token
   families plus `pitch-on`/`clock-line`, and swept 137 stock Tailwind colour classes

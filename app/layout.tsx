@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/app/components/Header";
+import { getTheme } from "@/lib/theme.server";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -25,14 +26,19 @@ export const metadata: Metadata = {
   description: "Predict match scores and compete with friends",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Rendered into the initial HTML so there's no flash of the wrong theme.
+  // "system" sets no attribute, letting the prefers-color-scheme rules apply.
+  const theme = await getTheme();
+
   return (
     <html
       lang="en"
+      data-theme={theme === "system" ? undefined : theme}
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-ground">

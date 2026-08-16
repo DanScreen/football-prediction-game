@@ -38,9 +38,19 @@ you find yourself reaching for a numbered Tailwind colour, add or reuse a token 
 
 ## Dark theme
 
-The app follows the **OS setting** via `@media (prefers-color-scheme: dark)` in
-`app/globals.css` — there is no in-app toggle. Only the token *values* change inside
-that block; no component carries a dark-mode branch.
+Three states, cycled by the header toggle: **System** (default, follows
+`prefers-color-scheme`), **Light**, **Dark**. Only token *values* change; no component
+carries a dark-mode branch.
+
+The dark palette is defined once in `app/globals.css` as `--dark-*` variables. Applying
+it is a mapping repeated for the two ways dark can win — `@media (prefers-color-scheme:
+dark)` scoped to `:root:not([data-theme="light"])`, and `:root[data-theme="dark"]`. Only
+the mapping is duplicated, never a colour value, so the two can't drift.
+
+The choice is a non-`httpOnly` `theme` cookie (a device preference, not account data),
+read server-side in the root layout (`lib/theme.server.ts`) and rendered into
+`<html data-theme>` — so there's **no flash of the wrong theme** on first paint.
+`"system"` deliberately sets no attribute, letting the media query apply.
 
 Two tokens genuinely invert rather than just darken:
 
@@ -49,8 +59,9 @@ Two tokens genuinely invert rather than just darken:
 - **`pitch-deep` becomes lighter than `pitch`**, because a hover state should still
   move toward the light in a dark theme.
 
-`:root { color-scheme: light dark }` is set so native UI — scrollbars, and crucially the
-date/time pickers in the host fixture forms — themes itself too.
+`color-scheme` is set so native UI — scrollbars, and crucially the date/time pickers in
+the host fixture forms — themes itself too, and is pinned to the explicit choice rather
+than the OS when one has been made.
 
 When adding UI: use tokens and it is dark-ready for free. If you must hardcode a colour,
 you own styling both themes.

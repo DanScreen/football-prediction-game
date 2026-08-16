@@ -60,11 +60,17 @@
   --color-info-tint: #dbeafe;
   --color-info-line: #bfdbfe;
 
-  /* Broadcast board (scoreboard moments only) */
-  --color-board: #0a1020;
-  --color-board-panel: #111a30;
+  /* Broadcast board (scoreboard moments only) — the leaderboard table header,
+     host/admin nav bars and api-docs code blocks.
+
+     A softened slate-navy rather than near-black: against a white page a
+     near-black slab reads as a harsh hole rather than a scoreboard. Dark mode
+     takes it deeper (see --dark-board), where the ground is dark enough that it
+     needs the contrast to still read as a raised panel. */
+  --color-board: #28334c;
+  --color-board-panel: #333f5b;
   --color-board-fore: #edf2ff;
-  --color-board-muted: #8b96b8;
+  --color-board-muted: #a8b2cd;
   --color-board-gold: #f2c74e;
   --color-board-cyan: #57c7ff;
 
@@ -76,65 +82,149 @@
 }
 
 /* ── Dark theme ──────────────────────────────────────────────
-   Follows the OS setting. Only the token VALUES change; every
-   utility in the app resolves through these variables, so no
-   component needs a dark-mode branch.
+   Only the token VALUES change; every utility in the app resolves
+   through these variables, so no component needs a dark-mode branch.
 
    Two things genuinely invert rather than darken:
    - `pitch` brightens (it must read as text on a dark ground), so
      `pitch-on` flips to near-black for text sitting on a pitch fill.
    - `pitch-deep` becomes *lighter* than `pitch`, because hover
      should still move toward the light in a dark theme.
+
+   The palette is defined ONCE here as `--dark-*`. Applying it is a
+   mapping repeated for the two ways dark can be active — the OS
+   setting, and an explicit `data-theme="dark"` choice. Only the
+   mapping is duplicated, never a colour value, so the two can't
+   drift apart.
    ──────────────────────────────────────────────────────────── */
+:root {
+  --dark-ground: #0e1411;
+  --dark-surface: #151d19;
+  --dark-chip: #1e2823;
+
+  --dark-ink: #e8eeea;
+  --dark-ink-mid: #b9c5be;
+  --dark-ink-muted: #8c9a92;
+  --dark-ink-faint: #879489;
+
+  --dark-line: #263029;
+  --dark-line-soft: #1d2621;
+  --dark-line-strong: #36443d;
+
+  --dark-pitch: #45c47d;
+  --dark-pitch-deep: #6ad698;
+  --dark-pitch-tint: #12291d;
+  --dark-pitch-on: #04140b;
+
+  --dark-clock: #e8a33d;
+  --dark-clock-tint: #2c2013;
+  --dark-clock-line: #4a3418;
+
+  --dark-good: #4ade80;
+  --dark-good-tint: #10281a;
+  --dark-good-line: #1e462f;
+  --dark-bad: #f87171;
+  --dark-bad-tint: #2b1414;
+  --dark-bad-line: #4a2020;
+  --dark-info: #60a5fa;
+  --dark-info-tint: #131f37;
+  --dark-info-line: #1f3358;
+
+  /* Dark mode takes the board deeper than its light value so it still reads as
+     a distinct panel against the dark ground, and restores the deeper muted —
+     the lighter one exists for the softened light-mode slab. */
+  --dark-board: #05090f;
+  --dark-board-panel: #0c1421;
+  --dark-board-muted: #8b96b8;
+
+  --dark-shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --dark-shadow-raised: 0 1px 3px rgb(0 0 0 / 0.5), 0 4px 12px rgb(0 0 0 / 0.4);
+}
+
+/* OS is dark AND the user hasn't explicitly chosen light. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color-ground: #0e1411;
-    --color-surface: #151d19;
-    --color-chip: #1e2823;
-
-    --color-ink: #e8eeea;
-    --color-ink-mid: #b9c5be;
-    --color-ink-muted: #8c9a92;
-    --color-ink-faint: #879489;
-
-    --color-line: #263029;
-    --color-line-soft: #1d2621;
-    --color-line-strong: #36443d;
-
-    --color-pitch: #45c47d;
-    --color-pitch-deep: #6ad698;
-    --color-pitch-tint: #12291d;
-    --color-pitch-on: #04140b;
-
-    --color-clock: #e8a33d;
-    --color-clock-tint: #2c2013;
-    --color-clock-line: #4a3418;
-
-    --color-good: #4ade80;
-    --color-good-tint: #10281a;
-    --color-good-line: #1e462f;
-    --color-bad: #f87171;
-    --color-bad-tint: #2b1414;
-    --color-bad-line: #4a2020;
-    --color-info: #60a5fa;
-    --color-info-tint: #131f37;
-    --color-info-line: #1f3358;
-
-    /* The board is already dark; nudge it deeper so it still reads
-       as a raised panel against the dark ground. */
-    --color-board: #05090f;
-    --color-board-panel: #0c1421;
-
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
-    --shadow-raised: 0 1px 3px rgb(0 0 0 / 0.5), 0 4px 12px rgb(0 0 0 / 0.4);
+  :root:not([data-theme="light"]) {
+    --color-ground: var(--dark-ground);
+    --color-surface: var(--dark-surface);
+    --color-chip: var(--dark-chip);
+    --color-ink: var(--dark-ink);
+    --color-ink-mid: var(--dark-ink-mid);
+    --color-ink-muted: var(--dark-ink-muted);
+    --color-ink-faint: var(--dark-ink-faint);
+    --color-line: var(--dark-line);
+    --color-line-soft: var(--dark-line-soft);
+    --color-line-strong: var(--dark-line-strong);
+    --color-pitch: var(--dark-pitch);
+    --color-pitch-deep: var(--dark-pitch-deep);
+    --color-pitch-tint: var(--dark-pitch-tint);
+    --color-pitch-on: var(--dark-pitch-on);
+    --color-clock: var(--dark-clock);
+    --color-clock-tint: var(--dark-clock-tint);
+    --color-clock-line: var(--dark-clock-line);
+    --color-good: var(--dark-good);
+    --color-good-tint: var(--dark-good-tint);
+    --color-good-line: var(--dark-good-line);
+    --color-bad: var(--dark-bad);
+    --color-bad-tint: var(--dark-bad-tint);
+    --color-bad-line: var(--dark-bad-line);
+    --color-info: var(--dark-info);
+    --color-info-tint: var(--dark-info-tint);
+    --color-info-line: var(--dark-info-line);
+    --color-board: var(--dark-board);
+    --color-board-panel: var(--dark-board-panel);
+    --color-board-muted: var(--dark-board-muted);
+    --shadow-card: var(--dark-shadow-card);
+    --shadow-raised: var(--dark-shadow-raised);
   }
+}
+
+/* Explicit dark choice, whatever the OS says. */
+:root[data-theme="dark"] {
+  --color-ground: var(--dark-ground);
+  --color-surface: var(--dark-surface);
+  --color-chip: var(--dark-chip);
+  --color-ink: var(--dark-ink);
+  --color-ink-mid: var(--dark-ink-mid);
+  --color-ink-muted: var(--dark-ink-muted);
+  --color-ink-faint: var(--dark-ink-faint);
+  --color-line: var(--dark-line);
+  --color-line-soft: var(--dark-line-soft);
+  --color-line-strong: var(--dark-line-strong);
+  --color-pitch: var(--dark-pitch);
+  --color-pitch-deep: var(--dark-pitch-deep);
+  --color-pitch-tint: var(--dark-pitch-tint);
+  --color-pitch-on: var(--dark-pitch-on);
+  --color-clock: var(--dark-clock);
+  --color-clock-tint: var(--dark-clock-tint);
+  --color-clock-line: var(--dark-clock-line);
+  --color-good: var(--dark-good);
+  --color-good-tint: var(--dark-good-tint);
+  --color-good-line: var(--dark-good-line);
+  --color-bad: var(--dark-bad);
+  --color-bad-tint: var(--dark-bad-tint);
+  --color-bad-line: var(--dark-bad-line);
+  --color-info: var(--dark-info);
+  --color-info-tint: var(--dark-info-tint);
+  --color-info-line: var(--dark-info-line);
+  --color-board: var(--dark-board);
+  --color-board-panel: var(--dark-board-panel);
+  --color-board-muted: var(--dark-board-muted);
+  --shadow-card: var(--dark-shadow-card);
+  --shadow-raised: var(--dark-shadow-raised);
 }
 
 /* Tells the browser to theme native UI — form controls, scrollbars, and
    crucially the date/time pickers in the host fixture forms. Without this
-   they render as light widgets on a dark page. */
+   they render as light widgets on a dark page. Pinned when the user has
+   made an explicit choice so native UI follows the app, not the OS. */
 :root {
   color-scheme: light dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {

@@ -4,10 +4,13 @@ import { prisma } from "@/lib/prisma"
 import { resolveActiveLeagueId } from "@/lib/activeLeague"
 import NavLinks from "./NavLinks"
 import MobileNav from "./MobileNav"
+import ThemeToggle from "./ThemeToggle"
 import Logo from "./Logo"
+import { getTheme } from "@/lib/theme.server"
 
 export default async function Header() {
   const session = await auth()
+  const theme = await getTheme()
   const activeLeagueId = session?.user?.id ? await resolveActiveLeagueId(session.user.id) : null
 
   const isCommissioner =
@@ -57,11 +60,16 @@ export default async function Header() {
         </div>
 
         <div className="flex items-center gap-3 text-sm">
+          {/* Outside the session branch — the theme is a device preference and the
+              auth pages need it too. */}
+          <ThemeToggle theme={theme} />
           {session ? (
             <>
+              {/* Stays visible on mobile — the tab bar has no Profile tab, so this
+                  is the only route to it. Truncated rather than hidden. */}
               <Link
                 href="/profile"
-                className="font-medium text-ink-muted transition-colors hover:text-ink"
+                className="max-w-24 truncate font-medium text-ink-muted transition-colors hover:text-ink sm:max-w-none"
               >
                 {session.user.name ?? session.user.email}
               </Link>

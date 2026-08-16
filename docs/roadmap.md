@@ -12,9 +12,6 @@ Nothing is currently blocking, and the core product is live. Candidate next work
 - **Staging environment** — a second Cloud Run service + DB from a `staging` branch,
   to review changes before they hit the live site instead of pushing straight to prod.
   Now the only remaining safety gap in the pipeline (CI does gate on tests).
-- **Dark-mode toggle** — the theme currently follows the OS with no override. Needs
-  persisted per-user state and a server-side cookie read to avoid a flash of the wrong
-  theme. See [decisions.md](decisions.md).
 - **Wider accessibility audit** — the polish pass fixed the form strip and `ink-faint`
   contrast; nothing has systematically checked focus order or screen-reader flow.
 

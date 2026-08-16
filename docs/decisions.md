@@ -82,9 +82,21 @@ Two consequences worth knowing:
 - **`pitch-deep` is lighter than `pitch` in dark mode** — hover should still move toward
   the light.
 
-**No in-app toggle** — it follows the OS. A toggle needs persisted per-user state and a
-cookie read in the server layout to avoid a flash of the wrong theme; not worth it until
-someone asks.
+**Three-state toggle** (System / Light / Dark) in the header, not a two-state switch:
+"follow my OS" is a real preference and the default, so a light/dark switch would strand
+anyone wanting to return to it. The choice is a non-`httpOnly` `theme` cookie — a device
+preference rather than account data, so it survives sign-out — read server-side in the
+root layout and rendered into `<html data-theme>`, which avoids a flash of the wrong
+theme on first paint. `"system"` sets no attribute at all, letting the media query win.
+
+Consequence: `lib/theme.ts` (pure constants, safe for Client Components) is deliberately
+split from `lib/theme.server.ts` (the `next/headers` cookie read). Merging them breaks
+the build, because the client toggle imports the constants.
+
+**Board navy is lighter in light mode than in dark** (`#28334c` vs `#05090f`). Against a
+white page the original near-black slab read as a harsh hole rather than a scoreboard;
+against the dark ground it has to go deeper than the surface to stay a raised panel.
+`board-muted` lightens to match in light mode.
 
 ## 2026-08-16 — Bottom tab bar for mobile navigation
 
