@@ -55,17 +55,19 @@ export default async function Header() {
         </div>
 
         <div className="flex items-center gap-3 text-sm">
-          {/* Both outside the session branch: the theme is a device preference, and
-              the rules are readable before you have an account. Not a nav tab —
-              it's read once, not a destination you return to. */}
-          <Link
-            href="/rules"
-            title="How it works"
-            aria-label="How it works"
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-line-strong text-xs font-bold text-ink-muted transition-colors hover:border-pitch hover:text-pitch"
-          >
-            <span aria-hidden="true">?</span>
-          </Link>
+          {/* Signed in, Rules is a nav tab. Signed out there is no nav at all, so
+              this is the only way in — and the rules are readable without an
+              account on purpose. */}
+          {!session && (
+            <Link
+              href="/rules"
+              className="font-medium text-ink-muted transition-colors hover:text-ink"
+            >
+              How it works
+            </Link>
+          )}
+          {/* Outside the session branch — the theme is a device preference and the
+              auth pages need it too. */}
           <ThemeToggle theme={theme} />
           {session ? (
             <>

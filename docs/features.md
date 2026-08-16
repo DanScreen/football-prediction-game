@@ -5,8 +5,8 @@ when behaviour changes.** For the public bot API see [api.md](api.md).
 
 ## Navigation & shell
 
-**Three destinations, one job each:** Predictions (`/`), Leaderboard, My Leagues — plus
-Admin/Host chips when the user holds those roles. Dashboard and My Predictions merged on
+**Four destinations, one job each:** Predictions (`/`), Leaderboard, My Leagues, Rules —
+plus Admin/Host chips when the user holds those roles. Dashboard and My Predictions merged on
 2026-08-16; they duplicated the same picks and results either side of kickoff.
 `/predictions` is a permanent redirect to `/` so old links still land.
 
@@ -22,9 +22,9 @@ Admin/Host chips when the user holds those roles. Dashboard and My Predictions m
   rendered, since it can carry connection strings) and `app/not-found.tsx`.
 - **Theme toggle:** cycles System → Light → Dark, in the header on every page including
   the auth pages. See [design-system.md](design-system.md#dark-theme).
-- **How it works (`/rules`):** reached from the `?` in the header, a link under the
-  Predictions page, and the register page. Deliberately *not* a nav tab — it's read once,
-  not a destination you return to.
+- **How it works (`/rules`):** a nav tab (desktop and mobile), plus links under the
+  Predictions page and on the register page. Signed-out visitors get a "How it works"
+  link in the header instead, since there is no nav for them.
 
 ### League scoping (and why most pages ignore it)
 

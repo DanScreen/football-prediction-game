@@ -10,9 +10,8 @@ initial build; later work is listed individually.
 `/rules` explains predictions and deadlines, the points table, banker, Grand Slam,
 provisional results, the leaderboard and leagues. Public, so an invited player can read
 it before signing up; personalised when signed in, listing each league's **actual** Grand
-Slam setting — it's per league, so a fixed page would misinform some players. Reached
-from a `?` in the header, the Predictions page footer and the register page; not a nav
-tab. Numbers come from `RESULT_DELAY_MS` and `BANKER_MULTIPLIER`, not hardcoded prose.
+Slam setting — it's per league, so a fixed page would misinform some players. A nav tab on
+desktop and mobile, plus links from the Predictions footer and the register page. Numbers come from `RESULT_DELAY_MS` and `BANKER_MULTIPLIER`, not hardcoded prose.
 
 ## 2026-08-16 — Banker: double points on one fixture per gameweek
 Players pick one fixture per gameweek (per competition) whose points double. New
