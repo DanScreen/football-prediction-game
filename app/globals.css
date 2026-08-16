@@ -61,18 +61,20 @@
   --color-info-line: #bfdbfe;
 
   /* Broadcast board (scoreboard moments only) — the leaderboard table header,
-     host/admin nav bars and api-docs code blocks.
+     host/admin nav bars, api-docs code blocks and the provisional score chips.
 
-     A softened slate-navy rather than near-black: against a white page a
-     near-black slab reads as a harsh hole rather than a scoreboard. Dark mode
-     takes it deeper (see --dark-board), where the ground is dark enough that it
-     needs the contrast to still read as a raised panel. */
-  --color-board: #28334c;
-  --color-board-panel: #333f5b;
-  --color-board-fore: #edf2ff;
-  --color-board-muted: #a8b2cd;
+     A deep pitch green, not the navy it started as: the accent of this product
+     is green, and a navy slab read as a borrowed element sitting apart from
+     everything around it. Gold on deep green is also the more football image.
+
+     Kept dark enough for `board-fore` to clear 10:1 in light mode. Dark mode
+     takes it deeper still (see --dark-board), where the ground is dark enough
+     that the panel needs the separation to read as raised. */
+  --color-board: #0f4527;
+  --color-board-panel: #175c36;
+  --color-board-fore: #eef7f1;
+  --color-board-muted: #a9c9b6;
   --color-board-gold: #f2c74e;
-  --color-board-cyan: #57c7ff;
 
   --font-sans: var(--font-inter);
   --font-mono: var(--font-mono);
@@ -131,11 +133,10 @@
   --dark-info-line: #1f3358;
 
   /* Dark mode takes the board deeper than its light value so it still reads as
-     a distinct panel against the dark ground, and restores the deeper muted —
-     the lighter one exists for the softened light-mode slab. */
-  --dark-board: #05090f;
-  --dark-board-panel: #0c1421;
-  --dark-board-muted: #8b96b8;
+     a distinct panel against the dark ground, and darkens the muted to match. */
+  --dark-board: #061a0f;
+  --dark-board-panel: #0c2d19;
+  --dark-board-muted: #7f9d8b;
 
   --dark-shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
   --dark-shadow-raised: 0 1px 3px rgb(0 0 0 / 0.5), 0 4px 12px rgb(0 0 0 / 0.4);

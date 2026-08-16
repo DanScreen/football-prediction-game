@@ -93,10 +93,13 @@ Consequence: `lib/theme.ts` (pure constants, safe for Client Components) is deli
 split from `lib/theme.server.ts` (the `next/headers` cookie read). Merging them breaks
 the build, because the client toggle imports the constants.
 
-**Board navy is lighter in light mode than in dark** (`#28334c` vs `#05090f`). Against a
-white page the original near-black slab read as a harsh hole rather than a scoreboard;
-against the dark ground it has to go deeper than the surface to stay a raised panel.
-`board-muted` lightens to match in light mode.
+**The board palette went from navy to deep pitch green** (`#0f4527` light, `#061a0f`
+dark). The navy was inherited from the original "darker concept" pitch and read as a
+borrowed element sitting apart from a product whose accent is green; gold on deep green
+is also the more football image. It is *lighter* in light mode than in dark: against a
+white page a near-black slab reads as a harsh hole, while against the dark ground it
+must go deeper than the surface to stay a raised panel. `board-muted` follows in both
+directions. Dropped `board-cyan` at the same time — defined but never used.
 
 ## 2026-08-16 — Bottom tab bar for mobile navigation
 

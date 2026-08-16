@@ -14,8 +14,11 @@ initial build; later work is listed individually.
   from a stale cookie pointing at a league the user has left. 5 tests.
 - **Theme toggle** — System / Light / Dark in the header, persisted in a cookie and read
   server-side so there's no flash of the wrong theme.
-- **Softened the board navy in light mode** (`#0a1020` → `#28334c`); the near-black
-  leaderboard header read as a hole against the white page.
+- **Board palette retimed from navy to deep pitch green** (`#0f4527` light, `#061a0f`
+  dark). The near-black navy leaderboard header read as a hole punched in the white
+  page, and navy was off-brand for a green product. Affects the leaderboard header,
+  host/admin nav bars, api-docs code blocks and provisional score chips. Dropped the
+  unused `board-cyan` token.
 
 ## 2026-08-16 — Polish & UX pass (incl. dark mode)
 - **Dark theme.** Follows the OS setting. Added `good`/`bad`/`info` semantic token

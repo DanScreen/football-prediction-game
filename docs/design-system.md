@@ -1,8 +1,8 @@
 # Design System
 
 The visual language is **"Quiet Product"** — a calm, editorial base with occasional
-**broadcast-scoreboard moments** (navy panels, mono score digits) borrowed from a
-darker concept. Chosen from a 3-concept pitch during the July 2026 redesign. The app is
+**broadcast-scoreboard moments** (deep-green panels, mono score digits) borrowed
+from a darker concept. Chosen from a 3-concept pitch during the July 2026 redesign. The app is
 branded **"Scorers"** in the UI chrome.
 
 ## Tokens
@@ -18,7 +18,7 @@ colours. The families:
 | Accent (pitch) | `pitch`, `pitch-deep`, `pitch-tint`, `pitch-on` | Primary green accent |
 | Deadline (clock) | `clock`, `clock-tint`, `clock-line` | **Amber** — deadlines **and provisional** state |
 | Semantic | `good`, `bad`, `info` (each with `-tint` and `-line`) | Success / error / partial-credit |
-| Scoreboard (board) | `board`, `board-panel`, `board-fore`, `board-muted`, `board-gold`, `board-cyan` | Navy scoreboard palette |
+| Scoreboard (board) | `board`, `board-panel`, `board-fore`, `board-muted`, `board-gold` | Deep-green scoreboard palette |
 
 **There are no stock Tailwind colours in the app.** `bg-red-50`, `text-green-700` and
 friends were swept out in favour of the `good`/`bad`/`info` families — that is what
@@ -31,8 +31,10 @@ you find yourself reaching for a numbered Tailwind colour, add or reuse a token 
 
 - **Amber (`clock`) means "provisional / awaiting"** throughout — provisional scores,
   provisional points badges (`+X prov.`), "awaiting confirmation". Keep this consistent.
-- **Board navy** is used for: leaderboard table header, host/admin nav bars, api-docs
-  code blocks, and proposed-score chips.
+- **The board palette** is used for: leaderboard table header, host/admin nav bars,
+  api-docs code blocks, and proposed-score chips. It is a deep pitch green — it was
+  navy until 2026-08-16, which read as a borrowed element rather than part of the
+  product. Gold on deep green is also the more football image.
 - **`.score-digits`** class = Geist Mono bold, tabular — used for scores, countdowns,
   and stat tiles. Reach for it wherever digits should line up.
 
