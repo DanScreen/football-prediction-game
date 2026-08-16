@@ -40,6 +40,8 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   Grand Slam badges, per-player "form" strip over the last 5 rounds.
 - **Deadline reminder emails** — the same cron emails members who haven't predicted
   a fixture kicking off within 3 hours (via Resend).
+- **How it works** (`/rules`) — the rules in one public page, personalised per league
+  where settings vary (Grand Slam).
 - **Public bot API** — `/api/v1/fixtures`, `/predictions`, `/leaderboard`.
 - **Design** — "Quiet Product" system with broadcast-scoreboard moments (see
   [design-system.md](design-system.md)), fully tokenised with a **dark theme** that

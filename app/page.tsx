@@ -51,6 +51,12 @@ export default async function PredictionsPage() {
         >
           Get Started →
         </Link>
+        <p className="mt-6 text-sm text-ink-muted">
+          New to this?{" "}
+          <Link href="/rules" className="font-medium text-pitch hover:underline">
+            How it works
+          </Link>
+        </p>
       </div>
     )
   }
@@ -433,6 +439,13 @@ export default async function PredictionsPage() {
           <PredictionHistory predictions={history} bonusByRound={bonusByRound} />
         </>
       )}
+
+      <p className="mt-10 border-t border-line-soft pt-5 text-center text-xs text-ink-muted">
+        <Link href="/rules" className="font-medium text-pitch hover:underline">
+          How scoring works
+        </Link>{" "}
+        — points, bankers, deadlines and bonuses.
+      </p>
     </div>
   )
 }

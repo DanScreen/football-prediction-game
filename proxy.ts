@@ -4,7 +4,10 @@ import { NextResponse } from "next/server"
 
 const { auth } = NextAuth(authConfig)
 
-const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"]
+// `/rules` is public on purpose: someone following an invite link should be able
+// to read what they're joining before creating an account. It personalises when
+// there is a session, but never requires one.
+const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/rules"]
 
 export default auth((req) => {
   const { pathname } = req.nextUrl

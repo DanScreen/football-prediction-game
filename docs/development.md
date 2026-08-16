@@ -113,6 +113,10 @@ verified exactly this way before shipping. See [decisions.md](decisions.md) and
   (e.g. `app/leagues/data.ts`).
 - **New public pages must be added to `PUBLIC_PATHS` in `proxy.ts`** or they redirect
   to `/login`. (Route middleware is `proxy.ts`, not `middleware.ts`, in Next.js 16.)
+- **A space directly after a closing JSX tag is dropped** — `</strong> not the start`
+  renders as `kickoffnot the start`. Write `</strong>{" "}` whenever inline emphasis is
+  followed by more text. It compiles and lints clean, so it only shows up in the browser;
+  `/rules` shipped with two of them before they were caught on screen.
 - Import the Prisma client from `@/app/generated/prisma/client`.
 - Match the surrounding code's style; keep comment density and naming consistent.
 

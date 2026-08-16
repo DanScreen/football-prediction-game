@@ -1,3 +1,4 @@
+import Link from "next/link"
 import RegisterForm from "./RegisterForm"
 import { prisma } from "@/lib/prisma"
 import { normaliseInviteCode, INVITE_PARAM } from "@/lib/inviteCode"
@@ -64,7 +65,10 @@ export default async function RegisterPage({
 
         <p className="mt-6 text-center text-xs text-ink-faint">
           Scorers is a friendly football score-prediction game. Leagues are private — you join
-          one with an invite link or code from a friend.
+          one with an invite link or code from a friend.{" "}
+          <Link href="/rules" className="font-medium text-pitch hover:underline">
+            How it works
+          </Link>
         </p>
       </div>
     </div>

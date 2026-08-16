@@ -22,6 +22,9 @@ Admin/Host chips when the user holds those roles. Dashboard and My Predictions m
   rendered, since it can carry connection strings) and `app/not-found.tsx`.
 - **Theme toggle:** cycles System → Light → Dark, in the header on every page including
   the auth pages. See [design-system.md](design-system.md#dark-theme).
+- **How it works (`/rules`):** reached from the `?` in the header, a link under the
+  Predictions page, and the register page. Deliberately *not* a nav tab — it's read once,
+  not a destination you return to.
 
 ### League scoping (and why most pages ignore it)
 
@@ -124,6 +127,22 @@ belong to the Leaderboard, where they can be read per league and against other p
 Whose picks show under Kicked Off: everyone who shares a league with you **on that
 competition**. A league-mate on the World Cup doesn't surface on your Premier League
 fixtures.
+
+## How it works (`/rules`)
+
+The rules in one page: making a prediction and the kickoff deadline, the points table,
+banker, Grand Slam, provisional results, the leaderboard, leagues, and a pointer to the
+bot API.
+
+**Public** (in `PUBLIC_PATHS`) so someone following an invite link can read what they're
+joining before creating an account — signed out it ends on a "Create an account" CTA
+instead.
+
+**Personalised when signed in**, and this is the point rather than a flourish: Grand Slam
+is a per-league setting, so a fixed page would tell some players something untrue about
+their own league. It lists each league the user is in with that league's actual setting
+(on and for how many points, or off). The result-request wait is derived from
+`RESULT_DELAY_MS` rather than typed into the copy.
 
 ## Leaderboard (`/leaderboard`)
 
