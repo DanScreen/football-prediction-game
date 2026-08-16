@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import Countdown from "@/app/components/Countdown"
 import PredictionInput from "@/app/components/PredictionInput"
+import BankerButton from "@/app/components/BankerButton"
+import BankerTag from "@/app/components/BankerTag"
 import RequestResultButton from "@/app/components/RequestResultButton"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
 import { provisionalPoints } from "@/lib/provisional"
@@ -107,6 +109,24 @@ export default async function PredictionsPage() {
   const open = liveFixtures.filter((f) => f.kickoffTime > now)
   const locked = liveFixtures.filter((f) => f.kickoffTime <= now)
   const liveIds = new Set(liveFixtures.map((f) => f.id))
+
+  /**
+   * The banker is one pick per (competition, round), but a round's fixtures
+   * straddle the Open / Kicked Off split as they go off — so resolve it across
+   * every live fixture rather than per list, or an Open group would report "no
+   * banker yet" when the banker simply sits on a match that has started.
+   * Keyed to match `groupByRound`.
+   */
+  const bankerByRound = new Map<string, { homeTeam: string; awayTeam: string }>()
+  for (const f of liveFixtures) {
+    if (f.predictions.some((p) => p.userId === userId && p.isBanker)) {
+      bankerByRound.set(`${f.competitionId}·${f.round}`, {
+        homeTeam: f.homeTeam,
+        awayTeam: f.awayTeam,
+      })
+    }
+  }
+  const bankerOf = (group: { key: string }) => bankerByRound.get(group.key) ?? null
 
   // History is everything not already shown in the live sections above.
   const history: HistoryPrediction[] = myPredictions.filter((p) => !liveIds.has(p.fixtureId))
@@ -228,6 +248,7 @@ export default async function PredictionsPage() {
                 group.fixtures.filter((f) => !f.predictions.some((p) => p.userId === userId))
                   .length
               }
+              banker={bankerOf(group)}
               defaultOpen={i === expandedRound}
             >
           {group.fixtures.map((f) => {
@@ -265,6 +286,16 @@ export default async function PredictionsPage() {
                     {f.awayTeam}
                   </p>
                 </div>
+
+                {/* Its own row rather than the header: a banker error can run to a
+                    full sentence, and the header has the countdown to protect. */}
+                <div className="flex flex-wrap items-center justify-end gap-2 border-t border-line-soft px-5 py-2">
+                  <BankerButton
+                    fixtureId={f.id}
+                    isBanker={myPick?.isBanker ?? false}
+                    hasPrediction={Boolean(myPick)}
+                  />
+                </div>
               </div>
             )
           })}
@@ -288,6 +319,7 @@ export default async function PredictionsPage() {
                 competitionName={group.competitionName}
                 kickoff={group.kickoff}
                 count={group.fixtures.length}
+                banker={bankerOf(group)}
                 defaultOpen={i === lockedRounds.length - 1}
               >
             {group.fixtures.map((f) => {
@@ -344,6 +376,7 @@ export default async function PredictionsPage() {
                         <span className="font-bold tabular-nums">
                           {myPick.predictedHomeScore} – {myPick.predictedAwayScore}
                         </span>
+                        {myPick.isBanker && <BankerTag />}
                         {provisionalPoints(myPick, f) !== null && (
                           <span className="rounded-md bg-clock-tint px-1.5 py-0.5 text-xs font-semibold text-clock">
                             +{provisionalPoints(myPick, f)} prov.
@@ -364,6 +397,7 @@ export default async function PredictionsPage() {
                         <span className="font-medium tabular-nums">
                           {p.predictedHomeScore} – {p.predictedAwayScore}
                         </span>
+                        {p.isBanker && <BankerTag />}
                         {provisionalPoints(p, f) !== null && (
                           <span className="rounded-md bg-clock-tint px-1.5 py-0.5 text-xs font-medium text-clock">
                             +{provisionalPoints(p, f)}

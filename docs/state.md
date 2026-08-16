@@ -28,6 +28,8 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   competitions that have a football-data.org code and at least one subscribed league.
 - **Predictions** (`/`) — one page for open fixtures, kicked-off picks and settled
   results. Scoped by competition, not league: a pick counts in every league you're in.
+- **Banker** — one fixture per gameweek scores double. Always on (it can't be a
+  per-league toggle; see [decisions.md](decisions.md)), locked at kickoff.
 - **Result resolution** — cron pre-fetches proposed scores; hosts confirm from a
   platform-wide queue (with **Accept All**); scoring runs once per fixture, then
   Grand Slam bonuses fan out per subscribing league.
@@ -56,7 +58,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **152 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **168 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the suite **before** deploying, so a red test blocks production.
 

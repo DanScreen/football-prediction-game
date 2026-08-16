@@ -47,6 +47,21 @@ describe("provisionalPoints", () => {
     ).toBe(0)
   })
 
+  it("doubles a banker's provisional points", () => {
+    expect(
+      provisionalPoints({ predictedHomeScore: 2, predictedAwayScore: 1, isBanker: true }, fixture()),
+    ).toBe(6)
+    expect(
+      provisionalPoints({ predictedHomeScore: 3, predictedAwayScore: 1, isBanker: true }, fixture()),
+    ).toBe(2)
+  })
+
+  it("treats a missing isBanker as not a banker", () => {
+    expect(
+      provisionalPoints({ predictedHomeScore: 2, predictedAwayScore: 1 }, fixture()),
+    ).toBe(3)
+  })
+
   it("is null when there is no provisional score", () => {
     expect(
       provisionalPoints(

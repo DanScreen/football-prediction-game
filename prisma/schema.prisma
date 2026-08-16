@@ -142,6 +142,11 @@ model Prediction {
   fixtureId          String
   predictedHomeScore Int
   predictedAwayScore Int
+  // The user's "banker" for this fixture's round: points doubled. At most one
+  // per (user, competition, round) — the round lives on Fixture, so this can't
+  // be a DB constraint; `setBanker()` enforces it transactionally.
+  isBanker           Boolean   @default(false)
+  // Base points × the banker multiplier — i.e. what actually counts.
   pointsAwarded      Float?
   submittedVia       SubmitVia @default(WEB)
   createdAt          DateTime  @default(now())

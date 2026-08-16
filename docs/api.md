@@ -29,13 +29,16 @@ locked and completed fixtures. Each fixture: `id`, `competition` (name string),
 (when completed), and `provisionalHomeScore/away` (when awaiting host confirmation).
 
 ### `POST /api/v1/predictions`
-Body: `{ fixtureId, homeScore, awayScore }` — non-negative integers. Creates or updates
-your prediction. `422` once the fixture has kicked off. Because fixtures are shared
+Body: `{ fixtureId, homeScore, awayScore, isBanker? }` — scores are non-negative
+integers; `isBanker` is an optional boolean, and omitting it leaves your banker
+untouched. Creates or updates your prediction. `422` once the fixture has kicked off,
+or if the banker for that round is already locked on a match that has started. Because fixtures are shared
 across every league on the competition, one pick counts everywhere you play.
 
 ### `GET /api/v1/predictions`
-Your predictions with fixture details and actual scores. Confirmed points in
-`pointsAwarded`; before a host confirms, `provisionalPoints` and the `provisional*`
+Your predictions with fixture details and actual scores. `isBanker` flags the
+double-points pick for that round, and both `pointsAwarded` and `provisionalPoints`
+already include the doubling. Confirmed points in `pointsAwarded`; before a host confirms, `provisionalPoints` and the `provisional*`
 score fields carry the projected outcome.
 
 ### `GET /api/v1/leaderboard`
@@ -48,4 +51,5 @@ Standings ranked by confirmed points. Per player: `rank`, `id`, `displayName`, `
 
 - Predictions lock at kickoff; submit or update any time before then.
 - One prediction per fixture; POSTing again overwrites the previous pick.
+- One banker per gameweek per competition; setting a new one clears the old.
 - Keep the API key secret — anyone holding it can submit picks as you.

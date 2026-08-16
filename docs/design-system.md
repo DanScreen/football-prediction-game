@@ -16,7 +16,7 @@ colours. The families:
 | Ink | `ink`, `ink-mid`, `ink-muted`, `ink-faint` | Text hierarchy |
 | Lines | `line`, `line-soft`, `line-strong` | Borders/dividers |
 | Accent (pitch) | `pitch`, `pitch-deep`, `pitch-tint`, `pitch-on` | Primary green accent |
-| Deadline (clock) | `clock`, `clock-tint`, `clock-line` | **Amber** — deadlines **and provisional** state |
+| Deadline (clock) | `clock`, `clock-tint`, `clock-line`, `clock-on` | **Amber** — deadlines, **provisional** state, and the banker |
 | Semantic | `good`, `bad`, `info` (each with `-tint` and `-line`) | Success / error / partial-credit |
 | Scoreboard (board) | `board`, `board-panel`, `board-fore`, `board-muted`, `board-gold` | Deep-green scoreboard palette |
 
@@ -28,15 +28,20 @@ you find yourself reaching for a numbered Tailwind colour, add or reuse a token 
 - **`pitch-on`** is the text colour that sits *on* a pitch fill. Use it for button
   labels rather than `text-white`: in dark mode the accent inverts to a bright green
   and the label has to go near-black to stay legible.
+- **`clock-on`** is the same idea for a solid amber fill (the active Banker button).
+  The dark-mode amber is a *bright* `#e8a33d`, so white labels on it fail contrast
+  badly — `text-white` on a filled `clock` background is always wrong.
 
 - **Amber (`clock`) means "provisional / awaiting"** throughout — provisional scores,
   provisional points badges (`+X prov.`), "awaiting confirmation". Keep this consistent.
+  It carries one extra job: the **banker** (★ ×2), which is amber because it shares the
+  "this is weighted / watch this one" register rather than success or failure.
 - **The board palette** is used for: leaderboard table header, host/admin nav bars,
   api-docs code blocks, and proposed-score chips. It is a deep pitch green — it was
   navy until 2026-08-16, which read as a borrowed element rather than part of the
   product. Gold on deep green is also the more football image.
 - **`.score-digits`** class = Geist Mono bold, tabular — used for scores, countdowns,
-  and stat tiles. Reach for it wherever digits should line up.
+  and countdowns. Reach for it wherever digits should line up.
 
 ## Dark theme
 

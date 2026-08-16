@@ -159,6 +159,38 @@ Two deliberate consequences:
   did `.trim()` while joining did `.trim().toUpperCase()`, so a lowercase code was
   rejected at sign-up but accepted when joining.
 
+## 2026-08-16 — Banker: one double-points pick per gameweek
+
+**It cannot be a per-league toggle, unlike the Grand Slam.** `Prediction.pointsAwarded`
+is competition-global — one pick, scored once, counting in every league on that
+competition — so a doubling can't apply in one league and not another. The Grand Slam
+gets to be optional precisely because it lives in a separate per-league `BonusAward`
+row. Banker is therefore on for everyone, everywhere. Making it optional would mean
+per-league points, which is the design the competitions refactor deliberately removed.
+
+**Stored as `isBanker` on Prediction, not a `BankerPick` table.** The multiplier applies
+to one prediction's points, so it belongs on that row: scoring reads it where it already
+is, and the leaderboard needs no extra join. The cost is that "one per (user,
+competition, round)" can't be a unique index — `round` lives on Fixture — so
+`setBanker()` enforces it in a transaction that clears the old pick and sets the new one
+together. Acceptable: a single user racing themselves is the only contention.
+
+**Two kickoff locks, both about hindsight.** You can't banker a fixture that has kicked
+off, and you can't move a banker *off* one that has — otherwise you could bank the
+Saturday lunchtime game, watch it go badly, and shift the double onto Sunday.
+
+**`awardedPoints()` is separate from `scoreOnePrediction()`.** Two callers genuinely
+need the undoubled figure: Grand Slam eligibility asks "was the result right?", not "how
+many points?", and the round-completion pass in `confirmFixtureResult` re-derives every
+prediction in the round. That pass previously normalised to base points — left alone, it
+would have silently stripped the double off a whole round the moment it completed. There
+is a test pinning exactly that.
+
+**Upside-only, and that's the intent.** The minimum score is 0, so a banker can never
+cost points. The decision is which fixture you're most confident in, not how much to
+risk — a risk-bearing version (halving a wrong banker) would punish the players who
+predict the most fixtures, which runs against a game meant to be light to play.
+
 ---
 
 ## Foundational stack decisions (earlier)

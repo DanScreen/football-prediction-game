@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { authenticateApiKey, resolveLeague } from "@/lib/apiAuth"
 import { upsertPrediction } from "@/lib/predictions"
 import { provisionalScore, provisionalPoints } from "@/lib/provisional"
+import { setBanker } from "@/lib/banker"
 
 export async function GET(request: NextRequest) {
   const user = await authenticateApiKey(request)
@@ -19,6 +20,7 @@ export async function GET(request: NextRequest) {
       id: true,
       predictedHomeScore: true,
       predictedAwayScore: true,
+      isBanker: true,
       pointsAwarded: true,
       submittedVia: true,
       updatedAt: true,
@@ -58,6 +60,7 @@ export async function GET(request: NextRequest) {
         provisionalAwayScore: prov?.away ?? null,
         predictedHomeScore: p.predictedHomeScore,
         predictedAwayScore: p.predictedAwayScore,
+        isBanker: p.isBanker,
         pointsAwarded: p.pointsAwarded,
         provisionalPoints: provisionalPoints(p, p.fixture),
         submittedVia: p.submittedVia,
@@ -82,7 +85,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Body must be a JSON object" }, { status: 400 })
   }
 
-  const { fixtureId, homeScore, awayScore } = body as Record<string, unknown>
+  const { fixtureId, homeScore, awayScore, isBanker } = body as Record<string, unknown>
 
   if (typeof fixtureId !== "string" || !fixtureId) {
     return Response.json({ error: "fixtureId is required" }, { status: 400 })
@@ -92,6 +95,11 @@ export async function POST(request: NextRequest) {
   }
   if (!Number.isInteger(awayScore) || (awayScore as number) < 0) {
     return Response.json({ error: "awayScore must be a non-negative integer" }, { status: 400 })
+  }
+  // Optional — omit to leave the banker untouched. Bots compete on the same
+  // leaderboard as everyone else, so they get the same scoring mechanic.
+  if (isBanker !== undefined && typeof isBanker !== "boolean") {
+    return Response.json({ error: "isBanker must be a boolean" }, { status: 400 })
   }
 
   const fixture = await prisma.fixture.findUnique({ where: { id: fixtureId } })
@@ -118,6 +126,11 @@ export async function POST(request: NextRequest) {
     "API",
   )
 
+  if (isBanker !== undefined) {
+    const result = await setBanker(user.id, fixture.id, isBanker)
+    if (!result.ok) return Response.json({ error: result.error }, { status: 422 })
+  }
+
   return Response.json(
     {
       prediction: {
@@ -125,6 +138,7 @@ export async function POST(request: NextRequest) {
         fixtureId: saved.fixtureId,
         predictedHomeScore: saved.predictedHomeScore,
         predictedAwayScore: saved.predictedAwayScore,
+        isBanker: isBanker ?? saved.isBanker,
         submittedVia: saved.submittedVia,
         updatedAt: saved.updatedAt,
       },

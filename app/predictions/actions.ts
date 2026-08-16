@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { upsertPrediction as savePrediction } from "@/lib/predictions"
+import { setBanker } from "@/lib/banker"
 
 export type PredictionState = { error?: string; success?: boolean }
+export type BankerState = { error?: string }
 
 export async function upsertPrediction(
   fixtureId: string,
@@ -41,4 +43,30 @@ export async function upsertPrediction(
   revalidatePath("/")
   revalidatePath("/predictions")
   return { success: true }
+}
+
+/**
+ * Make this fixture the user's banker for its gameweek, or clear it. The
+ * one-per-round rule and the kickoff locks live in `setBanker()`.
+ */
+// Takes neither the previous state nor the form body — everything it needs is
+// bound at the call site — but it's still a valid `useActionState` action.
+export async function toggleBanker(fixtureId: string, on: boolean): Promise<BankerState> {
+  const session = await auth()
+  if (!session?.user?.id) return { error: "Not signed in." }
+  const userId = session.user.id
+
+  const fixture = await prisma.fixture.findUnique({ where: { id: fixtureId } })
+  if (!fixture) return { error: "Fixture not found." }
+
+  const membership = await prisma.leagueMembership.findFirst({
+    where: { userId, league: { competitionId: fixture.competitionId } },
+  })
+  if (!membership) return { error: "Fixture not found." }
+
+  const result = await setBanker(userId, fixtureId, on)
+  if (!result.ok) return { error: result.error }
+
+  revalidatePath("/")
+  return {}
 }

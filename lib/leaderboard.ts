@@ -43,6 +43,9 @@ export async function computeLeaderboard(leagueId: string): Promise<LeaderboardE
         pointsAwarded: true,
         predictedHomeScore: true,
         predictedAwayScore: true,
+        // Needed so provisional points double for a banker, the way confirmed
+        // points already do via the stored pointsAwarded.
+        isBanker: true,
         fixture: {
           select: {
             status: true,

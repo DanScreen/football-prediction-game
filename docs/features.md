@@ -101,11 +101,15 @@ above). Three sections, top to bottom:
   Only the nearest round that still needs picks is expanded; later rounds collapse to a
   one-line summary with a "N to predict" badge. A full Premier League round is 10
   fixtures and several rounds import at once, so a flat list ran past 20 cards.
-  Built on native `<details>` — no client JS, keyboard accessible.
+  Built on native `<details>` — no client JS, keyboard accessible. Each card carries a
+  **☆ Banker** toggle (double points, one per gameweek — see Scoring), and the gameweek
+  header names the banker or says "no banker yet", since it's a per-round decision you'd
+  otherwise have to expand and scan for.
 - **Kicked Off** — grouped into gameweeks the same way (most recent expanded).
   Predictions lock at kickoff and everyone's picks reveal. If a
   proposed score exists the fixture shows the **provisional** scoreline and each pick's
-  provisional points (amber `+X prov.`), plus an "awaiting confirmation" note. A member
+  provisional points (amber `+X prov.`), plus an "awaiting confirmation" note. A
+  bankered pick is tagged ★ ×2 and its points already include the double. A member
   can press **Request result** to trigger the lookup early.
 - **Results** — settled picks grouped by competition and round, newest first, with the
   round subtotal and any Grand Slam bonus.
@@ -190,9 +194,20 @@ Pure function `scoreOnePrediction` in `lib/scoring.ts`:
 | Correct result only | 1 |
 | Wrong result | 0 |
 
+**Banker** (always on): one fixture per gameweek, per competition, scores **double**.
+Set it with the ☆ Banker button on any open fixture once you've saved a prediction
+there; picking another fixture in the same round moves it. Because the minimum score is
+0, a banker is upside-only — the skill is choosing the match you're most confident in,
+not staking anything on it. Two locks stop it being chosen with hindsight: you can't
+banker a fixture that has kicked off, and you can't move the banker off one that has.
+Applied in `awardedPoints()` (`lib/scoring.ts`) at both confirm time and in provisional
+points, so a bankered pick reads double everywhere. It is **not** a per-league toggle —
+see [data-model.md](data-model.md#key-invariants) for why it can't be.
+
 **Grand Slam bonus** (optional, per league): if a user gets the *result* of every
 fixture in a round right, they earn a bonus (default 3, configurable 1–20). Off by
-default. Awarded once the whole round is confirmed, stored as a `BonusAward` row
+default. Eligibility reads *base* points, so bankering a fixture neither helps nor
+hinders a slam. Awarded once the whole round is confirmed, stored as a `BonusAward` row
 (never folded into a prediction's points), shown as 🏆 on the leaderboard.
 
 ## Deadline reminder emails

@@ -53,7 +53,12 @@ A real-world match. **Canonical per competition** — shared by every subscribed
 ### Prediction
 One user's pick for one canonical fixture.
 - `id`, `userId`, `fixtureId`, `predictedHomeScore`, `predictedAwayScore`
-- `pointsAwarded` (`Float?`) — **base** points only (bonuses live in BonusAward); null
+- `isBanker` (`Boolean`, default false) — the user's double-points pick for this
+  fixture's round. At most one per `(user, competition, round)`; the round lives on
+  Fixture, so this **cannot be a unique index** and is enforced transactionally in
+  `setBanker()` (`lib/banker.ts`).
+- `pointsAwarded` (`Float?`) — points as they count: base score × the banker
+  multiplier. Grand Slam bonuses are *not* folded in (they live in BonusAward). Null
   until the fixture is confirmed complete. Float because a correct-result-and-GD pick
   scores 1.5.
 - `submittedVia`: `WEB` / `API` (`SubmitVia` enum).
@@ -80,6 +85,10 @@ A per-round bonus (currently only the Grand Slam), kept separate from
 - **Provisional is never stored.** Provisional scores/points are computed at read
   time from `proposed*` scores (`lib/provisional.ts`). Standings rank by confirmed
   `pointsAwarded` + `BonusAward` only.
+- **The banker doubles globally, not per league.** `pointsAwarded` is competition-wide
+  (one prediction, scored once, counting in every league on that competition), so a
+  doubling can't apply in one league and not another — unlike the Grand Slam, banker
+  can't be a per-league toggle. See [decisions.md](decisions.md).
 - **Score once, fan out bonuses.** Confirming a result (`lib/results.ts`) scores all
   predictions on the fixture once, then awards Grand Slam bonuses per subscribing
   league that has it enabled.

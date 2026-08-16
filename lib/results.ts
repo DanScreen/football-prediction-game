@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { scoreOnePrediction, qualifiesForGrandSlam } from "@/lib/scoring"
+import { scoreOnePrediction, qualifiesForGrandSlam, awardedPoints } from "@/lib/scoring"
 import { FixtureStatus, ResultSource } from "@/app/generated/prisma/client"
 
 /**
@@ -35,11 +35,14 @@ export async function confirmFixtureResult(
         tx.prediction.update({
           where: { id: p.id },
           data: {
-            pointsAwarded: scoreOnePrediction(
-              p.predictedHomeScore,
-              p.predictedAwayScore,
-              homeScore,
-              awayScore,
+            pointsAwarded: awardedPoints(
+              scoreOnePrediction(
+                p.predictedHomeScore,
+                p.predictedAwayScore,
+                homeScore,
+                awayScore,
+              ),
+              p.isBanker,
             ),
           },
         }),
@@ -67,10 +70,15 @@ export async function confirmFixtureResult(
       )
     }
 
-    // Normalize the whole round to pure base points (heals any legacy rows)
+    // Re-derive the whole round's points (heals any legacy rows). Banker
+    // doubling is re-applied here — normalising to *base* points would silently
+    // strip it from every fixture in the round the moment the round completed.
     await Promise.all(
       roundPredictions.map((p) =>
-        tx.prediction.update({ where: { id: p.id }, data: { pointsAwarded: basePoints(p) } }),
+        tx.prediction.update({
+          where: { id: p.id },
+          data: { pointsAwarded: awardedPoints(basePoints(p), p.isBanker) },
+        }),
       ),
     )
 

@@ -6,6 +6,17 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — Banker: double points on one fixture per gameweek
+Players pick one fixture per gameweek (per competition) whose points double. New
+`Prediction.isBanker` column + migration `20260816000000_add_prediction_banker`;
+`awardedPoints()` applies the multiplier at confirm time and in provisional points, so
+it reads double on the predictions page, results, leaderboard and API alike. One per
+(user, competition, round), enforced transactionally in `lib/banker.ts` — the round
+lives on Fixture, so it can't be a unique index. Locked once the fixture kicks off, and
+can't be moved off a match that has already started. Bots can set it via
+`POST /api/v1/predictions { isBanker }`. New `clock-on` token (white on the dark-mode
+amber failed contrast). 168 tests.
+
 ## 2026-08-16 — Drop the stat tiles from Predictions
 The Points / Exact / To predict tiles came off the top of `/`. Points and exact count are
 standings data that the Leaderboard already shows per league and in context; "to predict"

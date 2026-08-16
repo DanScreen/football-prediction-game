@@ -1,6 +1,7 @@
-import { scoreOnePrediction } from "@/lib/scoring"
+import { scoreOnePrediction, awardedPoints } from "@/lib/scoring"
 import { provisionalScore, provisionalPoints } from "@/lib/provisional"
 import { FixtureStatus } from "@/app/generated/prisma/client"
+import BankerTag from "@/app/components/BankerTag"
 
 type Fixture = {
   id: string
@@ -20,6 +21,7 @@ export type HistoryPrediction = {
   id: string
   predictedHomeScore: number
   predictedAwayScore: number
+  isBanker: boolean
   fixture: Fixture
 }
 
@@ -28,6 +30,17 @@ function baseScoreOf(p: HistoryPrediction): number | null {
   return f.status === FixtureStatus.COMPLETED && f.actualHomeScore !== null && f.actualAwayScore !== null
     ? scoreOnePrediction(p.predictedHomeScore, p.predictedAwayScore, f.actualHomeScore, f.actualAwayScore)
     : null
+}
+
+/**
+ * What the pick actually scored — base, doubled if it was the round's banker.
+ * The base figure is still needed alongside it: the badge colour and the
+ * "Nailed it!" flag key off *which* outcome it was (exact / diff / result),
+ * and a doubled 3 would otherwise read as an ordinary 6.
+ */
+function awardedScoreOf(p: HistoryPrediction): number | null {
+  const base = baseScoreOf(p)
+  return base === null ? null : awardedPoints(base, p.isBanker)
 }
 
 /**
@@ -61,7 +74,7 @@ export default function PredictionHistory({
   }
 
   const roundStats = rounds.map((r) => {
-    const scored = r.predictions.map(baseScoreOf).filter((s): s is number => s !== null)
+    const scored = r.predictions.map(awardedScoreOf).filter((s): s is number => s !== null)
     const provisional = r.predictions
       .map((p) => provisionalPoints(p, p.fixture))
       .filter((s): s is number => s !== null)
@@ -104,6 +117,7 @@ export default function PredictionHistory({
               const f = p.fixture
               const isCompleted = f.status === FixtureStatus.COMPLETED
               const baseScore = baseScoreOf(p)
+              const awarded = awardedScoreOf(p)
               const provScore = provisionalScore(f)
               const provPts = provisionalPoints(p, f)
 
@@ -144,6 +158,11 @@ export default function PredictionHistory({
                         <p className="score-digits text-lg">
                           {p.predictedHomeScore} – {p.predictedAwayScore}
                         </p>
+                        {p.isBanker && (
+                          <span className="mt-0.5 block">
+                            <BankerTag />
+                          </span>
+                        )}
                       </div>
 
                       <div>
@@ -168,9 +187,9 @@ export default function PredictionHistory({
 
                       <div className="min-w-[3rem]">
                         <p className="text-xs text-ink-faint mb-0.5">Pts</p>
-                        {isCompleted && baseScore !== null ? (
+                        {isCompleted && baseScore !== null && awarded !== null ? (
                           <div className="flex flex-col items-start gap-1">
-                            <PointsBadge points={baseScore} />
+                            <PointsBadge points={awarded} tone={baseScore} />
                             {baseScore === 3 && (
                               <span className="text-xs font-bold text-good bg-good-tint border border-good-line rounded-full px-2 py-0.5 animate-pop whitespace-nowrap">
                                 Nailed it! ⚽
@@ -197,13 +216,14 @@ export default function PredictionHistory({
   )
 }
 
-function PointsBadge({ points }: { points: number }) {
+/** `points` is what's scored; `tone` is the undoubled base that picks the colour. */
+function PointsBadge({ points, tone }: { points: number; tone: number }) {
   const color =
-    points === 3
+    tone === 3
       ? "bg-good-tint text-good border border-good-line"
-      : points === 1.5
+      : tone === 1.5
         ? "bg-info-tint text-info border border-info-line"
-        : points === 1
+        : tone === 1
           ? "bg-clock-tint text-clock border border-clock-line"
           : "bg-chip text-ink-muted border border-line"
 

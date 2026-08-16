@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { scoreOnePrediction, qualifiesForGrandSlam } from "./scoring"
+import { scoreOnePrediction, qualifiesForGrandSlam, awardedPoints } from "./scoring"
 
 describe("scoreOnePrediction", () => {
   describe("exact score → 3 pts", () => {
@@ -45,4 +45,12 @@ describe("qualifiesForGrandSlam", () => {
   it("all wrong → false", () => expect(qualifiesForGrandSlam([false, false])).toBe(false))
   it("empty array → false", () => expect(qualifiesForGrandSlam([])).toBe(false))
   it("single correct → true", () => expect(qualifiesForGrandSlam([true])).toBe(true))
+})
+
+describe("awardedPoints", () => {
+  it("leaves a normal pick alone", () => expect(awardedPoints(3, false)).toBe(3))
+  it("doubles a banker", () => expect(awardedPoints(3, true)).toBe(6))
+  it("doubles a half-point score cleanly", () => expect(awardedPoints(1.5, true)).toBe(3))
+  // Upside-only by design: doubling zero can't cost you anything.
+  it("doubles zero to zero", () => expect(awardedPoints(0, true)).toBe(0))
 })

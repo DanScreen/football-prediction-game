@@ -32,8 +32,21 @@ function completedFixture(id: string, home: number, away: number, overrides = {}
   }
 }
 
-function prediction(userId: string, fixtureId: string, home: number, away: number) {
-  return { id: `${userId}-${fixtureId}`, userId, fixtureId, predictedHomeScore: home, predictedAwayScore: away }
+function prediction(
+  userId: string,
+  fixtureId: string,
+  home: number,
+  away: number,
+  isBanker = false,
+) {
+  return {
+    id: `${userId}-${fixtureId}`,
+    userId,
+    fixtureId,
+    predictedHomeScore: home,
+    predictedAwayScore: away,
+    isBanker,
+  }
 }
 
 beforeEach(() => {
@@ -84,6 +97,55 @@ describe("confirmFixtureResult", () => {
     expect(tx.prediction.update).toHaveBeenCalledWith({
       where: { id: "bob-f1" },
       data: { pointsAwarded: 1 },
+    })
+  })
+
+  it("doubles a banker's points", async () => {
+    tx.prediction.findMany
+      .mockResolvedValueOnce([
+        prediction("alice", "f1", 2, 1, true), // exact = 3, bankered = 6
+        prediction("bob", "f1", 3, 1, true),   // result only = 1, bankered = 2
+        prediction("carol", "f1", 0, 2, true), // wrong = 0, still 0
+      ] as never)
+      .mockResolvedValueOnce([])
+
+    await confirmFixtureResult("f1", 2, 1, ResultSource.MANUAL)
+
+    expect(tx.prediction.update).toHaveBeenCalledWith({
+      where: { id: "alice-f1" },
+      data: { pointsAwarded: 6 },
+    })
+    expect(tx.prediction.update).toHaveBeenCalledWith({
+      where: { id: "bob-f1" },
+      data: { pointsAwarded: 2 },
+    })
+    expect(tx.prediction.update).toHaveBeenCalledWith({
+      where: { id: "carol-f1" },
+      data: { pointsAwarded: 0 },
+    })
+  })
+
+  // The round-completion pass re-derives every prediction's points. Normalising
+  // to base points there would silently strip the double off the whole round.
+  it("keeps the banker double when the completed round is re-derived", async () => {
+    const roundFixtures = [completedFixture("f1", 2, 1), completedFixture("f2", 0, 0)]
+    tx.fixture.findMany.mockResolvedValue(roundFixtures as never)
+    tx.prediction.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        prediction("alice", "f1", 2, 1, true), // exact, bankered → 6
+        prediction("alice", "f2", 0, 0),       // exact, normal → 3
+      ] as never)
+
+    await confirmFixtureResult("f2", 0, 0, ResultSource.MANUAL)
+
+    expect(tx.prediction.update).toHaveBeenCalledWith({
+      where: { id: "alice-f1" },
+      data: { pointsAwarded: 6 },
+    })
+    expect(tx.prediction.update).toHaveBeenCalledWith({
+      where: { id: "alice-f2" },
+      data: { pointsAwarded: 3 },
     })
   })
 

@@ -1,4 +1,4 @@
-import { scoreOnePrediction } from "@/lib/scoring"
+import { scoreOnePrediction, awardedPoints } from "@/lib/scoring"
 import { FixtureStatus } from "@/app/generated/prisma/client"
 
 export type ProvisionalFixture = {
@@ -29,10 +29,16 @@ export function provisionalScore(
  * Never stored — computed at read time and shown badged as provisional.
  */
 export function provisionalPoints(
-  pred: { predictedHomeScore: number; predictedAwayScore: number },
+  pred: { predictedHomeScore: number; predictedAwayScore: number; isBanker?: boolean },
   f: ProvisionalFixture,
 ): number | null {
   const score = provisionalScore(f)
   if (!score) return null
-  return scoreOnePrediction(pred.predictedHomeScore, pred.predictedAwayScore, score.home, score.away)
+  const base = scoreOnePrediction(
+    pred.predictedHomeScore,
+    pred.predictedAwayScore,
+    score.home,
+    score.away,
+  )
+  return awardedPoints(base, pred.isBanker ?? false)
 }

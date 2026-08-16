@@ -48,6 +48,9 @@
   --color-clock: #b45309;
   --color-clock-tint: #fdf3e7;
   --color-clock-line: #f0d3a8;
+  /* Text/icon fill on a solid clock background. Inverts like pitch-on:
+     the dark-mode amber is bright, so labels go near-black. */
+  --color-clock-on: #ffffff;
 
   /* Semantic — success / error / partial-credit */
   --color-good: #15803d;
@@ -121,6 +124,7 @@
   --dark-clock: #e8a33d;
   --dark-clock-tint: #2c2013;
   --dark-clock-line: #4a3418;
+  --dark-clock-on: #1a1206;
 
   --dark-good: #4ade80;
   --dark-good-tint: #10281a;
@@ -162,6 +166,7 @@
     --color-clock: var(--dark-clock);
     --color-clock-tint: var(--dark-clock-tint);
     --color-clock-line: var(--dark-clock-line);
+    --color-clock-on: var(--dark-clock-on);
     --color-good: var(--dark-good);
     --color-good-tint: var(--dark-good-tint);
     --color-good-line: var(--dark-good-line);
@@ -198,6 +203,7 @@
   --color-clock: var(--dark-clock);
   --color-clock-tint: var(--dark-clock-tint);
   --color-clock-line: var(--dark-clock-line);
+  --color-clock-on: var(--dark-clock-on);
   --color-good: var(--dark-good);
   --color-good-tint: var(--dark-good-tint);
   --color-good-line: var(--dark-good-line);

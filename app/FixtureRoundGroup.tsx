@@ -14,6 +14,7 @@ export default function FixtureRoundGroup({
   kickoff,
   count,
   outstanding,
+  banker,
   defaultOpen,
   children,
 }: {
@@ -23,6 +24,8 @@ export default function FixtureRoundGroup({
   count: number
   /** Fixtures in this round with no prediction yet. Omit where it doesn't apply. */
   outstanding?: number
+  /** The banker pick for this round, if one is set. Omit where it doesn't apply. */
+  banker?: { homeTeam: string; awayTeam: string } | null
   defaultOpen: boolean
   children: React.ReactNode
 }) {
@@ -44,6 +47,21 @@ export default function FixtureRoundGroup({
               day: "numeric",
               month: "short",
             })}
+            {/* Banker is one pick per gameweek, so its status belongs on the
+                gameweek — otherwise you'd have to expand and scan every card
+                to see whether you'd used it. */}
+            {banker !== undefined && (
+              <>
+                {" · "}
+                {banker ? (
+                  <span className="font-medium text-clock">
+                    ★ Banker: {banker.homeTeam} v {banker.awayTeam}
+                  </span>
+                ) : (
+                  <span className="text-ink-faint">no banker yet</span>
+                )}
+              </>
+            )}
           </span>
         </span>
         {outstanding !== undefined && outstanding > 0 && (

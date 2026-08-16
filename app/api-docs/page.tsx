@@ -74,14 +74,21 @@ export default async function ApiDocsPage() {
         <Endpoint method="POST" path="/api/v1/predictions">
           Create or update your prediction. Body:{" "}
           <code className="bg-chip px-1 rounded">
-            {"{ fixtureId, homeScore, awayScore }"}
+            {"{ fixtureId, homeScore, awayScore, isBanker? }"}
           </code>{" "}
-          — non-negative integers. Rejected with 422 once the fixture has kicked off. Fixtures are
-          shared across every league on the competition, so one pick counts everywhere you play.
+          — scores are non-negative integers. Rejected with 422 once the fixture has kicked off.
+          Fixtures are shared across every league on the competition, so one pick counts everywhere
+          you play. <code className="bg-chip px-1 rounded">isBanker</code> is optional: pass{" "}
+          <code className="bg-chip px-1 rounded">true</code> to make this your double-points pick
+          for the gameweek (one per round — it moves off your previous choice), or omit it to leave
+          your banker alone.
         </Endpoint>
 
         <Endpoint method="GET" path="/api/v1/predictions">
-          Your own predictions with fixture details and actual scores. Confirmed points are in{" "}
+          Your own predictions with fixture details and actual scores.{" "}
+          <code className="bg-chip px-1 rounded">isBanker</code> flags your double-points pick for
+          that round; the doubling is already included in the points below. Confirmed points are
+          in{" "}
           <code className="bg-chip px-1 rounded">pointsAwarded</code>; before the host confirms a
           result, <code className="bg-chip px-1 rounded">provisionalPoints</code> and the{" "}
           <code className="bg-chip px-1 rounded">provisional*</code> score fields show the
