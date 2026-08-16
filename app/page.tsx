@@ -122,12 +122,35 @@ export default async function PredictionsPage() {
     bonusByRound.set(key, (bonusByRound.get(key) ?? 0) + b.points)
   }
 
-  const missing = open.filter((f) => !f.predictions.some((p) => p.userId === userId))
-  const nextDeadline = missing[0]?.kickoffTime ?? null
-
   // Gameweeks, nearest first (both lists are already ordered by kickoff).
   const openRounds = groupByRound(open)
   const lockedRounds = groupByRound(locked)
+
+  /**
+   * The nudge counts only the *next* gameweek needing picks in each competition —
+   * not everything open. Fixtures import a couple of rounds ahead, so counting all
+   * of them said "20 fixtures still to predict" for deadlines a fortnight out:
+   * alarming, and not something you can usefully act on in one sitting. Each
+   * gameweek header carries its own "N to predict" badge for the rest.
+   */
+  const nudgeRounds: typeof openRounds = []
+  const claimed = new Set<string>()
+  for (const group of openRounds) {
+    const competitionId = group.fixtures[0].competitionId
+    if (claimed.has(competitionId)) continue
+    if (!group.fixtures.some((f) => !f.predictions.some((p) => p.userId === userId))) continue
+    claimed.add(competitionId)
+    nudgeRounds.push(group)
+  }
+
+  const missing = nudgeRounds.flatMap((g) =>
+    g.fixtures.filter((f) => !f.predictions.some((p) => p.userId === userId)),
+  )
+  // Groups are ordered by kickoff, but two competitions' groups interleave.
+  const nextDeadline = missing.reduce<Date | null>(
+    (soonest, f) => (soonest === null || f.kickoffTime < soonest ? f.kickoffTime : soonest),
+    null,
+  )
 
   /**
    * Open the nearest gameweek that still needs picks; if everything's predicted,
@@ -164,7 +187,8 @@ export default async function PredictionsPage() {
       {missing.length > 0 && nextDeadline && (
         <div className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-clock-line bg-clock-tint px-4 py-3">
           <p className="text-sm font-semibold text-clock">
-            {missing.length} fixture{missing.length !== 1 ? "s" : ""} still to predict
+            {missing.length} fixture{missing.length !== 1 ? "s" : ""} to predict in{" "}
+            {nudgeRounds.length === 1 ? nudgeRounds[0].round : "your next gameweeks"}
           </p>
           <p className="text-xs text-clock/90">
             Next deadline{" "}
@@ -211,8 +235,8 @@ export default async function PredictionsPage() {
             return (
               <div
                 key={f.id}
-                // An amber left edge marks the fixtures the "still to predict"
-                // count is referring to, so the nudge points somewhere.
+                // An amber left edge marks every fixture still needing a pick —
+                // a superset of the nudge, which only counts the next gameweek.
                 className={`bg-surface rounded-xl border shadow-card overflow-hidden border-l-4 ${
                   myPick ? "border-line border-l-pitch/40" : "border-clock-line border-l-clock"
                 }`}

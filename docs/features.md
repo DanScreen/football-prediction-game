@@ -97,7 +97,7 @@ above). Three sections, top to bottom:
 
 - **Open** — upcoming fixtures with a countdown and a score input each, **grouped into
   gameweeks** (`FixtureRoundGroup.tsx`). Cards carry an amber left edge when unpredicted,
-  green when predicted, so the "N still to predict" nudge points somewhere.
+  green when predicted.
   Only the nearest round that still needs picks is expanded; later rounds collapse to a
   one-line summary with a "N to predict" badge. A full Premier League round is 10
   fixtures and several rounds import at once, so a flat list ran past 20 cards.
@@ -110,8 +110,11 @@ above). Three sections, top to bottom:
 - **Results** — settled picks grouped by competition and round, newest first, with the
   round subtotal and any Grand Slam bonus.
 
-Above them, when anything is outstanding: an amber nudge with the count and the next
-deadline. Standing totals (points, exact count, rank) are deliberately *not* here — they
+Above them, when picks are outstanding: an amber nudge with the count and the next
+deadline. It counts only the **next gameweek needing picks in each competition**, not
+everything open — fixtures import a couple of rounds ahead, so counting all of them read
+"20 fixtures still to predict" for deadlines a fortnight out. Later rounds are covered by
+their own gameweek badge. Standing totals (points, exact count, rank) are deliberately *not* here — they
 belong to the Leaderboard, where they can be read per league and against other people.
 
 Whose picks show under Kicked Off: everyone who shares a league with you **on that
