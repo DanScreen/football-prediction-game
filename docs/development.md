@@ -113,6 +113,8 @@ verified exactly this way before shipping. See [decisions.md](decisions.md) and
   (e.g. `app/leagues/data.ts`).
 - **New public pages must be added to `PUBLIC_PATHS` in `proxy.ts`** or they redirect
   to `/login`. (Route middleware is `proxy.ts`, not `middleware.ts`, in Next.js 16.)
+  API prefixes `/api/v1`, `/api/mobile`, and `/api/cron` are allowlisted separately —
+  each enforces its own auth inside the handler.
 - **A space directly after a closing JSX tag is dropped** — `</strong> not the start`
   renders as `kickoffnot the start`. Write `</strong>{" "}` whenever inline emphasis is
   followed by more text. It compiles and lints clean, so it only shows up in the browser;

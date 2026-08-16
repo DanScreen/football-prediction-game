@@ -32,6 +32,7 @@ when a task touches them.
 | [data-model.md](data-model.md) | Touching Prisma schema, queries, or migrations |
 | [features.md](features.md) | Changing any page, scoring, results, reminders, or auth flows |
 | [api.md](api.md) | Changing the public `/api/v1` bot API |
+| [mobile.md](mobile.md) | Native iOS/Android plan, Expo monorepo, `/api/mobile/v1` contract |
 | [development.md](development.md) | Setting up locally, running tests, writing migrations, gotchas |
 | [deployment.md](deployment.md) | Anything about infra, Terraform, secrets, CI/CD, the domain |
 | [design-system.md](design-system.md) | Any visual/UI work |
@@ -47,7 +48,9 @@ stale wiki is worse than no wiki. Concretely:
 - **New feature or behaviour change** → update [features.md](features.md) and, if it
   shifts what's live, [state.md](state.md).
 - **Schema change** → update [data-model.md](data-model.md) (and note the migration).
-- **New/changed API endpoint or field** → update [api.md](api.md).
+- **New/changed API endpoint or field** → update [api.md](api.md) (bots) or
+  [mobile.md](mobile.md) (mobile API).
+- **Native app / Expo change** → update [mobile.md](mobile.md).
 - **Infra / secret / deploy change** → update [deployment.md](deployment.md).
 - **A non-obvious choice with a rationale** → add an entry to
   [decisions.md](decisions.md).

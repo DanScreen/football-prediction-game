@@ -9,11 +9,23 @@
 
 Nothing is currently blocking, and the core product is live. Candidate next work:
 
+- **Mobile Phase 2 — Expo skeleton** — `apps/mobile` with auth + tabs against the
+  shipped `/api/mobile/v1`. See [mobile.md](mobile.md).
 - **Staging environment** — a second Cloud Run service + DB from a `staging` branch,
   to review changes before they hit the live site instead of pushing straight to prod.
   Now the only remaining safety gap in the pipeline (CI does gate on tests).
 - **Wider accessibility audit** — the polish pass fixed the form strip and `ink-faint`
   contrast; nothing has systematically checked focus order or screen-reader flow.
+
+### Mobile (Expo) — phased
+
+Agreed stack and contract: [mobile.md](mobile.md). Order matters:
+
+1. **Phase 1** — Mobile API + auth ✅ (2026-08-16).
+2. **Phase 2** — Expo app skeleton in `apps/mobile` (tabs + auth).
+3. **Phase 3** — Predictions, banker, leaderboards, leagues.
+4. **Phase 4** — Push, deep links, store polish / internal testing.
+5. **Phase 5** — App Store + Play release.
 
 ## Product ideas (parked, not scoped)
 
@@ -39,4 +51,6 @@ These are wishlist items, noted for later:
 
 - Discovery/browsing of other people's leagues (leagues stay private — you need a link
   or code). Account creation itself is open; see [decisions.md](decisions.md).
-- Native mobile apps (responsive web only).
+- Host/commissioner tooling inside the native apps (web only).
+- Wrapping the website in a WebView/Capacitor shell as a substitute for Expo (see
+  [mobile.md](mobile.md)).

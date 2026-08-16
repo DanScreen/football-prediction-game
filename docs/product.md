@@ -64,6 +64,10 @@ detail in [features.md](features.md#scoring).
 
 - Paid competitions beyond what football-data.org's free tier covers (PL + World Cup).
 - League discovery — you can only join a league with its invite link or code.
-- Native mobile apps — it's a responsive web app.
+- Host/commissioner admin in the native apps — those stay on the web.
+
+Native **player** apps (iOS + Android via Expo) are planned — see
+[mobile.md](mobile.md). The site remains the full product; the apps cover the predict /
+leaderboard / leagues loop.
 
 See [roadmap.md](roadmap.md) for what's planned next.

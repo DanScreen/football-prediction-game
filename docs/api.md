@@ -5,6 +5,10 @@ endpoints are under `/api/v1/` and authenticate with a Bearer API key (generated
 the profile page, stored as `User.apiKey`). The in-app reference with curl examples
 and a Python starter bot lives at `/api-docs`.
 
+> **Mobile apps** use a separate surface (`/api/mobile/v1`) with access/refresh tokens —
+> not API keys. See [mobile.md](mobile.md). Do not overload this bot API for the phone
+> clients.
+
 > Keep this doc and `app/api-docs/page.tsx` in sync when endpoints or fields change.
 > **Bot compatibility rule:** `competition` stays a **string** in responses, and
 > `leaderboard.totalPoints` keeps meaning **confirmed** points — don't repurpose

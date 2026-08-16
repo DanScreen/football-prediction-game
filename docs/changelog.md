@@ -6,6 +6,17 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — Mobile Phase 1 API (`/api/mobile/v1`)
+Player API for the future Expo apps: register/login, access JWT (30m) + rotating
+DB-backed refresh tokens (30d), me/rules/fixtures/predictions/leagues/competitions/
+leaderboards. Bots keep `/api/v1` unchanged. Migration adds `MobileRefreshToken`.
+202 tests. Contract: [mobile.md](mobile.md).
+
+## 2026-08-16 — Native apps planned (Expo + mobile API contract)
+Agreed to build iOS/Android with Expo in a monorepo. Documented stack, v1 scope, and
+Phase 1 `/api/mobile/v1` auth + player endpoints in [mobile.md](mobile.md). No app or
+API code yet — next implementation step is the mobile API.
+
 ## 2026-08-16 — Close points now follow the real Superbru rule
 `scoreOnePrediction` was awarding 1.5 for *any* matching goal difference. The actual
 Superbru rule is the right result **and** a scoreline within one goal: one side exact and

@@ -10,6 +10,9 @@
 Scorers is deployed and running at **https://scorersonline.uk**. The
 platform-owned competitions model (the big refactor) is complete and live.
 
+**Native apps:** Phase 1 mobile API (`/api/mobile/v1`) shipped — access/refresh auth +
+player endpoints. Expo app not started; see [mobile.md](mobile.md).
+
 ## What's built and working
 
 Everything through **phase 23** (see [changelog.md](changelog.md) for the phase list):
@@ -44,6 +47,9 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 - **How it works** (`/rules`) — the rules in one public page. Nothing varies by league
   any more, so it reads its numbers from the scoring constants.
 - **Public bot API** — `/api/v1/fixtures`, `/predictions`, `/leaderboard`.
+- **Mobile API (Phase 1)** — `/api/mobile/v1` with access/refresh tokens (not API keys):
+  auth, me, rules, fixtures, predictions, leagues, competitions, leaderboards. See
+  [mobile.md](mobile.md).
 - **Design** — "Quiet Product" system with broadcast-scoreboard moments (see
   [design-system.md](design-system.md)), fully tokenised with a **dark theme** that
   follows the OS setting.
@@ -61,7 +67,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **168 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **202 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the suite **before** deploying, so a red test blocks production.
 
