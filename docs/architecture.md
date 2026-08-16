@@ -32,13 +32,13 @@ Competition ──owns──▶ Fixture ──has──▶ Prediction (one per u
      │ subscribes                           
    League ──has──▶ LeagueMembership ──▶ User
      │
-     └──has──▶ BonusAward (Grand Slam, per league)
+     └──has──▶ BonusAward (streak bonus, per league)
 ```
 
 Because a fixture is shared across every league on its competition, a user has
 exactly **one prediction per fixture** that counts in all their leagues on that
 competition. Results are confirmed once (scoring all predictions globally); only the
-per-league Grand Slam bonus fans out per subscribing league. Full schema in
+streak bonus fans out per subscribing league. Full schema in
 [data-model.md](data-model.md).
 
 ## Request/permission flow
@@ -82,8 +82,8 @@ per-league Grand Slam bonus fans out per subscribing league. Full schema in
 
 | File | Responsibility |
 |------|----------------|
-| `lib/scoring.ts` | Pure scoring: `scoreOnePrediction`, plus `awardedPoints` (the banker multiplier) |
-| `lib/results.ts` | `confirmFixtureResult` (score once + Grand Slam fan-out), `acceptAllProposed` |
+| `lib/scoring.ts` | Pure scoring: `scoreOnePrediction`, `awardedPoints` (banker multiplier), `streakPoints` (bonus tiers) |
+| `lib/results.ts` | `confirmFixtureResult` (score once + streak-bonus fan-out), `acceptAllProposed` |
 | `lib/provisional.ts` | Read-time provisional score/points helpers (never stored) |
 | `lib/leaderboard.ts` | `computeLeaderboard` — shared by the leaderboard page **and** the API |
 | `lib/resolution.ts` | The cron sweep: transitions, proposal fetch, `runResolutionSweep` |

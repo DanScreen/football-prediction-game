@@ -55,7 +55,7 @@ export default function PredictionHistory({
   bonusByRound,
 }: {
   predictions: HistoryPrediction[]
-  /** Grand Slam points keyed by `${competitionName}·${round}`. */
+  /** Streak-bonus points keyed by `${competitionName}·${round}`. */
   bonusByRound: Map<string, number>
 }) {
   type Round = { key: string; round: string; competitionName: string; predictions: HistoryPrediction[] }
@@ -99,7 +99,7 @@ export default function PredictionHistory({
             {r.scoredCount > 0 ? (
               <p className="text-sm text-ink-muted">
                 {r.bonus > 0 && (
-                  <span className="text-clock font-semibold mr-2">🏆 Grand Slam +{r.bonus}</span>
+                  <span className="text-clock font-semibold mr-2">🔥 Streak bonus +{r.bonus}</span>
                 )}
                 <span className="font-bold text-ink tabular-nums">{r.subtotal}</span> pts
               </p>

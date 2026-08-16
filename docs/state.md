@@ -32,16 +32,16 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   per-league toggle; see [decisions.md](decisions.md)), locked at kickoff.
 - **Result resolution** — cron pre-fetches proposed scores; hosts confirm from a
   platform-wide queue (with **Accept All**); scoring runs once per fixture, then
-  Grand Slam bonuses fan out per subscribing league.
+  streak bonuses fan out per subscribing league.
 - **Provisional scores/points everywhere** — predictions page, leaderboard,
   and API show projected scores/points (badged amber) once a proposed score exists,
   until a host confirms. Standings rank by **confirmed** points only.
 - **Leaderboard** — every league you're in, stacked: standings, exact-score count,
-  Grand Slam badges, per-player "form" strip over the last 5 rounds.
+  streak bonus points, per-player "form" strip over the last 5 rounds.
 - **Deadline reminder emails** — the same cron emails members who haven't predicted
   a fixture kicking off within 3 hours (via Resend).
-- **How it works** (`/rules`) — the rules in one public page, personalised per league
-  where settings vary (Grand Slam).
+- **How it works** (`/rules`) — the rules in one public page. Nothing varies by league
+  any more, so it reads its numbers from the scoring constants.
 - **Public bot API** — `/api/v1/fixtures`, `/predictions`, `/leaderboard`.
 - **Design** — "Quiet Product" system with broadcast-scoreboard moments (see
   [design-system.md](design-system.md)), fully tokenised with a **dark theme** that

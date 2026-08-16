@@ -69,8 +69,6 @@ async function main() {
       name: "Test League",
       competitionId: premierLeague.id,
       inviteCode: "GOAAALLL",
-      grandSlamEnabled: false,
-      grandSlamPoints: 3,
     },
   })
   console.log(`✓ League "${league.name}" (code: ${league.inviteCode})`)

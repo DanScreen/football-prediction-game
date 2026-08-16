@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma"
-import { scoreOnePrediction, qualifiesForGrandSlam, awardedPoints } from "@/lib/scoring"
+import { scoreOnePrediction, streakPoints, awardedPoints } from "@/lib/scoring"
 import { FixtureStatus, ResultSource } from "@/app/generated/prisma/client"
 
 /**
  * Confirm a canonical fixture's result: save scores, mark COMPLETED, score all
- * predictions once (predictions are global), then fan Grand Slam bonuses out
- * to every subscribing league once the round is complete — each league has its
- * own grandSlamEnabled/points and its own member set.
+ * predictions once (predictions are global), then fan streak bonuses out to
+ * every subscribing league once the round is complete. The bonus itself is the
+ * same everywhere, but it's stored per league because membership is.
  */
 export async function confirmFixtureResult(
   fixtureId: string,
@@ -49,7 +49,7 @@ export async function confirmFixtureResult(
       ),
     )
 
-    // 3. Grand Slam — once every fixture in the round is done, award per league
+    // 3. Streak bonus — once every fixture in the round is done, award per league
     const roundFixtures = await tx.fixture.findMany({
       where: { competitionId: fixture.competitionId, round: fixture.round },
     })
@@ -89,37 +89,38 @@ export async function confirmFixtureResult(
       byUser.set(p.userId, arr)
     }
 
-    // Users who predicted every round fixture with a correct result each time
-    const qualifyingUserIds = new Set(
-      [...byUser]
-        .filter(
-          ([, preds]) =>
-            preds.length === roundFixtures.length &&
-            qualifiesForGrandSlam(preds.map((p) => basePoints(p) > 0)),
-        )
-        .map(([userId]) => userId),
-    )
+    // Streak bonus per user: how many *results* they called right this round.
+    // Unlike the old Grand Slam this is tiered, so partial rounds still pay —
+    // and a user who skipped fixtures simply has fewer correct to count.
+    const bonusByUser = new Map<string, number>()
+    for (const [userId, preds] of byUser) {
+      const correct = preds.filter((p) => basePoints(p) > 0).length
+      const points = streakPoints(correct)
+      if (points > 0) bonusByUser.set(userId, points)
+    }
 
-    // Fan out per subscribing league: a member qualifies for a league's bonus
-    // only in leagues they belong to
+    // Fan out per subscribing league — the bonus is the same everywhere, but a
+    // member only earns it in leagues they actually belong to.
     const leagues = await tx.league.findMany({
-      where: { competitionId: fixture.competitionId, grandSlamEnabled: true },
+      where: { competitionId: fixture.competitionId },
       include: { memberships: { select: { userId: true } } },
     })
 
     for (const league of leagues) {
       const memberIds = league.memberships.map((m) => m.userId)
-      const qualifying = memberIds.filter((id) => qualifyingUserIds.has(id))
+      const earning = memberIds.filter((id) => bonusByUser.has(id))
       const roundKey = { leagueId: league.id, round: fixture.round }
 
+      // Clear stale awards: a re-confirmed result can move someone below a tier.
       await tx.bonusAward.deleteMany({
-        where: { ...roundKey, userId: { notIn: qualifying } },
+        where: { ...roundKey, userId: { notIn: earning } },
       })
-      for (const userId of qualifying) {
+      for (const userId of earning) {
+        const points = bonusByUser.get(userId)!
         await tx.bonusAward.upsert({
           where: { userId_leagueId_round: { userId, ...roundKey } },
-          create: { userId, ...roundKey, points: league.grandSlamPoints },
-          update: { points: league.grandSlamPoints },
+          create: { userId, ...roundKey, points },
+          update: { points },
         })
       }
     }

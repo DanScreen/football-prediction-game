@@ -137,7 +137,7 @@ export default async function PredictionsPage() {
   // History is everything not already shown in the live sections above.
   const history: HistoryPrediction[] = myPredictions.filter((p) => !liveIds.has(p.fixtureId))
 
-  // Grand Slam bonuses keyed to match PredictionHistory's competition·round key.
+  // Streak bonuses keyed to match PredictionHistory's competition·round key.
   const competitionNameById = new Map(memberships.map((m) => [m.league.competition.id, m.league.competition.name]))
   const bonusByRound = new Map<string, number>()
   for (const b of bonusAwards) {

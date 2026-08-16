@@ -98,9 +98,9 @@ export default async function ApiDocsPage() {
         <Endpoint method="GET" path="/api/v1/leaderboard">
           Current standings ranked by confirmed points.{" "}
           <code className="bg-chip px-1 rounded">totalPoints</code> is confirmed points (including
-          Grand Slam bonuses); <code className="bg-chip px-1 rounded">provisionalPoints</code> and{" "}
+          streak bonuses); <code className="bg-chip px-1 rounded">provisionalPoints</code> and{" "}
           <code className="bg-chip px-1 rounded">projectedPoints</code> add points from
-          unconfirmed results. Also returns exact-score count and Grand Slam count per player.
+          unconfirmed results. Also returns exact-score count and streak bonus points per player.
         </Endpoint>
       </section>
 

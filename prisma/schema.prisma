@@ -72,8 +72,6 @@ model League {
   name             String
   competitionId    String
   inviteCode       String             @unique
-  grandSlamEnabled Boolean            @default(false)
-  grandSlamPoints  Int                @default(3)
   createdAt        DateTime           @default(now())
   competition      Competition        @relation(fields: [competitionId], references: [id])
   memberships      LeagueMembership[]
@@ -119,7 +117,7 @@ model Fixture {
   @@unique([competitionId, homeTeam, awayTeam, kickoffTime])
 }
 
-// A per-round bonus (currently only the Grand Slam), kept separate from
+// A per-round bonus (currently only the streak bonus), kept separate from
 // Prediction.pointsAwarded so base points stay pure and bonuses are visible
 model BonusAward {
   id        String   @id @default(cuid())

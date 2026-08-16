@@ -6,12 +6,13 @@ export type LeaderboardEntry = {
   id: string
   displayName: string
   isBot: boolean
-  /** Confirmed points (pointsAwarded + Grand Slam bonuses) — authoritative. */
+  /** Confirmed points (pointsAwarded + streak bonuses) — authoritative. */
   confirmedPoints: number
   /** Points from proposed-but-unconfirmed results. Display only. */
   provisionalPoints: number
   exactCount: number
-  grandSlams: number
+  /** Total streak-bonus points earned. Tiered 1-3, so a count would hide size. */
+  streakPoints: number
   /** Rank by confirmed points (standings never move on provisional data). */
   rank: number
 }
@@ -63,19 +64,18 @@ export async function computeLeaderboard(leagueId: string): Promise<LeaderboardE
     }),
   ])
 
-  const bonusByUser = new Map<string, { points: number; count: number }>()
+  const bonusByUser = new Map<string, number>()
   for (const b of bonusAwards) {
-    const s = bonusByUser.get(b.userId) ?? { points: 0, count: 0 }
-    bonusByUser.set(b.userId, { points: s.points + b.points, count: s.count + 1 })
+    bonusByUser.set(b.userId, (bonusByUser.get(b.userId) ?? 0) + b.points)
   }
 
   const entries = users
     .map((user) => {
       const preds = predictions.filter((p) => p.userId === user.id)
-      const bonus = bonusByUser.get(user.id) ?? { points: 0, count: 0 }
+      const bonus = bonusByUser.get(user.id) ?? 0
 
       const confirmedPoints =
-        preds.reduce((sum, p) => sum + (p.pointsAwarded ?? 0), 0) + bonus.points
+        preds.reduce((sum, p) => sum + (p.pointsAwarded ?? 0), 0) + bonus
 
       const provisional = preds.reduce(
         (sum, p) => sum + (provisionalPoints(p, p.fixture) ?? 0),
@@ -101,7 +101,7 @@ export async function computeLeaderboard(leagueId: string): Promise<LeaderboardE
         confirmedPoints,
         provisionalPoints: provisional,
         exactCount,
-        grandSlams: bonus.count,
+        streakPoints: bonus,
       }
     })
     .sort((a, b) => b.confirmedPoints - a.confirmedPoints)

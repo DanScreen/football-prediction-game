@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       provisionalPoints: e.provisionalPoints,
       projectedPoints: e.confirmedPoints + e.provisionalPoints,
       exactCount: e.exactCount,
-      grandSlams: e.grandSlams,
+      streakPoints: e.streakPoints,
     })),
   )
 }

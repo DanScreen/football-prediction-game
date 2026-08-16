@@ -1,8 +1,7 @@
 import Link from "next/link"
 import { auth } from "@/auth"
-import { prisma } from "@/lib/prisma"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
-import { BANKER_MULTIPLIER } from "@/lib/scoring"
+import { BANKER_MULTIPLIER, STREAK_TIERS } from "@/lib/scoring"
 
 export const metadata = {
   title: "How it works",
@@ -24,30 +23,15 @@ const SCORING = [
  * The rules of the game, in one place.
  *
  * Public: someone following an invite link should be able to read what they're
- * joining before creating an account. Signed in, it also reports the settings
- * that genuinely vary — Grand Slam is per league, so a fixed page would tell
- * some players something untrue about their own league.
+ * joining before creating an account — signed out it ends on a sign-up CTA
+ * instead.
+ *
+ * Every rule here is now platform-wide (the streak bonus replaced the per-league
+ * Grand Slam on 2026-08-16), so nothing on this page varies by league and the
+ * numbers are read from the constants rather than typed into the copy.
  */
 export default async function RulesPage() {
   const session = await auth()
-
-  const memberships = session?.user?.id
-    ? await prisma.leagueMembership.findMany({
-        where: { userId: session.user.id },
-        orderBy: { joinedAt: "asc" },
-        select: {
-          league: {
-            select: {
-              id: true,
-              name: true,
-              grandSlamEnabled: true,
-              grandSlamPoints: true,
-              competition: { select: { name: true } },
-            },
-          },
-        },
-      })
-    : []
 
   const resultDelay = formatDelay(RESULT_DELAY_MS)
 
@@ -143,47 +127,45 @@ export default async function RulesPage() {
         </ul>
       </Section>
 
-      <Section title="Grand Slam bonus" emoji="🏆">
+      <Section title="Streak bonus" emoji="🔥">
         <p>
-          Get the <em>result</em>{" "}right in every fixture of a gameweek — not the exact scores, just
-          who won or drew — and you earn a bonus. It&apos;s optional and set by each league&apos;s
-          commissioner, so it can differ between your leagues.
+          Call a lot of a gameweek&apos;s <em>results</em> correctly — not the exact scores,
+          just who won or drew — and you earn bonus points on top:
         </p>
-        {memberships.length > 0 ? (
-          <ul className="mt-4 space-y-2">
-            {memberships.map(({ league }) => (
-              <li
-                key={league.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-surface px-4 py-2.5"
-              >
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-ink">
-                    {league.name}
-                  </span>
-                  <span className="block truncate text-xs text-ink-muted">
-                    {league.competition.name}
-                  </span>
-                </span>
-                {league.grandSlamEnabled ? (
-                  <span className="shrink-0 rounded-full border border-clock-line bg-clock-tint px-2.5 py-0.5 text-xs font-semibold text-clock">
-                    Grand Slam on · +{league.grandSlamPoints} pts
-                  </span>
-                ) : (
-                  <span className="shrink-0 rounded-full border border-line bg-chip px-2.5 py-0.5 text-xs font-medium text-ink-muted">
-                    Grand Slam off
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-3 text-xs text-ink-faint">
-            Sign in to see whether it&apos;s switched on in your leagues, and for how many points.
-          </p>
-        )}
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[22rem] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink-muted">
+                <th className="py-2 pr-4 font-semibold">Results correct in a gameweek</th>
+                <th className="py-2 text-right font-semibold">Bonus</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...STREAK_TIERS]
+                .slice()
+                .reverse()
+                .map((tier, i, tiers) => {
+                  const next = tiers[i + 1]
+                  const label = next
+                    ? `${tier.minCorrect}\u2013${next.minCorrect - 1}`
+                    : `${tier.minCorrect} or more`
+                  return (
+                    <tr key={tier.minCorrect} className="border-b border-line-soft last:border-0">
+                      <td className="py-2.5 pr-4 font-medium text-ink">{label}</td>
+                      <td className="score-digits py-2.5 text-right text-base text-clock">
+                        +{tier.points}
+                      </td>
+                    </tr>
+                  )
+                })}
+            </tbody>
+          </table>
+        </div>
         <p className="mt-3 text-xs text-ink-faint">
-          Awarded once every fixture in the gameweek has a confirmed result. Bankering a match
-          makes no difference to whether you qualify.
+          Awarded once every fixture in the gameweek has a confirmed result, and it applies
+          in every league you&apos;re in. Fixtures you didn&apos;t predict just don&apos;t
+          count towards the total. Bankering a match doesn&apos;t affect it — the bonus
+          counts correct results, not points.
         </p>
       </Section>
 
@@ -217,7 +199,7 @@ export default async function RulesPage() {
             — there&apos;s no tiebreak.
           </Bullet>
           <Bullet>
-            Each row also shows your exact-score count, Grand Slam badges, and a form strip for
+            Each row also shows your exact-score count, streak bonus points, and a form strip for
             the last five gameweeks.
           </Bullet>
           <Bullet>
@@ -237,8 +219,8 @@ export default async function RulesPage() {
             across all of them.
           </Bullet>
           <Bullet>
-            Whoever creates a league is its commissioner, and can rename it, set the Grand Slam
-            bonus and share invites.
+            Whoever creates a league is its commissioner, and can rename it and share
+            invites. Scoring is the same in every league.
           </Bullet>
         </ul>
       </Section>

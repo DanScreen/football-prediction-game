@@ -6,6 +6,23 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — Streak bonus replaces the Grand Slam
+Bonus points for calling a lot of a gameweek's results right: **+1** for 5–7 correct,
+**+2** for 8–9, **+3** for 10 or more. Replaces the all-or-nothing Grand Slam, which one
+wrong result in ten wiped out entirely.
+
+**No longer a per-league setting** — `grandSlamEnabled`/`grandSlamPoints` dropped from
+`League` (migration `20260816010000_streak_bonus_replaces_grand_slam`, destructive but
+config-only), so scoring is identical everywhere and standings are comparable. The
+`/admin/settings` toggle became a read-only summary; `/rules` stopped being personalised,
+since that setting was the only thing on it that varied.
+
+Tiers live in `STREAK_TIERS` and every surface reads them. Leaderboard and API field
+`grandSlams` → **`streakPoints`** (a points total, not a count — a count would hide
+whether three bonuses were 1s or 3s). Existing `BonusAward` rows are left as a historical
+record. Verified against the local Postgres, including demotion: re-confirming a result
+can move a player down a tier or off the bonus. 168 tests.
+
 ## 2026-08-16 — "How it works" rules page
 `/rules` explains predictions and deadlines, the points table, banker, Grand Slam,
 provisional results, the leaderboard and leagues. Public, so an invited player can read

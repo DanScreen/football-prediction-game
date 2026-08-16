@@ -115,7 +115,7 @@ above). Three sections, top to bottom:
   bankered pick is tagged ★ ×2 and its points already include the double. A member
   can press **Request result** to trigger the lookup early.
 - **Results** — settled picks grouped by competition and round, newest first, with the
-  round subtotal and any Grand Slam bonus.
+  round subtotal and any streak bonus.
 
 Above them, when picks are outstanding: an amber nudge with the count and the next
 deadline. It counts only the **next gameweek needing picks in each competition**, not
@@ -131,24 +131,23 @@ fixtures.
 ## How it works (`/rules`)
 
 The rules in one page: making a prediction and the kickoff deadline, the points table,
-banker, Grand Slam, provisional results, the leaderboard, leagues, and a pointer to the
-bot API.
+banker, the streak bonus, provisional results, the leaderboard, leagues, and a pointer
+to the bot API.
 
 **Public** (in `PUBLIC_PATHS`) so someone following an invite link can read what they're
 joining before creating an account — signed out it ends on a "Create an account" CTA
 instead.
 
-**Personalised when signed in**, and this is the point rather than a flourish: Grand Slam
-is a per-league setting, so a fixed page would tell some players something untrue about
-their own league. It lists each league the user is in with that league's actual setting
-(on and for how many points, or off). The result-request wait is derived from
-`RESULT_DELAY_MS` rather than typed into the copy.
+Every rule on it is platform-wide, so the page reads its numbers from `STREAK_TIERS`,
+`BANKER_MULTIPLIER` and `RESULT_DELAY_MS` rather than restating them in prose. It was
+briefly personalised per league, because Grand Slam was a per-league setting; the streak
+bonus that replaced it is the same everywhere, so that came back out.
 
 ## Leaderboard (`/leaderboard`)
 
 Standings ranked by **confirmed** points (ties share a rank). Built on
-`computeLeaderboard()` (shared with the API). Shows exact-score count, Grand Slam
-badges (🏆), a per-player **form strip** (last 5 completed rounds, oldest → newest) and
+`computeLeaderboard()` (shared with the API). Shows exact-score count, streak bonus
+points (🔥+N — a total, not a count, since tiers vary), a per-player **form strip** (last 5 completed rounds, oldest → newest) and
 a `+X` provisional chip per row. Provisional never changes rank.
 
 Each form cell is **dual-encoded** — a glyph (▲ strong / ■ mixed / ▼ poor / · no picks)
@@ -166,7 +165,7 @@ as well as a colour — so it's readable without colour vision, and carries an
 
 ## League admin (`/admin`) — commissioners only
 
-Slimmed to `/admin/settings` only: rename league, Grand Slam toggle + points, invite
+Slimmed to `/admin/settings` only: rename league, invite
 code management. Fixtures and results are handled by hosts, so there's nothing else here.
 
 ## Fixture import (automatic + manual)
@@ -195,8 +194,8 @@ in the meantime:
    standings still rank by confirmed points.
 3. **Host confirms** at `/host/results` — a platform-wide queue with **Accept All**.
    `confirmFixtureResult()` (`lib/results.ts`) saves the scores + `COMPLETED`, scores
-   every prediction on the fixture once, then fans out Grand Slam bonuses per
-   subscribing league that has it enabled. Nothing scores without host sign-off — the
+   every prediction on the fixture once, then fans out streak bonuses per subscribing
+   league. Nothing scores without host sign-off — the
    human check keeps bad data (postponements, ambiguous names) off the leaderboard.
 4. **Fallbacks** — members can Request result from the dashboard; hosts have a "Check
    for Updates" button (runs the sweep on demand); manual entry and per-fixture API
@@ -223,11 +222,30 @@ Applied in `awardedPoints()` (`lib/scoring.ts`) at both confirm time and in prov
 points, so a bankered pick reads double everywhere. It is **not** a per-league toggle —
 see [data-model.md](data-model.md#key-invariants) for why it can't be.
 
-**Grand Slam bonus** (optional, per league): if a user gets the *result* of every
-fixture in a round right, they earn a bonus (default 3, configurable 1–20). Off by
-default. Eligibility reads *base* points, so bankering a fixture neither helps nor
-hinders a slam. Awarded once the whole round is confirmed, stored as a `BonusAward` row
-(never folded into a prediction's points), shown as 🏆 on the leaderboard.
+**Streak bonus** (always on, every league): bonus points for calling a lot of a
+gameweek's *results* right — win/draw/loss, not exact scores.
+
+| Results correct in a gameweek | Bonus |
+|---|---|
+| 5–7 | +1 |
+| 8–9 | +2 |
+| 10 or more | +3 |
+
+Tiers live in `STREAK_TIERS` (`lib/scoring.ts`) and every surface reads them, so the
+numbers can't drift between the settings page, `/rules` and the scoring itself. Awarded
+once the whole round is confirmed, stored as a `BonusAward` row (never folded into a
+prediction's points), shown as 🔥+N on the leaderboard.
+
+Eligibility counts *correct results*, so:
+- Fixtures you didn't predict simply don't count towards the total.
+- Bankering a match makes no difference — the bonus counts results, not points.
+- Re-confirming a result can move you **down** a tier or off the bonus entirely; stale
+  awards are cleared on every round completion.
+- A round with fewer than 5 fixtures can't reach the lowest tier. Fine for a 10-fixture
+  Premier League matchweek; a short knockout round pays nothing.
+
+Replaced the all-or-nothing **Grand Slam** on 2026-08-16, which was a per-league toggle
+with a configurable points value. See [decisions.md](decisions.md).
 
 ## Deadline reminder emails
 

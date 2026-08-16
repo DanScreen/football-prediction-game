@@ -66,7 +66,7 @@ export async function lookupResult(
   }
 }
 
-/** Confirm result: save scores, score predictions, fan out Grand Slam per league */
+/** Confirm result: save scores, score predictions, fan out streak bonuses per league */
 export async function confirmResult(
   _prev: ResultFormState,
   formData: FormData,

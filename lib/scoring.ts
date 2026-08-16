@@ -37,8 +37,8 @@ export const BANKER_MULTIPLIER = 2
  * banker for the round.
  *
  * Kept separate from `scoreOnePrediction` because two callers need the *base*
- * figure — Grand Slam eligibility (which asks "was the result right?", not "how
- * many points?") and the round normalisation in `confirmFixtureResult`.
+ * figure — the streak bonus (which asks "was the result right?", not "how many
+ * points?") and the round normalisation in `confirmFixtureResult`.
  * The minimum score is 0, so a banker is upside-only; the strategy is picking
  * the fixture you're most confident in, not risking anything on it.
  */
@@ -47,10 +47,22 @@ export function awardedPoints(base: number, isBanker: boolean): number {
 }
 
 /**
- * Returns true if a user correctly predicted the result (W/D/L) for every
- * fixture in a round — used to evaluate Grand Slam bonus eligibility.
- * Pass an empty array and it returns false (no fixtures = no slam).
+ * Streak bonus tiers: how many *results* (W/D/L) you got right in a gameweek,
+ * and what that's worth on top of your base points.
+ *
+ * Ordered highest-first so the lookup returns the best tier reached. Replaced
+ * the old all-or-nothing Grand Slam on 2026-08-16 — see decisions.md.
  */
-export function qualifiesForGrandSlam(resultCorrect: boolean[]): boolean {
-  return resultCorrect.length > 0 && resultCorrect.every(Boolean)
+export const STREAK_TIERS = [
+  { minCorrect: 10, points: 3 },
+  { minCorrect: 8, points: 2 },
+  { minCorrect: 5, points: 1 },
+] as const
+
+/**
+ * The streak bonus for getting `correctCount` results right in one gameweek.
+ * Returns 0 below the lowest tier.
+ */
+export function streakPoints(correctCount: number): number {
+  return STREAK_TIERS.find((t) => correctCount >= t.minCorrect)?.points ?? 0
 }

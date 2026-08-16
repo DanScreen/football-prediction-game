@@ -1,13 +1,12 @@
 "use client"
 
-import { useActionState, useState } from "react"
+import { useActionState } from "react"
 import { updateLeagueSettings, type SettingsFormState } from "./actions"
+import { STREAK_TIERS } from "@/lib/scoring"
 
 type Props = {
   defaultValues: {
     name: string
-    grandSlamEnabled: boolean
-    grandSlamPoints: number
   }
 }
 
@@ -16,7 +15,6 @@ export default function SettingsForm({ defaultValues }: Props) {
     updateLeagueSettings,
     {},
   )
-  const [slamEnabled, setSlamEnabled] = useState(defaultValues.grandSlamEnabled)
 
   return (
     <form action={formAction} className="space-y-5 max-w-lg">
@@ -43,34 +41,25 @@ export default function SettingsForm({ defaultValues }: Props) {
         />
       </div>
 
-      <div className="bg-clock-tint border border-clock-line rounded-xl p-4 space-y-3">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            name="grandSlamEnabled"
-            checked={slamEnabled}
-            onChange={(e) => setSlamEnabled(e.target.checked)}
-            className="w-4 h-4 accent-pitch"
-          />
-          <span className="text-sm font-semibold text-ink">🏆 Grand Slam bonus</span>
-        </label>
+      {/* Read-only: the streak bonus is platform-wide, not a league setting. Shown
+          here because commissioners used to control the old Grand Slam and will
+          look for it. */}
+      <div className="bg-clock-tint border border-clock-line rounded-xl p-4 space-y-2">
+        <p className="text-sm font-semibold text-ink">🔥 Streak bonus</p>
         <p className="text-xs text-ink-muted">
-          Awards bonus points to anyone who predicts the correct result (win/draw/loss) for
-          every fixture in a round.
+          Bonus points for getting a lot of a gameweek&apos;s results right. It applies in
+          every league, so there&apos;s nothing to configure here.
         </p>
-        <div>
-          <label className="block text-sm font-medium text-ink-mid mb-1">Bonus points</label>
-          <input
-            type="number"
-            name="grandSlamPoints"
-            min={1}
-            max={20}
-            defaultValue={defaultValues.grandSlamPoints}
-            required
-            disabled={!slamEnabled}
-            className="w-24 border border-line-strong rounded-lg px-3 py-2 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-pitch disabled:opacity-50 disabled:bg-chip"
-          />
-        </div>
+        <ul className="space-y-1 text-xs text-ink-mid">
+          {STREAK_TIERS.map((tier) => (
+            <li key={tier.minCorrect}>
+              <span className="font-semibold text-clock">
+                +{tier.points} point{tier.points !== 1 ? "s" : ""}
+              </span>{" "}
+              for {tier.minCorrect}+ correct results
+            </li>
+          ))}
+        </ul>
       </div>
 
       <button

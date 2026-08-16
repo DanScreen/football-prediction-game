@@ -57,7 +57,8 @@ for how it's modelled.
 | Wrong result | 0 |
 
 Plus a **banker** — one fixture per gameweek that scores double — and an optional
-per-league **Grand Slam** bonus for getting every fixture in a round right. Full detail in [features.md](features.md#scoring).
+**streak bonus** of 1-3 points for calling most of a gameweek's results right. Full
+detail in [features.md](features.md#scoring).
 
 ## Non-goals (for now)
 

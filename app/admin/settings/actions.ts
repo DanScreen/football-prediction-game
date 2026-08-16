@@ -14,23 +14,13 @@ export async function updateLeagueSettings(
   const { leagueId } = await requireCommissioner()
 
   const name = String(formData.get("name") ?? "").trim()
-  const grandSlamEnabled = formData.get("grandSlamEnabled") === "on"
-  // The points input doesn't submit while the toggle is off (disabled input)
-  const pointsStr = String(formData.get("grandSlamPoints") ?? "").trim()
-  const grandSlamPoints = Number(pointsStr)
 
   if (!name) return { error: "League name is required." }
   if (name.length > 50) return { error: "League name must be 50 characters or fewer." }
-  const pointsValid =
-    pointsStr !== "" && Number.isInteger(grandSlamPoints) && grandSlamPoints >= 1 && grandSlamPoints <= 20
-  if (grandSlamEnabled && !pointsValid) {
-    return { error: "Grand Slam points must be a whole number between 1 and 20." }
-  }
 
-  await prisma.league.update({
-    where: { id: leagueId },
-    data: { name, grandSlamEnabled, ...(pointsValid ? { grandSlamPoints } : {}) },
-  })
+  // The streak bonus replaced the Grand Slam on 2026-08-16 and is platform-wide,
+  // so the name is all a commissioner sets here now.
+  await prisma.league.update({ where: { id: leagueId }, data: { name } })
 
   revalidatePath("/admin/settings")
   revalidatePath("/")

@@ -43,8 +43,9 @@ score fields carry the projected outcome.
 
 ### `GET /api/v1/leaderboard`
 Standings ranked by confirmed points. Per player: `rank`, `id`, `displayName`, `isBot`,
-`totalPoints` (**confirmed**, incl. Grand Slam), `provisionalPoints`, `projectedPoints`
-(= confirmed + provisional), `exactCount`, `grandSlams`. Delegates to the same
+`totalPoints` (**confirmed**, incl. streak bonuses), `provisionalPoints`,
+`projectedPoints` (= confirmed + provisional), `exactCount`, `streakPoints` (total
+bonus points earned, not a count of bonuses). Delegates to the same
 `computeLeaderboard()` the web leaderboard uses.
 
 ## Notes

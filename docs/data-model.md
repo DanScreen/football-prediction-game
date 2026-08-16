@@ -31,7 +31,6 @@ Platform-owned. Owns the canonical fixtures that leagues share.
 A group of players subscribed to one competition.
 - `id`, `name`, `inviteCode` (unique), `createdAt`
 - `competitionId` → **Competition** (FK). This is the subscription.
-- `grandSlamEnabled` (bool), `grandSlamPoints` (int, default 3) — per-league bonus config.
 - Relations: `competition`, `memberships[]`, `bonusAwards[]`.
 
 ### LeagueMembership
@@ -58,7 +57,7 @@ One user's pick for one canonical fixture.
   Fixture, so this **cannot be a unique index** and is enforced transactionally in
   `setBanker()` (`lib/banker.ts`).
 - `pointsAwarded` (`Float?`) — points as they count: base score × the banker
-  multiplier. Grand Slam bonuses are *not* folded in (they live in BonusAward). Null
+  multiplier. Streak bonuses are *not* folded in (they live in BonusAward). Null
   until the fixture is confirmed complete. Float because a correct-result-and-GD pick
   scores 1.5.
 - `submittedVia`: `WEB` / `API` (`SubmitVia` enum).
@@ -66,7 +65,7 @@ One user's pick for one canonical fixture.
   editable until kickoff.
 
 ### BonusAward
-A per-round bonus (currently only the Grand Slam), kept separate from
+A per-round bonus (currently only the streak bonus), kept separate from
 `Prediction.pointsAwarded` so base points stay pure and bonuses are visible.
 - `id`, `userId`, `leagueId`, `round`, `points`, `createdAt`
 - **Unique:** `(userId, leagueId, round)` — one bonus per user per league per round.
@@ -87,11 +86,11 @@ A per-round bonus (currently only the Grand Slam), kept separate from
   `pointsAwarded` + `BonusAward` only.
 - **The banker doubles globally, not per league.** `pointsAwarded` is competition-wide
   (one prediction, scored once, counting in every league on that competition), so a
-  doubling can't apply in one league and not another — unlike the Grand Slam, banker
+  doubling can't apply in one league and not another — unlike a BonusAward, banker
   can't be a per-league toggle. See [decisions.md](decisions.md).
 - **Score once, fan out bonuses.** Confirming a result (`lib/results.ts`) scores all
-  predictions on the fixture once, then awards Grand Slam bonuses per subscribing
-  league that has it enabled.
+  predictions on the fixture once, then awards streak bonuses per subscribing league.
+  The bonus is identical everywhere; it's stored per league because membership is.
 - **Active league** is a cookie (`activeLeagueId`), not a DB field.
 
 ## Migrations

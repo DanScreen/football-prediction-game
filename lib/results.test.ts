@@ -149,7 +149,7 @@ describe("confirmFixtureResult", () => {
     })
   })
 
-  it("skips Grand Slam processing while the round is incomplete", async () => {
+  it("skips bonus processing while the round is incomplete", async () => {
     tx.fixture.findMany.mockResolvedValue([
       completedFixture("f1", 2, 1),
       completedFixture("f2", 0, 0, { status: "AWAITING_RESULT", actualHomeScore: null, actualAwayScore: null }),
@@ -161,61 +161,86 @@ describe("confirmFixtureResult", () => {
     expect(tx.bonusAward.upsert).not.toHaveBeenCalled()
   })
 
-  it("fans Grand Slam bonuses out per league with per-league settings and membership", async () => {
-    const roundFixtures = [completedFixture("f1", 2, 1), completedFixture("f2", 0, 0)]
+  it("awards streak bonuses by tier and fans them out per league", async () => {
+    // A 10-fixture round: everyone drew 0-0, so a predicted draw is a correct result.
+    const roundFixtures = Array.from({ length: 10 }, (_, i) => completedFixture(`f${i + 1}`, 0, 0))
     tx.fixture.findMany.mockResolvedValue(roundFixtures as never)
+
+    const picks = (userId: string, correct: number) =>
+      roundFixtures.map((f, i) =>
+        // 0-0 is a correct result; 1-0 is not.
+        i < correct ? prediction(userId, f.id, 0, 0) : prediction(userId, f.id, 1, 0),
+      )
+
     tx.prediction.findMany
       .mockResolvedValueOnce([]) // fixture predictions
       .mockResolvedValueOnce([
-        // alice: correct results on both fixtures → qualifies
-        prediction("alice", "f1", 3, 2),
-        prediction("alice", "f2", 1, 1),
-        // bob: wrong result on f2 → does not qualify
-        prediction("bob", "f1", 2, 1),
-        prediction("bob", "f2", 1, 0),
-        // carol: only predicted one fixture → does not qualify
-        prediction("carol", "f1", 2, 1),
+        ...picks("alice", 10), // 10 correct → 3
+        ...picks("bob", 8), //    8 correct → 2
+        ...picks("carol", 5), //  5 correct → 1
+        ...picks("dan", 4), //    4 correct → nothing
       ] as never)
+
     tx.league.findMany.mockResolvedValue([
       {
         id: "league-a",
-        grandSlamPoints: 3,
-        memberships: [{ userId: "alice" }, { userId: "bob" }],
+        memberships: [{ userId: "alice" }, { userId: "bob" }, { userId: "dan" }],
       },
       {
         id: "league-b",
-        grandSlamPoints: 10,
         memberships: [{ userId: "carol" }], // alice is NOT a member here
       },
     ] as never)
 
-    await confirmFixtureResult("f1", 2, 1, ResultSource.MANUAL)
+    await confirmFixtureResult("f1", 0, 0, ResultSource.MANUAL)
 
-    // Only grandSlamEnabled leagues on this competition are considered
+    // Every league on the competition now qualifies — there is no enabled flag.
     expect(tx.league.findMany).toHaveBeenCalledWith({
-      where: { competitionId: "comp-pl", grandSlamEnabled: true },
+      where: { competitionId: "comp-pl" },
       include: { memberships: { select: { userId: true } } },
     })
 
-    // League A: alice qualifies at league A's points value
+    const awarded = (userId: string, leagueId: string) =>
+      tx.bonusAward.upsert.mock.calls
+        .map((c) => c[0] as { create: { userId: string; leagueId: string; points: number } })
+        .find((a) => a.create.userId === userId && a.create.leagueId === leagueId)?.create.points
+
+    expect(awarded("alice", "league-a")).toBe(3)
+    expect(awarded("bob", "league-a")).toBe(2)
+    expect(awarded("carol", "league-b")).toBe(1)
+    // dan fell below the lowest tier
+    expect(awarded("dan", "league-a")).toBeUndefined()
+    // alice isn't in league B, so her bonus doesn't leak into it
+    expect(awarded("alice", "league-b")).toBeUndefined()
+
+    // Anyone not earning is cleared, so a re-confirmation can demote someone.
+    expect(tx.bonusAward.deleteMany).toHaveBeenCalledWith({
+      where: { leagueId: "league-a", round: "Matchweek 1", userId: { notIn: ["alice", "bob"] } },
+    })
+  })
+
+  it("counts correct results, not fixtures predicted", async () => {
+    // Six fixtures, all 0-0. Alice predicts five and gets all five right; she
+    // reaches the 5+ tier despite skipping one.
+    const roundFixtures = Array.from({ length: 6 }, (_, i) => completedFixture(`f${i + 1}`, 0, 0))
+    tx.fixture.findMany.mockResolvedValue(roundFixtures as never)
+    tx.prediction.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(
+        roundFixtures.slice(0, 5).map((f) => prediction("alice", f.id, 0, 0)) as never,
+      )
+    tx.league.findMany.mockResolvedValue([
+      { id: "league-a", memberships: [{ userId: "alice" }] },
+    ] as never)
+
+    await confirmFixtureResult("f1", 0, 0, ResultSource.MANUAL)
+
     expect(tx.bonusAward.upsert).toHaveBeenCalledWith({
       where: {
         userId_leagueId_round: { userId: "alice", leagueId: "league-a", round: "Matchweek 1" },
       },
-      create: { userId: "alice", leagueId: "league-a", round: "Matchweek 1", points: 3 },
-      update: { points: 3 },
-    })
-    // League B: alice is not a member, carol didn't qualify → no upserts for league B
-    const leagueBUpserts = tx.bonusAward.upsert.mock.calls.filter(
-      (c) => (c[0] as { create: { leagueId: string } }).create.leagueId === "league-b",
-    )
-    expect(leagueBUpserts).toHaveLength(0)
-    // Non-qualifiers are cleaned up in both leagues
-    expect(tx.bonusAward.deleteMany).toHaveBeenCalledWith({
-      where: { leagueId: "league-a", round: "Matchweek 1", userId: { notIn: ["alice"] } },
-    })
-    expect(tx.bonusAward.deleteMany).toHaveBeenCalledWith({
-      where: { leagueId: "league-b", round: "Matchweek 1", userId: { notIn: [] } },
+      create: { userId: "alice", leagueId: "league-a", round: "Matchweek 1", points: 1 },
+      update: { points: 1 },
     })
   })
 })

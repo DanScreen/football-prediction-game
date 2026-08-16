@@ -28,8 +28,6 @@ export default async function SettingsPage() {
         <SettingsForm
           defaultValues={{
             name: league.name,
-            grandSlamEnabled: league.grandSlamEnabled,
-            grandSlamPoints: league.grandSlamPoints,
           }}
         />
         <InviteCodeCard inviteCode={league.inviteCode} />

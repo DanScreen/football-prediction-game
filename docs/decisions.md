@@ -33,11 +33,12 @@ Results are pre-fetched automatically but require host confirmation. **Why:** fo
 data is occasionally wrong; a quick human check keeps bad data off the leaderboard.
 **Accept All** keeps it low-effort when the data is clean.
 
-## Score once, fan out Grand Slam bonuses per league
+## Score once, fan out round bonuses per league
 Confirming a result scores every prediction on the canonical fixture once, then awards
-Grand Slam bonuses per subscribing league that has it enabled (`lib/results.ts`).
-**Why:** base points are competition-global (one canonical fixture) but Grand Slam
-settings and membership are per-league, so only the bonus needs to fan out.
+the round bonus per subscribing league (`lib/results.ts`). **Why:** base points are
+competition-global (one canonical fixture) but *membership* is per-league, so the bonus
+row has to exist once per league even though its value is now identical everywhere.
+(Until 2026-08-16 the value varied too — see the streak-bonus entry below.)
 
 ## Cron cadence 30 min → 10 min
 **Why:** with fixtures/results now automatic, tighter cadence means fresher imports and
@@ -161,10 +162,10 @@ Two deliberate consequences:
 
 ## 2026-08-16 — Banker: one double-points pick per gameweek
 
-**It cannot be a per-league toggle, unlike the Grand Slam.** `Prediction.pointsAwarded`
+**It cannot be a per-league toggle** (as the Grand Slam then was). `Prediction.pointsAwarded`
 is competition-global — one pick, scored once, counting in every league on that
 competition — so a doubling can't apply in one league and not another. The Grand Slam
-gets to be optional precisely because it lives in a separate per-league `BonusAward`
+got to be optional precisely because it lived in a separate per-league `BonusAward`
 row. Banker is therefore on for everyone, everywhere. Making it optional would mean
 per-league points, which is the design the competitions refactor deliberately removed.
 
@@ -180,7 +181,7 @@ off, and you can't move a banker *off* one that has — otherwise you could bank
 Saturday lunchtime game, watch it go badly, and shift the double onto Sunday.
 
 **`awardedPoints()` is separate from `scoreOnePrediction()`.** Two callers genuinely
-need the undoubled figure: Grand Slam eligibility asks "was the result right?", not "how
+need the undoubled figure: bonus eligibility asks "was the result right?", not "how
 many points?", and the round-completion pass in `confirmFixtureResult` re-derives every
 prediction in the round. That pass previously normalised to base points — left alone, it
 would have silently stripped the double off a whole round the moment it completed. There
@@ -190,6 +191,41 @@ is a test pinning exactly that.
 cost points. The decision is which fixture you're most confident in, not how much to
 risk — a risk-bearing version (halving a wrong banker) would punish the players who
 predict the most fixtures, which runs against a game meant to be light to play.
+
+## 2026-08-16 — Streak bonus replaces the Grand Slam
+
+The Grand Slam paid a fixed bonus for getting *every* result in a round right. The
+streak bonus pays **1 / 2 / 3** points for **5–7 / 8–9 / 10+** correct results in a
+gameweek.
+
+**Why tiers.** All-or-nothing almost never paid out — one wrong result in ten wiped the
+whole bonus — so it was a rule most players read once and then ignored. Tiers give a
+good week something to aim at without needing a perfect one, and the top tier still
+rewards a clean sweep of a 10-fixture matchweek.
+
+**It is no longer a per-league setting.** `grandSlamEnabled` / `grandSlamPoints` were
+dropped from `League` (migration
+`20260816010000_streak_bonus_replaces_grand_slam`). Scoring is now identical in every
+league, which makes standings comparable and one less thing for a commissioner to get
+wrong. `BonusAward` stays per-league because *membership* is per-league — the row must
+exist once per league even though its value no longer varies.
+
+**Consequences accepted:**
+- **Rounds shorter than 5 fixtures can't pay anything.** Fine for a Premier League
+  matchweek; a World Cup knockout round of 4 pays nothing. Judged acceptable rather than
+  scaling the tiers to round size, which would make the rule harder to state than it is
+  worth.
+- **Existing `BonusAward` rows were left alone** by the migration. They record what was
+  actually awarded at the time; deleting them would quietly remove points from settled
+  rounds. New awards use the tiers from the next confirmed gameweek onwards.
+- **`grandSlams` became `streakPoints` in the leaderboard and the public API** — a
+  breaking field rename. It reports total bonus points rather than a count, because with
+  tiers a count hides whether someone scored three 1s or three 3s.
+- **`/rules` stopped being personalised.** Per-league Grand Slam settings were the only
+  thing on it that varied.
+
+**Tiers live in `STREAK_TIERS`** and every surface renders from it — the settings page,
+`/rules`, and the scoring itself — so the numbers cannot drift apart.
 
 ---
 

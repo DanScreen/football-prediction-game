@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { scoreOnePrediction, qualifiesForGrandSlam, awardedPoints } from "./scoring"
+import { scoreOnePrediction, streakPoints, awardedPoints } from "./scoring"
 
 describe("scoreOnePrediction", () => {
   describe("exact score → 3 pts", () => {
@@ -39,12 +39,29 @@ describe("scoreOnePrediction", () => {
   })
 })
 
-describe("qualifiesForGrandSlam", () => {
-  it("all correct → true", () => expect(qualifiesForGrandSlam([true, true, true])).toBe(true))
-  it("one wrong → false", () => expect(qualifiesForGrandSlam([true, false, true])).toBe(false))
-  it("all wrong → false", () => expect(qualifiesForGrandSlam([false, false])).toBe(false))
-  it("empty array → false", () => expect(qualifiesForGrandSlam([])).toBe(false))
-  it("single correct → true", () => expect(qualifiesForGrandSlam([true])).toBe(true))
+describe("streakPoints", () => {
+  it("pays nothing below the lowest tier", () => {
+    expect(streakPoints(0)).toBe(0)
+    expect(streakPoints(4)).toBe(0)
+  })
+
+  // Boundaries both sides of every tier — the whole feature is thresholds.
+  it("pays 1 for 5-7 correct", () => {
+    expect(streakPoints(5)).toBe(1)
+    expect(streakPoints(6)).toBe(1)
+    expect(streakPoints(7)).toBe(1)
+  })
+
+  it("pays 2 for 8-9 correct", () => {
+    expect(streakPoints(8)).toBe(2)
+    expect(streakPoints(9)).toBe(2)
+  })
+
+  it("pays 3 for 10 or more correct", () => {
+    expect(streakPoints(10)).toBe(3)
+    expect(streakPoints(11)).toBe(3)
+    expect(streakPoints(38)).toBe(3)
+  })
 })
 
 describe("awardedPoints", () => {

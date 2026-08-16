@@ -195,12 +195,12 @@ export default async function LeagueBoard({
                       {entry.isBot && (
                         <span className="ml-1.5 text-xs text-ink-faint font-normal">🤖</span>
                       )}
-                      {entry.grandSlams > 0 && (
+                      {entry.streakPoints > 0 && (
                         <span
                           className="ml-1.5 text-xs font-medium text-clock"
-                          title={`${entry.grandSlams} Grand Slam${entry.grandSlams !== 1 ? "s" : ""}`}
+                          title={`${entry.streakPoints} streak bonus point${entry.streakPoints !== 1 ? "s" : ""}`}
                         >
-                          🏆{entry.grandSlams > 1 ? `×${entry.grandSlams}` : ""}
+                          🔥+{entry.streakPoints}
                         </span>
                       )}
                       {entry.id === currentUserId && (

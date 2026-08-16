@@ -99,7 +99,7 @@ describe("computeLeaderboard", () => {
     const bob = board.find((e) => e.id === "bob")!
     expect(alice.confirmedPoints).toBe(6) // 3 + 3 bonus
     expect(alice.provisionalPoints).toBe(3)
-    expect(alice.grandSlams).toBe(1)
+    expect(alice.streakPoints).toBe(3)
     expect(alice.exactCount).toBe(1)
     expect(bob.confirmedPoints).toBe(1)
     expect(bob.provisionalPoints).toBe(0)
