@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
+import { normaliseInviteCode } from "@/lib/inviteCode"
 
 export type RegisterState = {
   error?: string
@@ -16,7 +17,9 @@ export async function registerUser(
   const email = String(formData.get("email") ?? "").trim().toLowerCase()
   const password = String(formData.get("password") ?? "")
   const confirmPassword = String(formData.get("confirmPassword") ?? "")
-  const inviteCode = String(formData.get("inviteCode") ?? "").trim()
+  // Now only ever arrives from the hidden field an invite link populates — the
+  // visible "invite code" box was removed from sign-up.
+  const inviteCode = normaliseInviteCode(formData.get("inviteCode") as string | null)
 
   // Basic validation
   if (!displayName || !email || !password) {
@@ -31,14 +34,16 @@ export async function registerUser(
     return { error: "Password must be at least 8 characters." }
   }
 
-  // Verify invite code only if one was provided
+  // A bad invite must not block sign-up: accounts are open, and the code here came
+  // from a link the user can't see or correct. They just land without a league and
+  // can join one from /leagues.
   let joinLeagueId: string | null = null
   if (inviteCode) {
-    const league = await prisma.league.findUnique({ where: { inviteCode } })
-    if (!league) {
-      return { error: "Invalid invite code." }
-    }
-    joinLeagueId = league.id
+    const league = await prisma.league.findUnique({
+      where: { inviteCode },
+      select: { id: true },
+    })
+    joinLeagueId = league?.id ?? null
   }
 
   // Check for duplicate email

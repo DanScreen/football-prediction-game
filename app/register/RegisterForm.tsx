@@ -6,11 +6,18 @@ import Link from "next/link"
 
 const initialState: RegisterState = {}
 
-export default function RegisterForm() {
+/**
+ * `inviteCode` comes from the `?invite=` link and rides along in a hidden field —
+ * there is deliberately no visible code box. Sign-up is open, so an optional field
+ * most people had to ignore was pure friction; codes are entered on the "Join a
+ * league" form instead, once you have an account.
+ */
+export default function RegisterForm({ inviteCode }: { inviteCode: string }) {
   const [state, formAction, isPending] = useActionState(registerUser, initialState)
 
   return (
     <form action={formAction} className="space-y-4">
+      {inviteCode && <input type="hidden" name="inviteCode" value={inviteCode} />}
       {state.error && (
         <div className="rounded-md bg-bad-tint border border-bad-line text-bad px-4 py-3 text-sm">
           {state.error}
@@ -74,20 +81,6 @@ export default function RegisterForm() {
           autoComplete="new-password"
           className="w-full rounded-lg border border-line-strong px-3 py-2 text-sm shadow-card focus:border-pitch focus:outline-none focus:ring-1 focus:ring-pitch"
           placeholder="Repeat your password"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="inviteCode" className="block text-sm font-medium text-ink-mid mb-1">
-          Invite Code <span className="font-normal text-ink-faint">(optional)</span>
-        </label>
-        <input
-          id="inviteCode"
-          name="inviteCode"
-          type="text"
-          autoComplete="off"
-          className="w-full rounded-lg border border-line-strong px-3 py-2 text-sm shadow-card focus:border-pitch focus:outline-none focus:ring-1 focus:ring-pitch"
-          placeholder="Leave blank or enter code"
         />
       </div>
 

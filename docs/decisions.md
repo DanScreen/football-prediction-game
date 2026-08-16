@@ -134,6 +134,31 @@ with a `COMMISSIONER` filter (`resolveCommissionerLeagueId`). Without the filter
 who is a plain member of their earliest league and commissioner of another gets bounced
 out of `/admin`. The header's Admin chip likewise keys off commissioning *any* league.
 
+## 2026-08-16 — Invite links, and sign-up is open by design
+
+Sharing a league meant sharing a 6-character code and hoping the recipient found the
+site, spotted "Register", and typed the code into an optional box. Now `/register?invite=
+CODE` carries it for them and joins the league on account creation.
+
+**The invite field was removed from sign-up entirely.** It was optional, so most people
+had to ignore it, and it was the wrong place to ask: someone arriving from a link
+shouldn't retype what the link already said, and someone arriving cold has no code. Codes
+now belong on the "Join a league" form, where you use them once you have an account.
+
+**Sign-up is open** — no code required to create an account, which is what the code has
+always done despite the docs and on-page copy claiming "invite-only". Resolved in favour
+of the behaviour: *leagues* are private (link or code required), *accounts* are not. The
+login/register copy was corrected to match, which matters because that copy exists partly
+to reassure Google Safe Browsing — it should be true.
+
+Two deliberate consequences:
+- **A bad invite code never blocks registration.** It arrives from a link the user can't
+  see or fix, so failing them at the door would be hostile. They get the account and a
+  notice to join a league later.
+- **`normaliseInviteCode()` is used at both entry points.** They had drifted: registration
+  did `.trim()` while joining did `.trim().toUpperCase()`, so a lowercase code was
+  rejected at sign-up but accepted when joining.
+
 ---
 
 ## Foundational stack decisions (earlier)

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { resolveActiveLeagueId } from "@/lib/activeLeague"
 import LeaguesClient from "./LeaguesClient"
+import CopyInvite from "@/app/components/CopyInvite"
 
 export const metadata = { title: "My Leagues" }
 
@@ -70,6 +71,8 @@ export default async function LeaguesPage() {
                   {" · "}
                   Code: <span className="font-mono font-semibold">{m.league.inviteCode}</span>
                 </p>
+                {/* Any member can invite, not just the commissioner. */}
+                <CopyInvite inviteCode={m.league.inviteCode} className="mt-2" />
               </div>
               {/* Only commissioners have anything to switch *to* — predictions and
                   leaderboards already cover every league at once. */}

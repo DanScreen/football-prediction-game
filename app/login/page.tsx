@@ -28,8 +28,9 @@ export default async function LoginPage({
           <LoginForm callbackUrl={callbackUrl} registered={registered === "1"} reset={reset === "1"} />
         </div>
         <p className="mt-6 text-center text-xs text-ink-faint">
-          Scorers is a private, invite-only game where friends predict football scorelines and
-          compete on a leaderboard. We only ask for your email and a password to sign you in.
+          Scorers is a friendly game where you predict football scorelines and compete with
+          friends on a leaderboard. Leagues are private — you join one with an invite link or
+          code. We only ask for your email and a password to sign you in.
         </p>
       </div>
     </div>

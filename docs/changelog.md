@@ -6,6 +6,19 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — Invite links
+- **`/register?invite=CODE`** — a shareable sign-up link that creates the account and
+  joins the league in one step, showing which league you're joining before you sign up.
+- **Removed the invite-code field from sign-up.** It was optional and in the wrong
+  place; codes now belong on the "Join a league" form, for people who already have an
+  account. `CopyInvite` offers both link and code from `/leagues` and `/admin/settings`.
+- **Fixed: invite codes were case-sensitive at sign-up but not when joining.**
+  Registration did `.trim()` while joining did `.trim().toUpperCase()`, so a lowercase
+  code was rejected in one place and accepted in the other. Both now use
+  `normaliseInviteCode()`.
+- **Corrected the "invite-only" copy.** Sign-up has always been open despite the docs
+  and login/register pages saying otherwise; leagues are the private part. 152 tests.
+
 ## 2026-08-16 — Information architecture: 3 tabs, no league switching
 - **Dashboard merged into Predictions at `/`.** The two pages showed the same picks and
   results either side of kickoff, and only the dashboard could actually take a

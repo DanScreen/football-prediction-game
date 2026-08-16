@@ -5,7 +5,7 @@ import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { ACTIVE_LEAGUE_COOKIE } from "@/lib/activeLeague"
-import { generateInviteCode } from "@/lib/inviteCode"
+import { generateInviteCode, normaliseInviteCode } from "@/lib/inviteCode"
 
 async function requireUser() {
   const session = await auth()
@@ -66,7 +66,7 @@ export async function joinLeague(
 ): Promise<LeagueActionState> {
   const userId = await requireUser()
 
-  const code = String(formData.get("code") ?? "").trim().toUpperCase()
+  const code = normaliseInviteCode(formData.get("code") as string | null)
   if (!code) return { error: "Please enter an invite code." }
 
   const league = await prisma.league.findUnique({ where: { inviteCode: code } })

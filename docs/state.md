@@ -14,8 +14,9 @@ platform-owned competitions model (the big refactor) is complete and live.
 
 Everything through **phase 23** (see [changelog.md](changelog.md) for the phase list):
 
-- **Auth** — email/password registration (invite-code gated), login, JWT sessions,
-  profile page with API-key generation, forgot-password / reset via email.
+- **Auth** — open email/password registration, login, JWT sessions, profile page with
+  API-key generation, forgot-password / reset via email. **Invite links**
+  (`/register?invite=CODE`) create the account and join the league in one step.
 - **Two admin tiers:**
   - **Site hosts** (`User.isSiteAdmin`) own competitions, fixtures, imports, and
     the platform-wide result-confirmation queue at `/host`.
@@ -55,7 +56,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **148 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **152 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the suite **before** deploying, so a red test blocks production.
 

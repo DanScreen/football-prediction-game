@@ -62,7 +62,7 @@ round right. Full detail in [features.md](features.md#scoring).
 ## Non-goals (for now)
 
 - Paid competitions beyond what football-data.org's free tier covers (PL + World Cup).
-- Public/open registration — leagues are invite-code gated and private.
+- League discovery — you can only join a league with its invite link or code.
 - Native mobile apps — it's a responsive web app.
 
 See [roadmap.md](roadmap.md) for what's planned next.

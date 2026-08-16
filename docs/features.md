@@ -67,6 +67,29 @@ import. A user can belong to multiple leagues — predictions and leaderboards c
 of them at once, so there is nothing to "switch" as a player. Commissioners use the
 **Manage** action here to pick which league `/admin` edits.
 
+### Invites
+
+Two ways in, for the two situations:
+
+| | For | Where it's used |
+|---|---|---|
+| **Invite link** `/register?invite=CODE` | Someone with **no account** | Creates the account *and* joins the league in one step |
+| **Invite code** (6 chars) | Someone who **already has an account** | The "Join a league" form on `/leagues` |
+
+Any member can share either from `/leagues`; commissioners also get them on
+`/admin/settings`. The URL is built client-side from `window.location.origin`
+(`CopyInvite.tsx`), so it's right on the live domain, the run.app URL and localhost
+without an env var.
+
+**Sign-up itself is open and has no invite field.** The code rides in a hidden input
+populated by the link. Consequences that are deliberate:
+
+- An **unrecognised code never blocks registration** — the user can't see or correct a
+  code that came from a link, so they get an account and a prompt to join later.
+- Codes are normalised with `normaliseInviteCode()` (trim + uppercase) at **both** entry
+  points. They used to diverge, so a lowercase code was rejected at sign-up but accepted
+  when joining.
+
 ## Predictions (`/`)
 
 The single home for a player's picks, scoped by **competition** (see League scoping

@@ -36,5 +36,6 @@ These are wishlist items, noted for later:
 
 ## Explicitly out of scope
 
-- Public/open sign-up (leagues stay invite-only and private).
+- Discovery/browsing of other people's leagues (leagues stay private — you need a link
+  or code). Account creation itself is open; see [decisions.md](decisions.md).
 - Native mobile apps (responsive web only).
