@@ -22,7 +22,7 @@ revocation immediate. Gates `/host`; commissioners keep `/admin` (settings only)
 
 ## Provisional scores/points shown everywhere, ranked by confirmed
 Once the sweep pre-fetches a proposed score, projected scores/points appear across the
-dashboard, My Predictions, leaderboard, and API (badged amber), computed at read time
+predictions page, leaderboard, and API (badged amber), computed at read time
 (`lib/provisional.ts`) and **never stored**. Standings rank by confirmed points only.
 **Why:** the game should feel live the moment a result is known, but a human host must
 still confirm before anything official scores (postponements, TBD teams, ambiguous
@@ -103,10 +103,36 @@ directions. Dropped `board-cyan` at the same time — defined but never used.
 
 ## 2026-08-16 — Bottom tab bar for mobile navigation
 
-Chosen over a hamburger drawer. The app has exactly four destinations and is checked in
-short bursts around match times, so keeping all four one thumb-tap away beats hiding
-them behind a menu that costs a tap and needs open/close state. The desktop top-bar nav
+Chosen over a hamburger drawer. The app has only a handful of destinations and is
+checked in short bursts around match times, so keeping them all one thumb-tap away beats
+hiding them behind a menu that costs a tap and needs open/close state. The desktop top-bar nav
 is unchanged; both render from one link list in `NavLinks.tsx`.
+
+## 2026-08-16 — Merge Dashboard into Predictions, and scope pages by competition
+
+Two changes with one root cause: the app applied "active league" to surfaces that aren't
+per-league.
+
+**Dashboard and My Predictions merged into `/`.** They showed the same thing either side
+of kickoff — your picks and their results — and Dashboard was the only place you could
+actually enter a prediction, so the split forced you between two pages to do one job.
+One page now runs Open → Kicked Off → Results. `/predictions` is a permanent redirect.
+
+**Predictions are scoped by competition, not league.** A `Prediction` is unique per
+`(userId, fixtureId)` with no `leagueId`, so a pick already counts in every league on
+that competition. Rendering this page per-league would have shown the same fixtures with
+the same inputs once per league, all writing to the same row. Leagues only decide whose
+picks appear beside yours — resolved as "everyone sharing a league with you *on that
+competition*".
+
+**The leaderboard stacks every league instead.** Standings are the one genuinely
+per-league surface, so that is where seeing several at once pays for the page length,
+and it removes the need to switch leagues to read a different table.
+
+**Consequence:** the `activeLeagueId` cookie now only drives `/admin`, so it resolves
+with a `COMMISSIONER` filter (`resolveCommissionerLeagueId`). Without the filter, a user
+who is a plain member of their earliest league and commissioner of another gets bounced
+out of `/admin`. The header's Admin chip likewise keys off commissioning *any* league.
 
 ---
 
@@ -124,7 +150,8 @@ is unchanged; both render from one link list in `NavLinks.tsx`.
 - **Cloud Run ↔ Cloud SQL via Unix socket** at runtime (`?host=/cloudsql/<instance>`);
   CI migrations use a TCP URL via the Cloud SQL Auth Proxy.
 - **Active league in an `httpOnly` cookie** (`activeLeagueId`) rather than URL segments,
-  keeping routes unchanged across league switches.
+  keeping routes unchanged across league switches. Since 2026-08-16 this only affects
+  `/admin` — see the IA entry above.
 - **Cloudflare Worker for the custom domain** — europe-west2 supports neither Cloud Run
   domain mappings nor Firebase Hosting rewrites, so a Worker proxies the domain.
 - **`"use server"` files export functions only** — Turbopack errors on exported

@@ -5,34 +5,47 @@ when behaviour changes.** For the public bot API see [api.md](api.md).
 
 ## Navigation & shell
 
-- **Desktop (≥640px):** top-bar links (Dashboard, My Predictions, Leaderboard, My
-  Leagues), plus Admin/Host chips when the user holds those roles.
+**Three destinations, one job each:** Predictions (`/`), Leaderboard, My Leagues — plus
+Admin/Host chips when the user holds those roles. Dashboard and My Predictions merged on
+2026-08-16; they duplicated the same picks and results either side of kickoff.
+`/predictions` is a permanent redirect to `/` so old links still land.
+
+- **Desktop (≥640px):** top-bar links.
 - **Mobile (<640px):** a fixed **bottom tab bar** (`app/components/MobileNav.tsx`) with
-  the same four destinations. The top-bar nav is hidden at this width, so before this
-  existed there was no way to reach any page but the dashboard. Both share their link
-  list and active-state logic from `NavLinks.tsx`.
-- **Loading states:** `loading.tsx` skeletons for the dashboard, leaderboard and
-  predictions pages — these matter because Cloud Run runs at `--min-instances 0`, so a
+  the same destinations. The top-bar nav is hidden at this width, so before this existed
+  there was no way to reach any page but the dashboard. Both share their link list and
+  active-state logic from `NavLinks.tsx`. Profile stays reachable via the header name.
+- **Loading states:** `loading.tsx` skeletons for the predictions and leaderboard
+  pages — these matter because Cloud Run runs at `--min-instances 0`, so a
   cold start is a visible wait.
 - **Errors:** `app/error.tsx` (retry + dashboard link; the error text is logged, not
   rendered, since it can carry connection strings) and `app/not-found.tsx`.
 - **Theme toggle:** cycles System → Light → Dark, in the header on every page including
   the auth pages. See [design-system.md](design-system.md#dark-theme).
 
-### Active league resolution
+### League scoping (and why most pages ignore it)
 
-Pages need an active league and redirect to `/leagues` without one. The `activeLeagueId`
-cookie is only written when a user creates, joins or switches a league, so
-`resolveActiveLeagueId(userId)` (`lib/activeLeague.ts`) resolves it per request:
+A `Prediction` is unique per `(userId, fixtureId)` — there is **no `leagueId`** on it. One
+pick counts in every league you have on that competition. So leagues only decide *whose*
+picks appear beside yours and who you're ranked against:
 
-1. the cookie, if the user is still a member of that league
-2. otherwise their earliest-joined league
-3. otherwise `null` — a genuine "you have no leagues yet" state
+| Surface | Scoped by | Why |
+|---|---|---|
+| Predictions (`/`) | **Competition** | Per-league would render the same fixtures and the same inputs once per league |
+| Leaderboard | **League** — all of them, stacked | Standings are genuinely per-league; stacking removes the need to switch |
+| `/admin` | **League**, explicitly chosen | Managing settings is a deliberate act on one league |
 
-Without step 2, any member without the cookie (fresh sign-in, new browser, cleared
-cookies) was bounced to `/leagues` from every page. Step 1's membership check also
-recovers from a stale cookie pointing at a league they've left. It deliberately does
-**not** write the cookie back — Server Components can't set cookies during render.
+The `activeLeagueId` cookie therefore now only drives `/admin`.
+`lib/activeLeague.ts` resolves it per request:
+
+- `resolveActiveLeagueId(userId)` — cookie if the membership is still valid, else the
+  earliest-joined league, else `null` (genuinely no leagues).
+- `resolveCommissionerLeagueId(userId)` — same, but **filtered to `COMMISSIONER`**. This
+  matters: a user can be a plain member of the league they joined first and commissioner
+  of another, and the unfiltered resolver would bounce them straight out of `/admin`.
+
+Neither writes the cookie back — Server Components can't set cookies during render. It's
+still written by the explicit "Manage" action on `/leagues`.
 
 ## Roles
 
@@ -50,31 +63,32 @@ per request so access can be revoked immediately.
 
 Users sign up without a league, then **create** one or **join** with an invite code.
 Creating a league means picking one of the **active competitions** — no fixtures to
-import. A user can belong to multiple leagues; the active one is a cookie and is
-switched from this page.
+import. A user can belong to multiple leagues — predictions and leaderboards cover all
+of them at once, so there is nothing to "switch" as a player. Commissioners use the
+**Manage** action here to pick which league `/admin` edits.
 
-## Dashboard (`/page.tsx`)
+## Predictions (`/`)
 
-- **Upcoming fixtures** with a countdown to kickoff and a score input each.
-- **Kicked-off fixtures** — predictions lock at kickoff and everyone's picks reveal.
-  If a proposed score exists, the fixture shows the **provisional** scoreline and each
-  pick's provisional points (amber `+X prov.`), plus an "awaiting confirmation" note.
-- **Performance tiles** — rank, points (with `+X prov.` sub-label), exact count. Shown
-  from the first round; before anything is scored the rank reads `–` with a note that
-  it fills in once results are confirmed.
-- **"N fixtures still to predict"** banner with the next deadline. The fixtures it
-  refers to carry an amber left edge (predicted ones a green edge).
-- Fixtures are queried by the active league's `competitionId`; predictions are scoped
-  to league members so you see your league-mates' picks.
-- If no score has been fetched yet, a member can press **Request result** on a
-  kicked-off fixture to trigger the lookup early.
+The single home for a player's picks, scoped by **competition** (see League scoping
+above). Three sections, top to bottom:
 
-## My Predictions (`/predictions`)
+- **Open** — upcoming fixtures with a countdown and a score input each. Cards carry an
+  amber left edge when unpredicted, green when predicted, so the "N still to predict"
+  nudge points somewhere.
+- **Kicked Off** — predictions lock at kickoff and everyone's picks reveal. If a
+  proposed score exists the fixture shows the **provisional** scoreline and each pick's
+  provisional points (amber `+X prov.`), plus an "awaiting confirmation" note. A member
+  can press **Request result** to trigger the lookup early.
+- **Results** — settled picks grouped by competition and round, newest first, with the
+  round subtotal and any Grand Slam bonus.
 
-Full history grouped by round, newest first. Per round: subtotal, exact count, Grand
-Slam bonus. Per pick: your score, the result (or provisional score, amber), and points
-(confirmed `PointsBadge`, or provisional amber badge). Round subtotals show provisional
-separately until confirmed.
+Above them: tiles for points (with `+X prov.`), exact count, and how many fixtures are
+still to predict. Rank is deliberately *not* here — it belongs to the Leaderboard, and
+it differs per league.
+
+Whose picks show under Kicked Off: everyone who shares a league with you **on that
+competition**. A league-mate on the World Cup doesn't surface on your Premier League
+fixtures.
 
 ## Leaderboard (`/leaderboard`)
 
@@ -122,7 +136,7 @@ in the meantime:
    kickoff to `AWAITING_RESULT` and pre-fetches the final score from football-data.org
    (one API call per competition/date window, fuzzy-matched by team name).
 2. **Provisional everywhere** — once `proposed*` scores exist, the projected scoreline
-   and points show (amber) across dashboard, My Predictions, leaderboard, and API,
+   and points show (amber) across the predictions page, leaderboard, and API,
    until a host confirms. Computed at read time (`lib/provisional.ts`); never stored;
    standings still rank by confirmed points.
 3. **Host confirms** at `/host/results` — a platform-wide queue with **Accept All**.

@@ -28,18 +28,42 @@ export async function getActiveLeagueId(): Promise<string | null> {
  * user explicitly picks a league.
  */
 export async function resolveActiveLeagueId(userId: string): Promise<string | null> {
+  return resolveLeagueId(userId, {})
+}
+
+/**
+ * The league whose settings `/admin` manages.
+ *
+ * Predictions and leaderboards now cover every league at once, so the active-league
+ * cookie only survives for the commissioner area. Resolving with a COMMISSIONER
+ * filter matters: a user can be a plain member of the league they joined first and
+ * commissioner of another, and falling back to the earliest league would bounce them
+ * out of /admin entirely.
+ */
+export async function resolveCommissionerLeagueId(userId: string): Promise<string | null> {
+  return resolveLeagueId(userId, { role: "COMMISSIONER" })
+}
+
+async function resolveLeagueId(
+  userId: string,
+  filter: { role?: string },
+): Promise<string | null> {
   const cookieLeagueId = await getActiveLeagueId()
 
   if (cookieLeagueId) {
     const membership = await prisma.leagueMembership.findUnique({
       where: { userId_leagueId: { userId, leagueId: cookieLeagueId } },
-      select: { leagueId: true },
+      select: { leagueId: true, role: true },
     })
-    if (membership) return membership.leagueId
+    // The cookie only wins if it still satisfies the filter — a commissioner
+    // looking at /admin shouldn't land on a league where they're a plain member.
+    if (membership && (!filter.role || membership.role === filter.role)) {
+      return membership.leagueId
+    }
   }
 
   const fallback = await prisma.leagueMembership.findFirst({
-    where: { userId },
+    where: { userId, ...(filter.role ? { role: filter.role } : {}) },
     orderBy: { joinedAt: "asc" },
     select: { leagueId: true },
   })

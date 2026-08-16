@@ -3,9 +3,13 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+/**
+ * Three destinations, one job each: make your picks, see the standings, manage
+ * membership. The old Dashboard/My Predictions split duplicated the same picks
+ * and results either side of kickoff, so they merged into `/`.
+ */
 export const LINKS = [
-  { href: "/", label: "Dashboard", short: "Home", icon: "⚽" },
-  { href: "/predictions", label: "My Predictions", short: "Picks", icon: "📝" },
+  { href: "/", label: "Predictions", short: "Predict", icon: "⚽" },
   { href: "/leaderboard", label: "Leaderboard", short: "Table", icon: "🏆" },
   { href: "/leagues", label: "My Leagues", short: "Leagues", icon: "👥" },
 ] as const

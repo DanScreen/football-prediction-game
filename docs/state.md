@@ -25,16 +25,16 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   across all their leagues on that competition.
 - **Automatic fixtures** — a 10-minute cron imports upcoming fixtures for active
   competitions that have a football-data.org code and at least one subscribed league.
-- **Predictions** — score inputs that lock at kickoff; other players' picks reveal
-  after the deadline.
+- **Predictions** (`/`) — one page for open fixtures, kicked-off picks and settled
+  results. Scoped by competition, not league: a pick counts in every league you're in.
 - **Result resolution** — cron pre-fetches proposed scores; hosts confirm from a
   platform-wide queue (with **Accept All**); scoring runs once per fixture, then
   Grand Slam bonuses fan out per subscribing league.
-- **Provisional scores/points everywhere** — dashboard, My Predictions, leaderboard,
+- **Provisional scores/points everywhere** — predictions page, leaderboard,
   and API show projected scores/points (badged amber) once a proposed score exists,
   until a host confirms. Standings rank by **confirmed** points only.
-- **Leaderboard** — standings, exact-score count, Grand Slam badges, per-player
-  "form" strip over the last 5 rounds.
+- **Leaderboard** — every league you're in, stacked: standings, exact-score count,
+  Grand Slam badges, per-player "form" strip over the last 5 rounds.
 - **Deadline reminder emails** — the same cron emails members who haven't predicted
   a fixture kicking off within 3 hours (via Resend).
 - **Public bot API** — `/api/v1/fixtures`, `/predictions`, `/leaderboard`.
@@ -55,7 +55,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **140 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **148 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the suite **before** deploying, so a red test blocks production.
 
@@ -69,9 +69,9 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   the domain in Google Search Console → Security Issues → Request Review (social-eng
   reviews clear in ~72h). Interim: the direct Cloud Run URL is a separate domain and
   unlikely to be flagged. Also hurts Resend email deliverability until cleared.
-  **Mitigation done (not yet deployed):** login/register/forgot/reset page titles
-  fixed to the "Scorers" brand, and the login/register pages now carry a clear "what
-  this site is" explainer to reduce the credential-page phishing false-positive.
+  **Mitigation deployed:** login/register/forgot/reset page titles use the "Scorers"
+  brand, and the login/register pages carry a clear "what this site is" explainer to
+  reduce the credential-page phishing false-positive.
   **Still needed from the owner:** the Search Console verification + review request.
 - Migrations are still **authored offline** (`prisma migrate diff`) rather than against
   a live dev DB — but a local Docker Postgres now exists to verify them against

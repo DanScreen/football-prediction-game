@@ -1,7 +1,6 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { resolveActiveLeagueId } from "@/lib/activeLeague"
 import { scoreOnePrediction } from "@/lib/scoring"
 import Link from "next/link"
 import Countdown from "@/app/components/Countdown"
@@ -9,17 +8,34 @@ import PredictionInput from "@/app/components/PredictionInput"
 import RequestResultButton from "@/app/components/RequestResultButton"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
 import { provisionalPoints } from "@/lib/provisional"
+import PredictionHistory, { type HistoryPrediction } from "@/app/PredictionHistory"
 
-export default async function DashboardPage() {
+/**
+ * Predictions — the single home for a player's picks.
+ *
+ * Deliberately scoped by **competition, not league**. A prediction is unique per
+ * (user, fixture) and counts in every league the user has on that competition, so
+ * showing this page per-league would render the same fixtures and the same inputs
+ * once per league. Leagues only decide *whose* picks you see alongside yours, and
+ * who you're ranked against — which is the Leaderboard's job.
+ */
+export default async function PredictionsPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
   const userId = session.user.id
 
-  const activeLeagueId = await resolveActiveLeagueId(userId)
+  const memberships = await prisma.leagueMembership.findMany({
+    where: { userId },
+    orderBy: { joinedAt: "asc" },
+    select: {
+      leagueId: true,
+      league: {
+        select: { competitionId: true, competition: { select: { id: true, name: true } } },
+      },
+    },
+  })
 
-  // Null here means the user genuinely belongs to no leagues — resolveActiveLeagueId
-  // already falls back to their first membership when the cookie is missing or stale.
-  if (!activeLeagueId) {
+  if (memberships.length === 0) {
     return (
       <div className="max-w-md mx-auto px-4 py-24 text-center">
         <p className="text-5xl mb-4">⚽</p>
@@ -37,91 +53,86 @@ export default async function DashboardPage() {
     )
   }
 
-  const league = await prisma.league.findUnique({
-    where: { id: activeLeagueId },
-    include: {
-      memberships: { select: { userId: true } },
-      competition: { select: { name: true } },
-    },
+  const myLeagueIds = memberships.map((m) => m.leagueId)
+  const leagueToCompetition = new Map(memberships.map((m) => [m.leagueId, m.league.competitionId]))
+  const competitionIds = [...new Set(memberships.map((m) => m.league.competitionId))]
+  const multipleCompetitions = competitionIds.length > 1
+
+  // Who you see picks from: everyone sharing a league with you, per competition.
+  // A league-mate on the World Cup shouldn't surface on your Premier League fixtures.
+  const coMemberships = await prisma.leagueMembership.findMany({
+    where: { leagueId: { in: myLeagueIds } },
+    select: { leagueId: true, userId: true },
   })
-
-  if (!league) {
-    redirect("/leagues")
+  const peersByCompetition = new Map<string, Set<string>>()
+  for (const m of coMemberships) {
+    const competitionId = leagueToCompetition.get(m.leagueId)
+    if (!competitionId) continue
+    const set = peersByCompetition.get(competitionId) ?? new Set<string>()
+    set.add(m.userId)
+    peersByCompetition.set(competitionId, set)
   }
+  const allPeerIds = [...new Set(coMemberships.map((m) => m.userId))]
 
-  // Check user is actually a member
-  const isMember = league.memberships.some((m) => m.userId === userId)
-  if (!isMember) redirect("/leagues")
-
-  const leagueMemberIds = league.memberships.map((m) => m.userId)
-  const competitionName = league.competition.name
   const now = new Date()
   const cutoff = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
 
-  // Fixtures are canonical per competition, so every prediction query filters
-  // to league members — other leagues' users predict the same fixtures
-  const [fixtures, scoredPredictions, leagueMembers, bonusAwards] = await Promise.all([
+  const [liveFixtures, myPredictions, bonusAwards] = await Promise.all([
     prisma.fixture.findMany({
       where: {
-        competitionId: league.competitionId,
+        competitionId: { in: competitionIds },
         status: { in: ["SCHEDULED", "AWAITING_RESULT"] },
         kickoffTime: { gte: cutoff },
       },
       orderBy: { kickoffTime: "asc" },
       include: {
+        competition: { select: { name: true } },
         predictions: {
-          where: { userId: { in: leagueMemberIds } },
+          where: { userId: { in: allPeerIds } },
           include: { user: { select: { id: true, displayName: true, isBot: true } } },
         },
       },
     }),
     prisma.prediction.findMany({
-      where: {
-        userId: { in: leagueMemberIds },
-        fixture: { competitionId: league.competitionId },
-        pointsAwarded: { not: null },
-      },
-      select: {
-        userId: true,
-        pointsAwarded: true,
-        predictedHomeScore: true,
-        predictedAwayScore: true,
-        fixture: { select: { actualHomeScore: true, actualAwayScore: true } },
-      },
-    }),
-    prisma.user.findMany({
-      where: { id: { in: leagueMemberIds } },
-      select: { id: true, displayName: true },
+      where: { userId, fixture: { competitionId: { in: competitionIds } } },
+      orderBy: { fixture: { kickoffTime: "desc" } },
+      include: { fixture: { include: { competition: { select: { name: true } } } } },
     }),
     prisma.bonusAward.findMany({
-      where: { leagueId: activeLeagueId },
-      select: { userId: true, points: true },
+      where: { userId, leagueId: { in: myLeagueIds } },
+      select: { leagueId: true, round: true, points: true },
     }),
   ])
 
-  // Compute rank for current user (base points + Grand Slam bonuses)
-  const pointsByUser = new Map<string, number>()
-  for (const p of scoredPredictions) {
-    pointsByUser.set(p.userId, (pointsByUser.get(p.userId) ?? 0) + (p.pointsAwarded ?? 0))
-  }
+  const open = liveFixtures.filter((f) => f.kickoffTime > now)
+  const locked = liveFixtures.filter((f) => f.kickoffTime <= now)
+  const liveIds = new Set(liveFixtures.map((f) => f.id))
+
+  // History is everything not already shown in the live sections above.
+  const history: HistoryPrediction[] = myPredictions.filter((p) => !liveIds.has(p.fixtureId))
+
+  // Grand Slam bonuses keyed to match PredictionHistory's competition·round key.
+  const competitionNameById = new Map(memberships.map((m) => [m.league.competition.id, m.league.competition.name]))
+  const bonusByRound = new Map<string, number>()
   for (const b of bonusAwards) {
-    pointsByUser.set(b.userId, (pointsByUser.get(b.userId) ?? 0) + b.points)
-  }
-  const myPoints = pointsByUser.get(userId) ?? 0
-
-  const sortedPoints = leagueMembers
-    .map((u) => pointsByUser.get(u.id) ?? 0)
-    .sort((a, b) => b - a)
-
-  let myRank = 1
-  for (const pts of sortedPoints) {
-    if (pts > myPoints) myRank++
-    else break
+    const competitionId = leagueToCompetition.get(b.leagueId)
+    const name = competitionId ? competitionNameById.get(competitionId) : undefined
+    if (!name) continue
+    const key = `${name}·${b.round}`
+    bonusByRound.set(key, (bonusByRound.get(key) ?? 0) + b.points)
   }
 
-  const myExact = scoredPredictions.filter(
+  const confirmedPoints =
+    myPredictions.reduce((sum, p) => sum + (p.pointsAwarded ?? 0), 0) +
+    bonusAwards.reduce((sum, b) => sum + b.points, 0)
+
+  const provisional = myPredictions.reduce(
+    (sum, p) => sum + (provisionalPoints(p, p.fixture) ?? 0),
+    0,
+  )
+
+  const exactCount = myPredictions.filter(
     (p) =>
-      p.userId === userId &&
       p.fixture.actualHomeScore !== null &&
       p.fixture.actualAwayScore !== null &&
       scoreOnePrediction(
@@ -132,99 +143,68 @@ export default async function DashboardPage() {
       ) === 3,
   ).length
 
-  const open = fixtures.filter((f) => new Date(f.kickoffTime) > now)
-  const locked = fixtures.filter((f) => new Date(f.kickoffTime) <= now)
-
-  // Provisional points from proposed-but-unconfirmed results (display only)
-  const myProvisional = locked.reduce((sum, f) => {
-    const myPick = f.predictions.find((p) => p.userId === userId)
-    return sum + (myPick ? (provisionalPoints(myPick, f) ?? 0) : 0)
-  }, 0)
-
-  // The most actionable thing on the page: how many open fixtures still need a
-  // pick, and when the soonest of those kicks off.
   const missing = open.filter((f) => !f.predictions.some((p) => p.userId === userId))
   const nextDeadline = missing[0]?.kickoffTime ?? null
 
+  /** Competition · round · kickoff, the line at the top of every fixture card. */
+  const fixtureMeta = (f: (typeof liveFixtures)[number]) =>
+    `${f.competition.name} · ${f.round} · ${new Date(f.kickoffTime).toLocaleString("en-GB", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* League header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">{league.name}</h1>
-          <p className="text-sm text-ink-muted mt-0.5">
-            {league.competition.name} · {league.memberships.length} member
-            {league.memberships.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <Link href="/leagues" className="text-sm text-ink-muted hover:text-ink-mid transition-colors">
-          Switch league →
-        </Link>
-      </div>
+      <h1 className="text-2xl font-bold text-ink">Predictions</h1>
+      <p className="text-sm text-ink-muted mt-0.5 mb-6">
+        {multipleCompetitions
+          ? `${competitionIds.length} competitions · your picks count in every league you're in`
+          : memberships[0].league.competition.name}
+      </p>
 
-      {/* Performance card. Shown from the first round — a new league used to see
-          nothing here at all, which read as a broken page rather than a fresh start. */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
-          <p className="score-digits text-2xl text-ink">
-            {scoredPredictions.length === 0
-              ? "–"
-              : myRank === 1
-                ? "🥇"
-                : myRank === 2
-                  ? "🥈"
-                  : myRank === 3
-                    ? "🥉"
-                    : `#${myRank}`}
-          </p>
-          <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">Rank</p>
-        </div>
-        <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
-          <p className="score-digits text-2xl text-ink">{myPoints}</p>
+          <p className="score-digits text-2xl text-ink">{confirmedPoints}</p>
           <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">
             Points
-            {myProvisional > 0 && (
-              <span className="ml-1 normal-case text-clock font-semibold">
-                +{myProvisional} prov.
-              </span>
+            {provisional > 0 && (
+              <span className="ml-1 normal-case text-clock font-semibold">+{provisional} prov.</span>
             )}
           </p>
         </div>
         <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
-          <p className="score-digits text-2xl text-ink">{myExact}</p>
+          <p className="score-digits text-2xl text-ink">{exactCount}</p>
           <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">Exact ⚽</p>
+        </div>
+        <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
+          <p className="score-digits text-2xl text-ink">{missing.length}</p>
+          <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">To predict</p>
         </div>
       </div>
 
-      {scoredPredictions.length === 0 && (
-        <p className="mb-8 text-center text-xs text-ink-muted">
-          Your rank and points appear once the first results are confirmed.
-        </p>
-      )}
-
-      {/* Outstanding predictions — the one thing worth acting on right now. */}
-      {missing.length > 0 && (
+      {missing.length > 0 && nextDeadline && (
         <div className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-clock-line bg-clock-tint px-4 py-3">
           <p className="text-sm font-semibold text-clock">
             {missing.length} fixture{missing.length !== 1 ? "s" : ""} still to predict
           </p>
-          {nextDeadline && (
-            <p className="text-xs text-clock/90">
-              Next deadline{" "}
-              {new Date(nextDeadline).toLocaleString("en-GB", {
-                weekday: "short",
-                day: "numeric",
-                month: "short",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-          )}
+          <p className="text-xs text-clock/90">
+            Next deadline{" "}
+            {new Date(nextDeadline).toLocaleString("en-GB", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
         </div>
       )}
 
-      {/* Open fixtures */}
-      <h2 className="text-lg font-bold text-ink mb-1">Upcoming Fixtures</h2>
+      {/* ── Open ── */}
+      <h2 className="text-lg font-bold text-ink mb-1">Open</h2>
       <p className="text-ink-muted text-sm mb-4">Submit your predictions before each kickoff.</p>
 
       {open.length === 0 ? (
@@ -250,14 +230,7 @@ export default async function DashboardPage() {
               >
                 <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-2.5">
                   <p className="min-w-0 truncate text-xs font-medium text-ink-muted">
-                    {competitionName} · {f.round} ·{" "}
-                    {new Date(f.kickoffTime).toLocaleString("en-GB", {
-                      weekday: "short",
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {fixtureMeta(f)}
                   </p>
                   <div className="shrink-0">
                     <Countdown kickoffTime={f.kickoffTime.toISOString()} />
@@ -285,15 +258,19 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Kicked off — show everyone's picks */}
+      {/* ── Kicked off ── */}
       {locked.length > 0 && (
         <>
           <h2 className="text-lg font-bold text-ink mb-1">Kicked Off</h2>
-          <p className="text-ink-muted text-sm mb-4">Predictions locked — see what everyone picked.</p>
-          <div className="space-y-3">
+          <p className="text-ink-muted text-sm mb-4">
+            Predictions locked — see what everyone picked.
+          </p>
+          <div className="space-y-3 mb-10">
             {locked.map((f) => {
-              const myPick = f.predictions.find((p) => p.userId === userId)
-              const others = f.predictions.filter((p) => p.userId !== userId)
+              const peers = peersByCompetition.get(f.competitionId) ?? new Set<string>()
+              const visible = f.predictions.filter((p) => peers.has(p.userId))
+              const myPick = visible.find((p) => p.userId === userId)
+              const others = visible.filter((p) => p.userId !== userId)
 
               return (
                 <div
@@ -302,14 +279,7 @@ export default async function DashboardPage() {
                 >
                   <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-2.5">
                     <p className="min-w-0 truncate text-xs font-medium text-ink-muted">
-                      {competitionName} · {f.round} ·{" "}
-                      {new Date(f.kickoffTime).toLocaleString("en-GB", {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {fixtureMeta(f)}
                     </p>
                     {f.proposedHomeScore === null && (
                       <span className="shrink-0 text-xs font-semibold text-bad">🔒 Locked</span>
@@ -344,7 +314,7 @@ export default async function DashboardPage() {
                   </div>
 
                   <div className="mx-5 mt-3 mb-4 border-t border-line-soft pt-3 space-y-1.5">
-                    {myPick && (
+                    {myPick ? (
                       <div className="flex items-center gap-2 text-sm">
                         <span className="text-pitch font-semibold w-24 truncate">You</span>
                         <span className="font-bold tabular-nums">
@@ -356,9 +326,10 @@ export default async function DashboardPage() {
                           </span>
                         )}
                       </div>
-                    )}
-                    {!myPick && (
-                      <p className="text-xs text-ink-faint italic">You didn&apos;t submit a prediction.</p>
+                    ) : (
+                      <p className="text-xs text-ink-faint italic">
+                        You didn&apos;t submit a prediction.
+                      </p>
                     )}
                     {others.map((p) => (
                       <div key={p.id} className="flex items-center gap-2 text-sm text-ink-muted">
@@ -376,7 +347,7 @@ export default async function DashboardPage() {
                         )}
                       </div>
                     ))}
-                    {f.predictions.length === 0 && (
+                    {visible.length === 0 && (
                       <p className="text-xs text-ink-faint italic">No predictions submitted.</p>
                     )}
                   </div>
@@ -391,6 +362,15 @@ export default async function DashboardPage() {
               )
             })}
           </div>
+        </>
+      )}
+
+      {/* ── History ── */}
+      {history.length > 0 && (
+        <>
+          <h2 className="text-lg font-bold text-ink mb-1">Results</h2>
+          <p className="text-ink-muted text-sm mb-4">Your settled picks, newest round first.</p>
+          <PredictionHistory predictions={history} bonusByRound={bonusByRound} />
         </>
       )}
     </div>

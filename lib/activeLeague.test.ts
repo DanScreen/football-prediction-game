@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { resolveActiveLeagueId } from "./activeLeague"
+import { resolveActiveLeagueId, resolveCommissionerLeagueId } from "./activeLeague"
 import { prisma } from "@/lib/prisma"
 import { cookies } from "next/headers"
 
@@ -69,7 +69,39 @@ describe("resolveActiveLeagueId", () => {
 
     expect(findUnique).toHaveBeenCalledWith({
       where: { userId_leagueId: { userId: "u1", leagueId: "league-a" } },
+      select: { leagueId: true, role: true },
+    })
+  })
+})
+
+describe("resolveCommissionerLeagueId", () => {
+  it("keeps the cookie when the user is commissioner there", async () => {
+    withCookie("league-a")
+    findUnique.mockResolvedValue({ leagueId: "league-a", role: "COMMISSIONER" } as never)
+
+    expect(await resolveCommissionerLeagueId("u1")).toBe("league-a")
+    expect(findFirst).not.toHaveBeenCalled()
+  })
+
+  // Without this, a user who is a plain member of their first league and
+  // commissioner of a second would be bounced straight back out of /admin.
+  it("ignores a cookie pointing at a league where they are only a member", async () => {
+    withCookie("league-a")
+    findUnique.mockResolvedValue({ leagueId: "league-a", role: "MEMBER" } as never)
+    findFirst.mockResolvedValue({ leagueId: "league-b" } as never)
+
+    expect(await resolveCommissionerLeagueId("u1")).toBe("league-b")
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { userId: "u1", role: "COMMISSIONER" },
+      orderBy: { joinedAt: "asc" },
       select: { leagueId: true },
     })
+  })
+
+  it("returns null when the user commissions nothing", async () => {
+    withCookie(undefined)
+    findFirst.mockResolvedValue(null as never)
+
+    expect(await resolveCommissionerLeagueId("u1")).toBeNull()
   })
 })

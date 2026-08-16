@@ -2,13 +2,13 @@ import Link from "next/link"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { resolveActiveLeagueId } from "@/lib/activeLeague"
+import { resolveCommissionerLeagueId } from "@/lib/activeLeague"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
 
-  const activeLeagueId = await resolveActiveLeagueId(session.user.id)
+  const activeLeagueId = await resolveCommissionerLeagueId(session.user.id)
   if (!activeLeagueId) redirect("/leagues")
 
   const membership = await prisma.leagueMembership.findUnique({

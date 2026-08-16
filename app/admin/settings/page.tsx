@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { resolveActiveLeagueId } from "@/lib/activeLeague"
+import { resolveCommissionerLeagueId } from "@/lib/activeLeague"
 import SettingsForm from "./SettingsForm"
 import InviteCodeCard from "./InviteCodeCard"
 
@@ -13,7 +13,7 @@ export default async function SettingsPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
 
-  const activeLeagueId = await resolveActiveLeagueId(session.user.id)
+  const activeLeagueId = await resolveCommissionerLeagueId(session.user.id)
   if (!activeLeagueId) redirect("/leagues")
 
   const league = await prisma.league.findUnique({ where: { id: activeLeagueId } })

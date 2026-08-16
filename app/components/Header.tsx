@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { auth, signOut } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { resolveActiveLeagueId } from "@/lib/activeLeague"
 import NavLinks from "./NavLinks"
 import MobileNav from "./MobileNav"
 import ThemeToggle from "./ThemeToggle"
@@ -11,18 +10,14 @@ import { getTheme } from "@/lib/theme.server"
 export default async function Header() {
   const session = await auth()
   const theme = await getTheme()
-  const activeLeagueId = session?.user?.id ? await resolveActiveLeagueId(session.user.id) : null
-
-  const isCommissioner =
-    session?.user?.id && activeLeagueId
-      ? !!(await prisma.leagueMembership.findFirst({
-          where: {
-            userId: session.user.id,
-            leagueId: activeLeagueId,
-            role: "COMMISSIONER",
-          },
-        }))
-      : false
+  // Commissioner of *any* league, not just a selected one — the Admin link should
+  // be present whenever there's something to administer.
+  const isCommissioner = session?.user?.id
+    ? !!(await prisma.leagueMembership.findFirst({
+        where: { userId: session.user.id, role: "COMMISSIONER" },
+        select: { id: true },
+      }))
+    : false
 
   return (
     <>

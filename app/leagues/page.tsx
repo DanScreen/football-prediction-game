@@ -10,8 +10,8 @@ export default async function LeaguesPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
 
-  // Resolved, not the raw cookie, so the "Active" badge matches the league the rest
-  // of the app is actually using when no cookie has been written yet.
+  // Since predictions and leaderboards now cover every league at once, this only
+  // marks which league the commissioner area manages.
   const activeLeagueId = await resolveActiveLeagueId(session.user.id)
 
   const [memberships, competitions] = await Promise.all([
@@ -58,9 +58,9 @@ export default async function LeaguesPage() {
                       Commissioner
                     </span>
                   )}
-                  {m.leagueId === activeLeagueId && (
+                  {m.leagueId === activeLeagueId && m.role === "COMMISSIONER" && (
                     <span className="text-xs bg-good-tint text-good border border-good-line rounded-full px-2 py-0.5 font-medium shrink-0">
-                      Active
+                      Managing
                     </span>
                   )}
                 </div>
@@ -71,7 +71,9 @@ export default async function LeaguesPage() {
                   Code: <span className="font-mono font-semibold">{m.league.inviteCode}</span>
                 </p>
               </div>
-              {m.leagueId !== activeLeagueId && (
+              {/* Only commissioners have anything to switch *to* — predictions and
+                  leaderboards already cover every league at once. */}
+              {m.leagueId !== activeLeagueId && m.role === "COMMISSIONER" && (
                 <form action={async () => {
                   "use server"
                   const { selectLeague } = await import("./actions")
@@ -81,7 +83,7 @@ export default async function LeaguesPage() {
                     type="submit"
                     className="text-sm text-pitch font-semibold hover:underline shrink-0"
                   >
-                    Switch →
+                    Manage →
                   </button>
                 </form>
               )}

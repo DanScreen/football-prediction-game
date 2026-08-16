@@ -6,6 +6,20 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — Information architecture: 3 tabs, no league switching
+- **Dashboard merged into Predictions at `/`.** The two pages showed the same picks and
+  results either side of kickoff, and only the dashboard could actually take a
+  prediction. Now one page: Open → Kicked Off → Results. `/predictions` permanently
+  redirects.
+- **Predictions scoped by competition, not league** — a pick is unique per
+  `(userId, fixtureId)` and already counts in every league on that competition, so
+  per-league rendering would have duplicated the same fixtures and inputs.
+- **Leaderboard stacks every league** you're in, with a jump list. Standings are the one
+  genuinely per-league surface.
+- **Nav down to three tabs**: Predictions · Leaderboard · My Leagues.
+- `activeLeagueId` now only drives `/admin`, resolved with a `COMMISSIONER` filter so a
+  commissioner of a later-joined league isn't bounced out. 3 new tests (148 total).
+
 ## 2026-08-16 — Navigation fix + theme toggle
 - **Fixed: every page bounced back to `/leagues`.** The `activeLeagueId` cookie is only
   written on create/join/switch, and every page redirected when it was missing — so a

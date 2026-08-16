@@ -85,6 +85,11 @@ export async function joinLeague(
   redirect("/")
 }
 
+/**
+ * Choose which league the commissioner area manages. Predictions and leaderboards
+ * span every league, so this no longer changes what a player sees — hence the
+ * redirect into /admin rather than back to the predictions page.
+ */
 export async function selectLeague(leagueId: string): Promise<void> {
   const userId = await requireUser()
 
@@ -94,5 +99,5 @@ export async function selectLeague(leagueId: string): Promise<void> {
   if (!membership) return
 
   await setActiveCookie(leagueId)
-  redirect("/")
+  redirect(membership.role === "COMMISSIONER" ? "/admin/settings" : "/")
 }

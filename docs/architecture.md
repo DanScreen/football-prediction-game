@@ -61,8 +61,9 @@ per-league Grand Slam bonus fans out per subscribing league. Full schema in
 
 | Path | Purpose |
 |------|---------|
-| `app/page.tsx` | Dashboard — upcoming + kicked-off fixtures, predictions, provisional |
-| `app/predictions/` | My Predictions history (per-round breakdown, provisional) |
+| `app/page.tsx` | **Predictions** — open fixtures (with inputs), kicked-off picks, settled results |
+| `app/PredictionHistory.tsx` | Settled picks grouped by competition + round |
+| `app/predictions/` | `actions.ts` (the prediction server action) + a permanent redirect to `/` |
 | `app/leaderboard/` | Standings table + form strip |
 | `app/leagues/` | Create/join/switch leagues; competition picker |
 | `app/profile/` | API key management |
