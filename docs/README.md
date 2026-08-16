@@ -33,6 +33,7 @@ when a task touches them.
 | [features.md](features.md) | Changing any page, scoring, results, reminders, or auth flows |
 | [api.md](api.md) | Changing the public `/api/v1` bot API |
 | [mobile.md](mobile.md) | Native iOS/Android plan, Expo monorepo, `/api/mobile/v1` contract |
+| [store-release.md](store-release.md) | App Store / Play submission checklist (Phase 5) |
 | [development.md](development.md) | Setting up locally, running tests, writing migrations, gotchas |
 | [deployment.md](deployment.md) | Anything about infra, Terraform, secrets, CI/CD, the domain |
 | [design-system.md](design-system.md) | Any visual/UI work |

@@ -4,9 +4,8 @@ Plan and contract for the Scorers **iOS and Android** apps. Native apps were
 previously out of scope (responsive web only); this doc is the source of truth for
 how we reverse that and ship them.
 
-**Status:** Phase 1 API ✅ and Phase 2 Expo skeleton ✅ (2026-08-16). Phase 3
-(player features) next. Stack: **Expo (React Native)** in `apps/mobile/`. See
-[decisions.md](decisions.md).
+**Status:** Phases 1–4 **shipped** in code (2026-08-16). Phase 5 is store
+submission (accounts + EAS) — see [store-release.md](store-release.md).
 
 ---
 
@@ -300,37 +299,39 @@ Also: `GET /api/mobile/v1/leagues/:leagueId/leaderboard` for a single league (mu
 Consistent JSON: `{ "error": "human-readable message" }` with appropriate HTTP status
 (`400` validation, `401` auth, `404`, `409`, `422` business rule / locked fixture).
 
-### Out of Phase 1 (API)
+### Out of Phase 1 originally — now shipped in Phase 4
 
-- Device push token registration
-- Password reset deep link into the app
-- Host/commissioner endpoints
-- Changing or rotating API keys from the app
+- Device push token registration (`POST/DELETE /api/mobile/v1/devices`)
+- Deadline reminders also send Expo push (alongside email)
+- Invite deep link `scorers://join?code=`
 
+Still out of native scope: host/commissioner endpoints; API-key management in-app.
 ---
 
 ## Later phases (app)
 
 | Phase | Work |
 |-------|------|
-| **1 — Mobile API** | ✅ Shipped 2026-08-16 |
-| **2 — Expo skeleton** | ✅ Shipped 2026-08-16 — `apps/mobile`, auth, tabs, SecureStore, API client |
-| **3 — Player features** | Fixtures + submit/banker, provisional badges, stacked leaderboards, create/join + invite share |
-| **4 — Store polish** | Push reminders, universal/app links for invites, icons/splash, error/empty states, TestFlight + Play internal |
-| **5 — Store release** | App Store + Play listing, privacy labels, review |
+| **1 — Mobile API** | ✅ |
+| **2 — Expo skeleton** | ✅ |
+| **3 — Player features** | ✅ Predictions + banker, leaderboards, create/join/share |
+| **4 — Store polish** | ✅ Push tokens + reminders, deep links, empty/error states, EAS config |
+| **5 — Store release** | ⏳ Accounts + submit — [store-release.md](store-release.md) |
 
-### Phase 2 app layout (`apps/mobile`)
+### App layout (`apps/mobile`)
 
 | Path | Role |
 |------|------|
-| `app/(auth)/login\|register` | Email/password against `/api/mobile/v1/auth/*` |
-| `app/(tabs)/*` | Predictions / Leaderboard / Leagues / Rules (placeholders except Rules, which loads `/rules`) |
-| `lib/api.ts` | Fetch client with one-shot refresh on 401 |
-| `lib/auth.tsx` | Session context; tokens in SecureStore (localStorage on web) |
-| `lib/config.ts` | `EXPO_PUBLIC_API_URL` (default `https://scorersonline.uk`) |
-| `constants/tokens.ts` | Quiet Product light/dark colours |
+| `app/(auth)/login\|register` | Auth (+ forgot password via API) |
+| `app/join` | Deep-link join (`scorers://join?code=`) |
+| `app/(tabs)/index` | Predictions + banker |
+| `app/(tabs)/leaderboard` | Stacked standings |
+| `app/(tabs)/leagues` | List / create / join / share |
+| `app/(tabs)/rules` | Scoring constants from API |
+| `lib/api.ts` | Client with refresh |
+| `lib/notifications.ts` | Expo push registration |
 
-Run: `cd apps/mobile && npm start`. Typecheck: `npm run mobile:typecheck` from the repo root.
+Run: `cd apps/mobile && npm start`. Typecheck: `npm run mobile:typecheck`.
 See `apps/mobile/README.md`.
 
 ---
@@ -348,15 +349,14 @@ See `apps/mobile/README.md`.
 
 ---
 
-## Open items (later phases)
+## Open items (Phase 5)
 
-- Apple/Google developer account ownership and bundle ids (`uk.scorersonline.app` or
-  similar) — needed before Phase 4.
-- Push device-token registration endpoint (Phase 4).
-- Password-reset deep link into the app (Phase 4).
+- Apple/Google developer accounts + EAS `projectId` — [store-release.md](store-release.md)
+- Universal links / App Links for `https://scorersonline.uk/register?invite=` (optional; scheme works)
 
-### Resolved in Phase 1
+### Resolved earlier
 
 - Access TTL **30m**, refresh TTL **30d**, DB-backed `MobileRefreshToken` with rotation.
-- `forgot-password` shipped (website reset link).
-- Fixtures returned **flat**; client groups by competition/round.
+- `forgot-password` on mobile API (website reset link).
+- Fixtures returned **flat**; client groups in UI.
+- Push device tokens + Expo reminders; invite deep link.

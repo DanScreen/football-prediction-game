@@ -13,20 +13,83 @@ export type MobileUser = {
   isBot: boolean
 }
 
+export type LeagueSummary = {
+  id: string
+  name: string
+  inviteCode?: string
+  role: string
+  competitionId: string
+  competitionName: string
+}
+
 export type MeResponse = MobileUser & {
-  leagues: Array<{
-    id: string
-    name: string
-    role: string
-    competitionId: string
-    competitionName: string
-  }>
+  leagues: LeagueSummary[]
 }
 
 export type AuthTokensResponse = {
   user: MobileUser
   accessToken: string
   refreshToken: string
+}
+
+export type FixturePrediction = {
+  homeScore: number
+  awayScore: number
+  isBanker: boolean
+  pointsAwarded: number | null
+  provisionalPoints: number | null
+}
+
+export type MobileFixture = {
+  id: string
+  competitionId: string
+  competitionName: string
+  round: string
+  homeTeam: string
+  awayTeam: string
+  kickoffTime: string
+  status: string
+  actualHomeScore: number | null
+  actualAwayScore: number | null
+  provisionalHomeScore: number | null
+  provisionalAwayScore: number | null
+  prediction: FixturePrediction | null
+}
+
+export type LeaderboardEntry = {
+  rank: number
+  id: string
+  displayName: string
+  isBot: boolean
+  totalPoints: number
+  provisionalPoints: number
+  projectedPoints: number
+  exactCount: number
+  streakPoints: number
+  pointsBreakdown: {
+    result: number
+    close: number
+    exact: number
+    banker: number
+    streak: number
+  }
+}
+
+export type LeaderboardBlock = {
+  leagueId: string
+  leagueName: string
+  competitionName: string
+  standings: LeaderboardEntry[]
+}
+
+export type CompetitionOption = { id: string; name: string }
+
+export type RulesResponse = {
+  exact: number
+  close: number
+  correctResult: number
+  bankerMultiplier: number
+  streakTiers: Array<{ minCorrect: number; points: number }>
 }
 
 export class ApiError extends Error {
@@ -40,9 +103,7 @@ export class ApiError extends Error {
 type RequestOptions = {
   method?: string
   body?: unknown
-  /** Skip Authorization header (login/register/refresh). */
   auth?: boolean
-  /** Internal: avoid infinite refresh loops. */
   _retried?: boolean
 }
 
@@ -85,10 +146,6 @@ async function parseError(res: Response): Promise<string> {
   return res.statusText || `Request failed (${res.status})`
 }
 
-/**
- * Authenticated (by default) JSON request to `/api/mobile/v1`.
- * On 401, attempts one refresh + retry.
- */
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, auth = true, _retried = false } = options
   const headers: Record<string, string> = { Accept: "application/json" }
@@ -152,16 +209,60 @@ export async function logoutRemote(): Promise<void> {
       body: refreshToken ? { refreshToken } : {},
     })
   } catch {
-    // Still clear local tokens if the network call fails.
+    /* clear local anyway */
   }
 }
 
-export async function fetchRules(): Promise<{
-  exact: number
-  close: number
-  correctResult: number
-  bankerMultiplier: number
-  streakTiers: Array<{ minCorrect: number; points: number }>
-}> {
+export async function fetchRules(): Promise<RulesResponse> {
   return apiRequest("/rules")
+}
+
+export async function fetchFixtures(status?: "open" | "locked" | "completed" | "all"): Promise<MobileFixture[]> {
+  const q = status && status !== "all" ? `?status=${status}` : ""
+  return apiRequest(`/fixtures${q}`)
+}
+
+export async function submitPrediction(input: {
+  fixtureId: string
+  homeScore: number
+  awayScore: number
+  isBanker?: boolean
+}): Promise<{ prediction: { id: string; isBanker: boolean } }> {
+  return apiRequest("/predictions", { method: "POST", body: input })
+}
+
+export async function fetchLeaderboards(): Promise<LeaderboardBlock[]> {
+  return apiRequest("/leaderboards")
+}
+
+export async function fetchLeagues(): Promise<LeagueSummary[]> {
+  return apiRequest("/leagues")
+}
+
+export async function createLeague(name: string, competitionId: string): Promise<LeagueSummary> {
+  return apiRequest("/leagues", { method: "POST", body: { name, competitionId } })
+}
+
+export async function joinLeague(inviteCode: string): Promise<LeagueSummary> {
+  return apiRequest("/leagues/join", { method: "POST", body: { inviteCode } })
+}
+
+export async function fetchCompetitions(): Promise<CompetitionOption[]> {
+  return apiRequest("/competitions")
+}
+
+export async function registerDeviceToken(token: string, platform: string): Promise<void> {
+  await apiRequest("/devices", { method: "POST", body: { token, platform } })
+}
+
+export async function unregisterDeviceToken(token: string): Promise<void> {
+  await apiRequest("/devices", { method: "DELETE", body: { token } })
+}
+
+export async function requestForgotPassword(email: string): Promise<void> {
+  await apiRequest("/auth/forgot-password", {
+    method: "POST",
+    auth: false,
+    body: { email },
+  })
 }

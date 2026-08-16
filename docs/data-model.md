@@ -26,7 +26,7 @@ Platform-owned. Owns the canonical fixtures that leagues share.
   login (see `auth.ts`); gates the `/host` area.
 - `apiKey` (unique) — Bearer token for the public API.
 - Relations: `memberships[]`, `predictions[]`, `bonusAwards[]`, `resetTokens[]`,
-  `mobileRefreshTokens[]`.
+  `mobileRefreshTokens[]`, `mobileDeviceTokens[]`.
 
 ### League
 A group of players subscribed to one competition.
@@ -75,13 +75,11 @@ A per-round bonus (currently only the streak bonus), kept separate from
 - `id`, `userId`, `tokenHash` (unique — **SHA-256 hash only**, the raw token lives
   only in the email link), `expiresAt`, `usedAt` (nullable), `createdAt`.
 
-### MobileRefreshToken
-Opaque refresh tokens for `/api/mobile/v1`. Migration
-`20260816220000_add_mobile_refresh_token`.
-- `id`, `userId`, `tokenHash` (unique — SHA-256 of the raw token), `expiresAt`,
-  `revokedAt` (nullable), `createdAt`.
-- Index on `userId`. Rotated on every refresh; revoked on logout.
-- Access JWTs are **not** stored — short-lived HS256 signed with `AUTH_SECRET`.
+### MobileDeviceToken
+Expo push tokens for deadline reminders. Migration
+`20260816230000_add_mobile_device_token`.
+- `id`, `userId`, `expoPushToken` (unique), `platform` (nullable), `createdAt`, `updatedAt`.
+- Upserted by `POST /api/mobile/v1/devices`; used by `sendDeadlineReminders`.
 
 ## Key invariants
 

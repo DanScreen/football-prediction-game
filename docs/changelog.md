@@ -6,6 +6,12 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — Mobile Phases 3–4 (player app + push)
+Expo app: predictions with banker, stacked leaderboards, create/join/share leagues,
+forgot-password, invite deep link `scorers://join?code=`. Server: `MobileDeviceToken`,
+`/api/mobile/v1/devices`, deadline reminders also send Expo push. Store checklist in
+[store-release.md](store-release.md). 206 tests.
+
 ## 2026-08-16 — Mobile Phase 2 Expo skeleton
 `apps/mobile` Expo Router app: login/register, SecureStore tokens, API client with
 refresh, tabs (Predictions / Leaderboard / Leagues / Rules), Quiet Product tokens.

@@ -16,7 +16,7 @@ How the system fits together and where to find things in the code.
 | Infra | Terraform (`terraform/`) |
 | CI/CD | GitHub Actions (`.github/workflows/deploy.yml`) |
 | Domain | Cloudflare Worker proxy → Cloud Run (`cloudflare/worker.js`) |
-| Mobile | Expo app in `apps/mobile/` (Phase 2 skeleton) — [mobile.md](mobile.md) |
+| Mobile | Expo app in `apps/mobile/` (Phases 1–4) — [mobile.md](mobile.md); store submit [store-release.md](store-release.md) |
 
 > **Next.js 16 caveat:** this is a newer Next.js than most training data. APIs and
 > conventions may differ — check `node_modules/next/dist/docs/` when unsure. Notably,

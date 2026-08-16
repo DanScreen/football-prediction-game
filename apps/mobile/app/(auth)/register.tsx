@@ -1,5 +1,5 @@
-import { Link } from "expo-router"
-import { useState } from "react"
+import { Link, useLocalSearchParams } from "expo-router"
+import { useEffect, useState } from "react"
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native"
 import { ApiError } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
@@ -16,12 +16,18 @@ import {
 export default function RegisterScreen() {
   const { register } = useAuth()
   const t = useTokens()
+  const params = useLocalSearchParams<{ inviteCode?: string }>()
   const [displayName, setDisplayName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [inviteCode, setInviteCode] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const fromLink = typeof params.inviteCode === "string" ? params.inviteCode : ""
+    if (fromLink) setInviteCode(fromLink)
+  }, [params.inviteCode])
 
   async function onSubmit() {
     setError(null)

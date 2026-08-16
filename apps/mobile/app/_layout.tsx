@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar"
 import { useEffect } from "react"
 import { useColorScheme } from "react-native"
 import { AuthProvider, useAuth } from "@/lib/auth"
+import { registerForPushReminders } from "@/lib/notifications"
 import { useTokens } from "@/lib/theme"
 
 export { ErrorBoundary } from "expo-router"
@@ -29,6 +30,14 @@ function RootNavigator() {
     }
   }, [isLoading])
 
+  useEffect(() => {
+    if (user) {
+      void registerForPushReminders().catch(() => {
+        /* permission denied or Expo Go project id — non-fatal */
+      })
+    }
+  }, [user])
+
   if (isLoading) {
     return null
   }
@@ -44,6 +53,7 @@ function RootNavigator() {
           contentStyle: { backgroundColor: t.ground },
         }}
       >
+        <Stack.Screen name="join" options={{ title: "Join league", presentation: "modal" }} />
         <Stack.Protected guard={!!user}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack.Protected>

@@ -9,8 +9,9 @@
 
 Nothing is currently blocking, and the core product is live. Candidate next work:
 
-- **Mobile Phase 3 — player features** — fixtures, banker, leaderboards, create/join
-  in the Expo app against `/api/mobile/v1`. See [mobile.md](mobile.md).
+- **Mobile Phase 5 — store release** — Apple/Google accounts, EAS project id, TestFlight /
+  Play internal then public. Checklist: [store-release.md](store-release.md).
+  Phases 1–4 are done on `feature/mobile-apps`.
 - **Staging environment** — a second Cloud Run service + DB from a `staging` branch,
   to review changes before they hit the live site instead of pushing straight to prod.
   Now the only remaining safety gap in the pipeline (CI does gate on tests).
@@ -19,13 +20,13 @@ Nothing is currently blocking, and the core product is live. Candidate next work
 
 ### Mobile (Expo) — phased
 
-Agreed stack and contract: [mobile.md](mobile.md). Order matters:
+Agreed stack and contract: [mobile.md](mobile.md).
 
-1. **Phase 1** — Mobile API + auth ✅ (2026-08-16).
-2. **Phase 2** — Expo app skeleton in `apps/mobile` ✅ (2026-08-16).
-3. **Phase 3** — Predictions, banker, leaderboards, leagues.
-4. **Phase 4** — Push, deep links, store polish / internal testing.
-5. **Phase 5** — App Store + Play release.
+1. **Phase 1** — Mobile API + auth ✅
+2. **Phase 2** — Expo skeleton ✅
+3. **Phase 3** — Player features ✅
+4. **Phase 4** — Push, deep links, polish ✅
+5. **Phase 5** — App Store + Play release ⏳ ([store-release.md](store-release.md))
 
 ## Product ideas (parked, not scoped)
 

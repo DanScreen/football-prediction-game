@@ -10,8 +10,9 @@
 Scorers is deployed and running at **https://scorersonline.uk**. The
 platform-owned competitions model (the big refactor) is complete and live.
 
-**Native apps:** Phase 1 API + Phase 2 Expo skeleton on `feature/mobile-apps`
-(`apps/mobile`). Player features (Phase 3) not started. See [mobile.md](mobile.md).
+**Native apps:** Phases 1–4 complete on `feature/mobile-apps` (`apps/mobile` +
+`/api/mobile/v1`). Phase 5 is store submission (needs Apple/Google + EAS) —
+[store-release.md](store-release.md).
 
 ## What's built and working
 
@@ -67,7 +68,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **202 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **206 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the suite **before** deploying, so a red test blocks production.
 
