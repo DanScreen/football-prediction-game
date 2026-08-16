@@ -11,8 +11,8 @@ export const metadata = {
 const SCORING = [
   { outcome: "Exact score", example: "You said 2–1, it finished 2–1", points: "3" },
   {
-    outcome: "Right result and goal difference",
-    example: "You said 2–1, it finished 3–2",
+    outcome: "Right result, within one goal",
+    example: "You said 2–1, it finished 3–2 or 2–0",
     points: "1.5",
   },
   { outcome: "Right result only", example: "You said 2–1, it finished 4–0", points: "1" },
@@ -94,9 +94,16 @@ export default async function RulesPage() {
           </table>
         </div>
         <p className="mt-3 text-xs text-ink-faint">
-          &ldquo;Result&rdquo; means home win, draw or away win. Getting the goal difference right
-          as well earns the half point — so 2–1 when it finished 3–2 beats 2–1 when it finished
-          4–0.
+          &ldquo;Result&rdquo; means home win, draw or away win. You earn the extra half point for
+          being <strong>close</strong>: the right result and a scoreline within one goal. That means
+          either one team&rsquo;s score spot-on and the other out by one (2–0 when it finished 2–1),
+          or both out by one in the same direction, which keeps the goal difference (3–2 when it
+          finished 2–1).
+        </p>
+        <p className="mt-2 text-xs text-ink-faint">
+          Being out by one on <em>both</em> teams in opposite directions is two goals away, so 3–0
+          when it finished 2–1 is the result point only. Right goal difference on its own
+          isn&rsquo;t enough either — 5–4 when it finished 2–1 scores 1.
         </p>
       </Section>
 

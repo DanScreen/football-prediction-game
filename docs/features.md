@@ -151,7 +151,7 @@ per-player **form strip** (last 5 completed rounds, oldest → newest) and
 a `+X` provisional chip per row. Provisional never changes rank.
 
 **Points breakdown.** Every row accounts for itself: **Result** (1-pointers), **Close**
-(1.5s — right result *and* goal difference), **Exact** (3s), **★** (the extra the banker
+(1.5s — right result, scoreline within one goal), **Exact** (3s), **★** (the extra the banker
 doubling produced) and **🔥** (streak bonuses). The five always sum to the player's
 total, which is why they're derived by splitting the *stored* `pointsAwarded` rather than
 recomputing from scorelines — a parallel recomputation could drift from the total.
@@ -219,9 +219,28 @@ Pure function `scoreOnePrediction` in `lib/scoring.ts`:
 | Outcome | Points |
 |---|---|
 | Exact score | 3 |
-| Correct result (W/D/L) **and** goal difference, not exact | 1.5 |
+| Correct result (W/D/L), scoreline within one goal, not exact | 1.5 |
 | Correct result only | 1 |
 | Wrong result | 0 |
+
+**What counts as "close" (1.5).** The right result *and* a scoreline within one goal —
+which is one of two shapes:
+
+- one team's score exactly right and the other out by one (2–0 for a 2–1); or
+- both out by one **in the same direction**, which preserves the goal difference
+  (3–2 or 1–0 for a 2–1).
+
+Out by one on both sides in *opposite* directions (3–0 for a 2–1) is two goals away and
+pays 1. Matching goal difference on its own is **not** enough — 5–4 for a 2–1, or 4–4 for
+a 1–1, both score 1.
+
+This mirrors Superbru, whose Closeness Index is
+`|your GD − actual GD| + |your total goals − actual total goals| ÷ 2`, close at ≤ 1.5.
+The two formulations are exactly equivalent; the code uses goal offsets because that's
+how players reason about it. Corrected on 2026-08-16 — see
+[decisions.md](decisions.md) — the original build read "correct goal difference", which
+was both too generous (any matching GD, however far out) and too stingy (no credit for
+2–0 on a 2–1).
 
 **Banker** (always on): one fixture per gameweek, per competition, scores **double**.
 Set it with the ☆ Banker button on any open fixture once you've saved a prediction

@@ -6,6 +6,14 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — Close points now follow the real Superbru rule
+`scoreOnePrediction` was awarding 1.5 for *any* matching goal difference. The actual
+Superbru rule is the right result **and** a scoreline within one goal: one side exact and
+the other out by one (2–0 for a 2–1), or both out by one the same way (3–2 for a 2–1).
+Equivalent to Superbru's Closeness Index ≤ 1.5. The old rule was wrong both ways — it
+paid 1.5 for 5–4 on a 2–1 or 4–4 on a 1–1, and only 1 for 2–0 on a 2–1. Existing
+`pointsAwarded` values are **not** rescored. 178 tests.
+
 ## 2026-08-16 — Leaderboard points breakdown
 Each row now shows where its points came from: **Result** (1s), **Close** (1.5s),
 **Exact** (3s), **★** banker doubling and **🔥** streak bonuses. The five sum to the

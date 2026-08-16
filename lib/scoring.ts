@@ -8,7 +8,17 @@ function result(home: number, away: number): Result {
 
 /**
  * Score a single prediction against the actual result.
- * Returns 3 / 1.5 / 1 / 0 per the Superbru-style rules in the spec.
+ * Returns 3 / 1.5 / 1 / 0 per the Superbru rules.
+ *
+ * "Close" (1.5) needs the right result *and* a scoreline within one goal:
+ * either one side spot-on and the other out by one (2-0 for a 2-1), or both
+ * sides out by one in the same direction, which keeps the goal difference
+ * (3-2 for a 2-1). Being out by one on both sides in *opposite* directions
+ * (3-0 for a 2-1) is two goals away and only pays the result point.
+ *
+ * Equivalent to Superbru's Closeness Index scoring 1.5 or lower, where
+ * CI = |your GD - actual GD| + |your total goals - actual total goals| / 2.
+ * Expressed as goal offsets here because that's the rule players reason about.
  */
 export function scoreOnePrediction(
   predictedHome: number,
@@ -23,10 +33,17 @@ export function scoreOnePrediction(
 
   if (predictedResult !== actualResult) return 0
 
-  const predictedDiff = predictedHome - predictedAway
-  const actualDiff = actualHome - actualAway
+  const homeOff = Math.abs(predictedHome - actualHome)
+  const awayOff = Math.abs(predictedAway - actualAway)
 
-  return predictedDiff === actualDiff ? 1.5 : 1
+  // More than one goal out on either side is never close.
+  if (homeOff > 1 || awayOff > 1) return 1
+
+  // Exactly one side out by one.
+  if (homeOff + awayOff === 1) return 1.5
+
+  // Both sides out by one: close only if that preserved the goal difference.
+  return predictedHome - predictedAway === actualHome - actualAway ? 1.5 : 1
 }
 
 /** How much a banker pick multiplies its fixture's points by. */

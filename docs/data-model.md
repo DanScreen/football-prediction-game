@@ -58,8 +58,7 @@ One user's pick for one canonical fixture.
   `setBanker()` (`lib/banker.ts`).
 - `pointsAwarded` (`Float?`) — points as they count: base score × the banker
   multiplier. Streak bonuses are *not* folded in (they live in BonusAward). Null
-  until the fixture is confirmed complete. Float because a correct-result-and-GD pick
-  scores 1.5.
+  until the fixture is confirmed complete. Float because a close pick scores 1.5.
 - `submittedVia`: `WEB` / `API` (`SubmitVia` enum).
 - **Unique:** `(userId, fixtureId)` — exactly one prediction per user per fixture,
   editable until kickoff.

@@ -5,7 +5,7 @@ import { provisionalPoints } from "@/lib/provisional"
 export type PointsBreakdown = {
   /** Right result only (1 each). */
   result: number
-  /** Right result and goal difference, not exact (1.5 each). */
+  /** Right result, scoreline within one goal, not exact (1.5 each). */
   close: number
   /** Exact scoreline (3 each). */
   exact: number

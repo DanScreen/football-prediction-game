@@ -227,6 +227,17 @@ exist once per league even though its value no longer varies.
 **Tiers live in `STREAK_TIERS`** and every surface renders from it — the settings page,
 `/rules`, and the scoring itself — so the numbers cannot drift apart.
 
+**Close points follow Superbru exactly** (2026-08-16). "Close" is the right result plus
+a scoreline within one goal, not merely a matching goal difference. Superbru express it
+as a Closeness Index — `|your GD - actual GD| + |your total goals - actual total goals|
+/ 2`, close at <= 1.5 — but the code checks per-side goal offsets instead, because the
+two are provably equivalent and offsets are what players actually reason about.
+
+Already-scored predictions were **not** rescored. The change moves points in both
+directions, the affected rounds are settled, and silently restating finished
+leaderboards is worse than a clean cutover. Anything confirmed before this date keeps
+the points it was awarded.
+
 ---
 
 ## Foundational stack decisions (earlier)

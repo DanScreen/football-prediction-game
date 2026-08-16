@@ -47,7 +47,7 @@ const BREAKDOWN_COLUMNS: {
     key: "close",
     label: "Close",
     short: "close",
-    title: "Points from the right result and goal difference, but not the exact score (1.5 each)",
+    title: "Points from the right result with a scoreline within one goal, but not exact (1.5 each)",
     tone: "text-info",
   },
   {

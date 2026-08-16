@@ -39,8 +39,13 @@ describe("provisionalPoints", () => {
     expect(
       provisionalPoints({ predictedHomeScore: 3, predictedAwayScore: 2 }, fixture()),
     ).toBe(1.5)
+    // One goal out on the home side only: close.
     expect(
       provisionalPoints({ predictedHomeScore: 3, predictedAwayScore: 1 }, fixture()),
+    ).toBe(1.5)
+    // Two goals out, right result: the result point only.
+    expect(
+      provisionalPoints({ predictedHomeScore: 4, predictedAwayScore: 1 }, fixture()),
     ).toBe(1)
     expect(
       provisionalPoints({ predictedHomeScore: 0, predictedAwayScore: 0 }, fixture()),
@@ -52,7 +57,7 @@ describe("provisionalPoints", () => {
       provisionalPoints({ predictedHomeScore: 2, predictedAwayScore: 1, isBanker: true }, fixture()),
     ).toBe(6)
     expect(
-      provisionalPoints({ predictedHomeScore: 3, predictedAwayScore: 1, isBanker: true }, fixture()),
+      provisionalPoints({ predictedHomeScore: 4, predictedAwayScore: 1, isBanker: true }, fixture()),
     ).toBe(2)
   })
 

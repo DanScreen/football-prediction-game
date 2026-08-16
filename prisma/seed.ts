@@ -156,20 +156,23 @@ async function main() {
   //
   // Results:  Arsenal 2-1 Chelsea | Man City 1-1 Liverpool | Spurs 0-2 Man Utd
   //
-  // Alice:    2-1 (exact!)  | 0-0 (draw, same diff)  | 0-3 (correct result)   → 3 + 1.5 + 1 = 5.5
-  // Bob:      1-0 (HW, +1)  | 2-1 (wrong: HW vs D)   | 1-2 (AW, diff -1≠-2)  → 1.5 + 0 + 1 = 2.5
-  // Robo:     1-1 (wrong)   | 2-2 (draw, same diff)  | 0-1 (AW, diff -1≠-2)  → 0 + 1.5 + 1 = 2.5
+  // Picks are chosen so the seed shows every tier: exact, close (within one
+  // goal), result-only (two or more goals out) and wrong.
+  //
+  // Alice:    2-1 (exact!)  | 0-0 (close: ±1)   | 0-4 (AW, two out)   → 3 + 1.5 + 1 = 5.5
+  // Bob:      1-0 (close)   | 2-1 (wrong: HW)   | 2-4 (AW, two out)   → 1.5 + 0 + 1 = 2.5
+  // Robo:     1-1 (wrong)   | 2-2 (close: ±1)   | 1-4 (AW, two out)   → 0 + 1.5 + 1 = 2.5
 
   const allPicks: Array<{ userId: string; fixtureIdx: number; pH: number; pA: number }> = [
     { userId: alice.id, fixtureIdx: 0, pH: 2, pA: 1 },
     { userId: alice.id, fixtureIdx: 1, pH: 0, pA: 0 },
-    { userId: alice.id, fixtureIdx: 2, pH: 0, pA: 3 },
+    { userId: alice.id, fixtureIdx: 2, pH: 0, pA: 4 },
     { userId: bob.id,   fixtureIdx: 0, pH: 1, pA: 0 },
     { userId: bob.id,   fixtureIdx: 1, pH: 2, pA: 1 },
-    { userId: bob.id,   fixtureIdx: 2, pH: 1, pA: 2 },
+    { userId: bob.id,   fixtureIdx: 2, pH: 2, pA: 4 },
     { userId: robo.id,  fixtureIdx: 0, pH: 1, pA: 1 },
     { userId: robo.id,  fixtureIdx: 1, pH: 2, pA: 2 },
-    { userId: robo.id,  fixtureIdx: 2, pH: 0, pA: 1 },
+    { userId: robo.id,  fixtureIdx: 2, pH: 1, pA: 4 },
   ]
 
   for (const { userId, fixtureIdx, pH, pA } of allPicks) {

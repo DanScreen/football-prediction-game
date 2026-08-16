@@ -52,7 +52,7 @@ for how it's modelled.
 | Outcome | Points |
 |---|---|
 | Exact score | 3 |
-| Correct result **and** goal difference | 1.5 |
+| Correct result, scoreline within one goal | 1.5 |
 | Correct result only | 1 |
 | Wrong result | 0 |
 

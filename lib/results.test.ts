@@ -84,7 +84,7 @@ describe("confirmFixtureResult", () => {
     tx.prediction.findMany
       .mockResolvedValueOnce([
         prediction("alice", "f1", 2, 1), // exact = 3
-        prediction("bob", "f1", 3, 1),   // correct result, different diff = 1
+        prediction("bob", "f1", 4, 1),   // right result, two goals out = 1
       ] as never)
       .mockResolvedValueOnce([]) // round predictions pass
 
@@ -104,7 +104,7 @@ describe("confirmFixtureResult", () => {
     tx.prediction.findMany
       .mockResolvedValueOnce([
         prediction("alice", "f1", 2, 1, true), // exact = 3, bankered = 6
-        prediction("bob", "f1", 3, 1, true),   // result only = 1, bankered = 2
+        prediction("bob", "f1", 4, 1, true),   // result only = 1, bankered = 2
         prediction("carol", "f1", 0, 2, true), // wrong = 0, still 0
       ] as never)
       .mockResolvedValueOnce([])

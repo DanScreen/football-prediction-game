@@ -9,18 +9,40 @@ describe("scoreOnePrediction", () => {
     it("draw exact (2-2)", () => expect(scoreOnePrediction(2, 2, 2, 2)).toBe(3))
   })
 
-  describe("correct result + correct goal diff, not exact → 1.5 pts", () => {
-    it("home win, same diff (+2)", () => expect(scoreOnePrediction(2, 0, 3, 1)).toBe(1.5))
-    it("home win, same diff (+1)", () => expect(scoreOnePrediction(1, 0, 3, 2)).toBe(1.5))
-    it("away win, same diff (-1)", () => expect(scoreOnePrediction(0, 1, 1, 2)).toBe(1.5))
-    it("draw (any draw vs any other draw)", () => expect(scoreOnePrediction(1, 1, 2, 2)).toBe(1.5))
-    it("draw 0-0 vs 3-3", () => expect(scoreOnePrediction(0, 0, 3, 3)).toBe(1.5))
+  describe("close: right result, within one goal → 1.5 pts", () => {
+    // One side spot-on, the other out by one. Goal difference changes.
+    it("home win, away side out by one (2-0 for 2-1)", () =>
+      expect(scoreOnePrediction(2, 0, 2, 1)).toBe(1.5))
+    it("home win, home side out by one (3-1 for 2-1)", () =>
+      expect(scoreOnePrediction(3, 1, 2, 1)).toBe(1.5))
+    it("away win, out by one (0-2 for 0-3)", () => expect(scoreOnePrediction(0, 2, 0, 3)).toBe(1.5))
+
+    // Both sides out by one the same way, so the goal difference survives.
+    it("home win, both out by one up (3-2 for 2-1)", () =>
+      expect(scoreOnePrediction(3, 2, 2, 1)).toBe(1.5))
+    it("home win, both out by one down (1-0 for 2-1)", () =>
+      expect(scoreOnePrediction(1, 0, 2, 1)).toBe(1.5))
+    it("away win, both out by one (1-2 for 0-1)", () =>
+      expect(scoreOnePrediction(1, 2, 0, 1)).toBe(1.5))
+    it("draw, one either side (1-1 for 2-2)", () => expect(scoreOnePrediction(1, 1, 2, 2)).toBe(1.5))
+    it("draw, 0-0 for 1-1", () => expect(scoreOnePrediction(0, 0, 1, 1)).toBe(1.5))
   })
 
   describe("correct result only → 1 pt", () => {
-    it("home win, diff 2 vs diff 1", () => expect(scoreOnePrediction(2, 0, 2, 1)).toBe(1))
+    // Right goal difference is not enough on its own once you're 2+ goals out.
+    it("home win, same diff but two out (2-0 for 4-2)", () =>
+      expect(scoreOnePrediction(2, 0, 4, 2)).toBe(1))
+    it("draw, same diff but two out (0-0 for 3-3)", () =>
+      expect(scoreOnePrediction(0, 0, 3, 3)).toBe(1))
+    it("draw, same diff but two out (1-1 for 3-3)", () =>
+      expect(scoreOnePrediction(1, 1, 3, 3)).toBe(1))
+
+    // Out by one on both sides, but in opposite directions: two goals away and
+    // the goal difference is wrong by 2.
+    it("home win, one out each way (3-0 for 2-1)", () =>
+      expect(scoreOnePrediction(3, 0, 2, 1)).toBe(1))
     it("home win, diff 1 vs diff 3", () => expect(scoreOnePrediction(1, 0, 4, 1)).toBe(1))
-    it("away win, diff 1 vs diff 2", () => expect(scoreOnePrediction(0, 1, 0, 2)).toBe(1))
+    it("away win, well off (0-1 for 0-4)", () => expect(scoreOnePrediction(0, 1, 0, 4)).toBe(1))
   })
 
   describe("wrong result → 0 pts", () => {
@@ -35,7 +57,11 @@ describe("scoreOnePrediction", () => {
     it("0-0 draw (exact)", () => expect(scoreOnePrediction(0, 0, 0, 0)).toBe(3))
     it("predicted 0-0, actual 0-1 (diff sides)", () => expect(scoreOnePrediction(0, 0, 0, 1)).toBe(0))
     it("high-scoring exact", () => expect(scoreOnePrediction(5, 3, 5, 3)).toBe(3))
-    it("high-scoring same diff", () => expect(scoreOnePrediction(5, 3, 6, 4)).toBe(1.5))
+    it("high-scoring, both out by one", () => expect(scoreOnePrediction(5, 3, 6, 4)).toBe(1.5))
+    it("high-scoring, same diff but far off", () => expect(scoreOnePrediction(5, 3, 8, 6)).toBe(1))
+    // A drawn match can still only pay 3 / 1.5 / 1 / 0 — but 1 is now reachable.
+    it("drawn match, out by two, pays the result point", () =>
+      expect(scoreOnePrediction(4, 4, 1, 1)).toBe(1))
   })
 })
 
