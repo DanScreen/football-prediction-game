@@ -208,9 +208,15 @@ h4 {
   animation: slideUp 0.3s ease forwards;
 }
 
+/* Loading skeletons — a slow pulse, not a sweeping gradient. */
+.animate-shimmer {
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-pop,
-  .animate-slide-up {
+  .animate-slide-up,
+  .animate-shimmer {
     animation: none;
     opacity: 1;
     transform: none;
