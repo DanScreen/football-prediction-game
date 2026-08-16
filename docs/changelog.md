@@ -6,6 +6,13 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — Group fixtures into gameweeks
+Open and Kicked Off fixtures are now grouped by round instead of one flat list — a full
+Premier League round is 10 fixtures and several import at once, so the page ran past 20
+cards. Only the nearest round needing picks is expanded; the rest collapse to a one-line
+summary with a "N to predict" badge. Native `<details>`, so no client JS. Fixture cards
+dropped the now-redundant competition/round prefix and show just the kickoff time.
+
 ## 2026-08-16 — Invite links
 - **`/register?invite=CODE`** — a shareable sign-up link that creates the account and
   joins the league in one step, showing which league you're joining before you sign up.

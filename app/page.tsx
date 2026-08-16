@@ -9,6 +9,7 @@ import RequestResultButton from "@/app/components/RequestResultButton"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
 import { provisionalPoints } from "@/lib/provisional"
 import PredictionHistory, { type HistoryPrediction } from "@/app/PredictionHistory"
+import FixtureRoundGroup, { groupByRound } from "@/app/FixtureRoundGroup"
 
 /**
  * Predictions — the single home for a player's picks.
@@ -146,15 +147,32 @@ export default async function PredictionsPage() {
   const missing = open.filter((f) => !f.predictions.some((p) => p.userId === userId))
   const nextDeadline = missing[0]?.kickoffTime ?? null
 
-  /** Competition · round · kickoff, the line at the top of every fixture card. */
+  // Gameweeks, nearest first (both lists are already ordered by kickoff).
+  const openRounds = groupByRound(open)
+  const lockedRounds = groupByRound(locked)
+
+  /**
+   * Open the nearest gameweek that still needs picks; if everything's predicted,
+   * just open the first. Anything further out stays collapsed — a full Premier
+   * League round is 10 fixtures, so several rounds expanded is an unusable page.
+   */
+  const firstUnfinishedRound = openRounds.findIndex((g) =>
+    g.fixtures.some((f) => !f.predictions.some((p) => p.userId === userId)),
+  )
+  const expandedRound = firstUnfinishedRound === -1 ? 0 : firstUnfinishedRound
+
+  /**
+   * Kickoff only. The competition and round used to be repeated here, but the
+   * gameweek header above the card now states both.
+   */
   const fixtureMeta = (f: (typeof liveFixtures)[number]) =>
-    `${f.competition.name} · ${f.round} · ${new Date(f.kickoffTime).toLocaleString("en-GB", {
+    new Date(f.kickoffTime).toLocaleString("en-GB", {
       weekday: "short",
       day: "numeric",
       month: "short",
       hour: "2-digit",
       minute: "2-digit",
-    })}`
+    })
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -217,7 +235,20 @@ export default async function PredictionsPage() {
         </div>
       ) : (
         <div className="space-y-3 mb-10">
-          {open.map((f) => {
+          {openRounds.map((group, i) => (
+            <FixtureRoundGroup
+              key={group.key}
+              round={group.round}
+              competitionName={group.competitionName}
+              kickoff={group.kickoff}
+              count={group.fixtures.length}
+              outstanding={
+                group.fixtures.filter((f) => !f.predictions.some((p) => p.userId === userId))
+                  .length
+              }
+              defaultOpen={i === expandedRound}
+            >
+          {group.fixtures.map((f) => {
             const myPick = f.predictions.find((p) => p.userId === userId)
             return (
               <div
@@ -255,6 +286,8 @@ export default async function PredictionsPage() {
               </div>
             )
           })}
+            </FixtureRoundGroup>
+          ))}
         </div>
       )}
 
@@ -266,7 +299,16 @@ export default async function PredictionsPage() {
             Predictions locked — see what everyone picked.
           </p>
           <div className="space-y-3 mb-10">
-            {locked.map((f) => {
+            {lockedRounds.map((group, i) => (
+              <FixtureRoundGroup
+                key={group.key}
+                round={group.round}
+                competitionName={group.competitionName}
+                kickoff={group.kickoff}
+                count={group.fixtures.length}
+                defaultOpen={i === lockedRounds.length - 1}
+              >
+            {group.fixtures.map((f) => {
               const peers = peersByCompetition.get(f.competitionId) ?? new Set<string>()
               const visible = f.predictions.filter((p) => peers.has(p.userId))
               const myPick = visible.find((p) => p.userId === userId)
@@ -361,6 +403,8 @@ export default async function PredictionsPage() {
                 </div>
               )
             })}
+              </FixtureRoundGroup>
+            ))}
           </div>
         </>
       )}

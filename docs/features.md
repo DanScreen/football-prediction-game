@@ -95,10 +95,15 @@ populated by the link. Consequences that are deliberate:
 The single home for a player's picks, scoped by **competition** (see League scoping
 above). Three sections, top to bottom:
 
-- **Open** — upcoming fixtures with a countdown and a score input each. Cards carry an
-  amber left edge when unpredicted, green when predicted, so the "N still to predict"
-  nudge points somewhere.
-- **Kicked Off** — predictions lock at kickoff and everyone's picks reveal. If a
+- **Open** — upcoming fixtures with a countdown and a score input each, **grouped into
+  gameweeks** (`FixtureRoundGroup.tsx`). Cards carry an amber left edge when unpredicted,
+  green when predicted, so the "N still to predict" nudge points somewhere.
+  Only the nearest round that still needs picks is expanded; later rounds collapse to a
+  one-line summary with a "N to predict" badge. A full Premier League round is 10
+  fixtures and several rounds import at once, so a flat list ran past 20 cards.
+  Built on native `<details>` — no client JS, keyboard accessible.
+- **Kicked Off** — grouped into gameweeks the same way (most recent expanded).
+  Predictions lock at kickoff and everyone's picks reveal. If a
   proposed score exists the fixture shows the **provisional** scoreline and each pick's
   provisional points (amber `+X prov.`), plus an "awaiting confirmation" note. A member
   can press **Request result** to trigger the lookup early.
