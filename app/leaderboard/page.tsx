@@ -7,15 +7,18 @@ import { AnimatedPoints } from "./AnimatedPoints"
 
 export const metadata = { title: "Leaderboard" }
 
-type FormColor = "green" | "yellow" | "red" | "grey"
+type FormTier = "strong" | "mixed" | "poor" | "none"
 
-function formColorClass(c: FormColor) {
-  return {
-    green: "bg-good",
-    yellow: "bg-clock",
-    red: "bg-bad",
-    grey: "bg-line",
-  }[c]
+/**
+ * Form cells are dual-encoded: a glyph as well as a colour. Colour alone left
+ * colour-blind players unable to read their own form, and the `title` tooltip
+ * that carried the meaning does nothing on touch.
+ */
+const FORM_TIERS: Record<FormTier, { class: string; glyph: string; label: string }> = {
+  strong: { class: "bg-good-tint text-good border-good-line", glyph: "▲", label: "Strong" },
+  mixed: { class: "bg-clock-tint text-clock border-clock-line", glyph: "■", label: "Mixed" },
+  poor: { class: "bg-bad-tint text-bad border-bad-line", glyph: "▼", label: "Poor" },
+  none: { class: "bg-chip text-ink-faint border-line", glyph: "·", label: "No picks" },
 }
 
 export default async function LeaderboardPage() {
@@ -86,15 +89,14 @@ export default async function LeaderboardPage() {
     })
   }
 
-  const formForUser = (userId: string): FormColor[] => {
+  const formForUser = (userId: string): { round: string; tier: FormTier; scored: number }[] => {
     const byRound = roundStatsByUser.get(userId)
     return last5Rounds.map((round) => {
       const s = byRound?.get(round)
-      if (!s || s.count === 0) return "grey"
+      if (!s || s.count === 0) return { round, tier: "none", scored: 0 }
       const pct = s.scored / (s.count * 3)
-      if (pct > 0.4) return "green"
-      if (pct > 0.2) return "yellow"
-      return "red"
+      const tier: FormTier = pct > 0.4 ? "strong" : pct > 0.2 ? "mixed" : "poor"
+      return { round, tier, scored: s.scored }
     })
   }
 
@@ -143,9 +145,9 @@ export default async function LeaderboardPage() {
                     Exact ⚽
                   </th>
                   {last5Rounds.length > 0 && (
-                    <th className="text-right px-4 py-3 hidden md:table-cell font-semibold text-board-muted">
+                    <th className="text-right px-2 sm:px-4 py-3 font-semibold text-board-muted">
                       Form{" "}
-                      <span className="normal-case font-normal opacity-70">
+                      <span className="hidden md:inline normal-case font-normal opacity-70">
                         (oldest → newest)
                       </span>
                     </th>
@@ -196,15 +198,29 @@ export default async function LeaderboardPage() {
                         {entry.exactCount}
                       </td>
                       {last5Rounds.length > 0 && (
-                        <td className="px-4 py-3 hidden md:table-cell">
+                        <td className="px-2 sm:px-4 py-3">
                           <div className="flex justify-end gap-1">
-                            {form.map((color, j) => (
-                              <span
-                                key={j}
-                                title={last5Rounds[j]}
-                                className={`w-4 h-4 rounded-sm ${formColorClass(color)}`}
-                              />
-                            ))}
+                            {form.map(({ round, tier, scored }) => {
+                              const t = FORM_TIERS[tier]
+                              return (
+                                <span
+                                  key={round}
+                                  title={
+                                    tier === "none"
+                                      ? `${round}: no predictions`
+                                      : `${round}: ${scored} pts (${t.label.toLowerCase()})`
+                                  }
+                                  aria-label={
+                                    tier === "none"
+                                      ? `${round}: no predictions`
+                                      : `${round}: ${scored} points, ${t.label.toLowerCase()}`
+                                  }
+                                  className={`flex h-5 w-5 items-center justify-center rounded-sm border text-[9px] leading-none ${t.class}`}
+                                >
+                                  <span aria-hidden="true">{t.glyph}</span>
+                                </span>
+                              )
+                            })}
                           </div>
                         </td>
                       )}
@@ -216,18 +232,25 @@ export default async function LeaderboardPage() {
           </div>
 
           {last5Rounds.length > 0 && (
-            <div className="hidden md:flex items-center gap-5 text-xs text-ink-muted px-1">
-              <span className="font-semibold text-ink-mid">Form key:</span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1 text-xs text-ink-muted">
+              <span className="font-semibold text-ink-mid">
+                Form key <span className="font-normal">(oldest → newest)</span>:
+              </span>
               {(
                 [
-                  ["bg-good", ">40% of pts"],
-                  ["bg-clock", "21–40%"],
-                  ["bg-bad", "≤20%"],
-                  ["bg-line", "No picks"],
+                  ["strong", ">40% of pts"],
+                  ["mixed", "21–40%"],
+                  ["poor", "≤20%"],
+                  ["none", "No picks"],
                 ] as const
-              ).map(([cls, label]) => (
-                <span key={label} className="flex items-center gap-1.5">
-                  <span className={`w-3 h-3 rounded-sm inline-block ${cls}`} />
+              ).map(([tier, label]) => (
+                <span key={tier} className="flex items-center gap-1.5">
+                  <span
+                    aria-hidden="true"
+                    className={`flex h-4 w-4 items-center justify-center rounded-sm border text-[8px] leading-none ${FORM_TIERS[tier].class}`}
+                  >
+                    {FORM_TIERS[tier].glyph}
+                  </span>
                   {label}
                 </span>
               ))}

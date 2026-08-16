@@ -24,7 +24,10 @@
   --color-ink: #17201b;
   --color-ink-mid: #3d4842;
   --color-ink-muted: #5e6b63;
-  --color-ink-faint: #9aa69f;
+  /* Darker than it looks like it "should" be: ink-faint carries real content
+     (empty states, "My pick"/"Result"/"Pts" labels, the sign-in explainer), so
+     it has to clear WCAG AA 4.5:1 rather than sit at a decorative 2.5:1. */
+  --color-ink-faint: #66726b;
 
   /* Lines */
   --color-line: #e4e8e4;
@@ -92,7 +95,7 @@
     --color-ink: #e8eeea;
     --color-ink-mid: #b9c5be;
     --color-ink-muted: #8c9a92;
-    --color-ink-faint: #63706a;
+    --color-ink-faint: #879489;
 
     --color-line: #263029;
     --color-line-soft: #1d2621;

@@ -37,7 +37,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-ground">
         <Header />
-        <main className="flex-1">{children}</main>
+        {/* pb-20 keeps content clear of the fixed mobile tab bar. */}
+        <main className="flex-1 pb-20 sm:pb-0">{children}</main>
       </body>
     </html>
   );

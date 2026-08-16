@@ -3,6 +3,7 @@ import { auth, signOut } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { getActiveLeagueId } from "@/lib/activeLeague"
 import NavLinks from "./NavLinks"
+import MobileNav from "./MobileNav"
 import Logo from "./Logo"
 
 export default async function Header() {
@@ -21,6 +22,7 @@ export default async function Header() {
       : false
 
   return (
+    <>
     <header className="bg-surface border-b border-line">
       <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-5">
@@ -96,5 +98,8 @@ export default async function Header() {
         </div>
       </div>
     </header>
+    {/* Only signed-in users have anywhere to navigate to. */}
+    {session && <MobileNav />}
+    </>
   )
 }
