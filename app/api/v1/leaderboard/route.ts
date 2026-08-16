@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
       projectedPoints: e.confirmedPoints + e.provisionalPoints,
       exactCount: e.exactCount,
       streakPoints: e.streakPoints,
+      // Where totalPoints came from; the five sum to totalPoints exactly.
+      pointsBreakdown: e.breakdown,
     })),
   )
 }

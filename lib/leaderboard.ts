@@ -1,6 +1,19 @@
 import { prisma } from "@/lib/prisma"
-import { scoreOnePrediction } from "@/lib/scoring"
+import { scoreOnePrediction, BANKER_MULTIPLIER } from "@/lib/scoring"
 import { provisionalPoints } from "@/lib/provisional"
+
+export type PointsBreakdown = {
+  /** Right result only (1 each). */
+  result: number
+  /** Right result and goal difference, not exact (1.5 each). */
+  close: number
+  /** Exact scoreline (3 each). */
+  exact: number
+  /** The *extra* points doubling produced — not the whole bankered fixture. */
+  banker: number
+  /** Streak bonuses, which sit outside a prediction's own points. */
+  streak: number
+}
 
 export type LeaderboardEntry = {
   id: string
@@ -11,6 +24,15 @@ export type LeaderboardEntry = {
   /** Points from proposed-but-unconfirmed results. Display only. */
   provisionalPoints: number
   exactCount: number
+  /**
+   * Where the confirmed points came from. These five sum to `confirmedPoints`
+   * exactly, so the row always adds up on screen.
+   *
+   * Derived from the *stored* `pointsAwarded` rather than recomputed from the
+   * scoreline: the stored figure is what actually counts, so splitting it can't
+   * drift away from the total the way a parallel recomputation could.
+   */
+  breakdown: PointsBreakdown
   /** Total streak-bonus points earned. Tiered 1-3, so a count would hide size. */
   streakPoints: number
   /** Rank by confirmed points (standings never move on provisional data). */
@@ -77,6 +99,25 @@ export async function computeLeaderboard(leagueId: string): Promise<LeaderboardE
       const confirmedPoints =
         preds.reduce((sum, p) => sum + (p.pointsAwarded ?? 0), 0) + bonus
 
+      const breakdown: PointsBreakdown = {
+        result: 0,
+        close: 0,
+        exact: 0,
+        banker: 0,
+        streak: bonus,
+      }
+      for (const p of preds) {
+        if (p.pointsAwarded === null) continue
+        // Undo the multiplier to recover the base tier, then bank the extra
+        // separately — so a bankered exact reads as 3 exact + 3 banker, not 6
+        // in a bucket that claims to be "exact score" points.
+        const base = p.isBanker ? p.pointsAwarded / BANKER_MULTIPLIER : p.pointsAwarded
+        if (base === 3) breakdown.exact += base
+        else if (base === 1.5) breakdown.close += base
+        else if (base === 1) breakdown.result += base
+        breakdown.banker += p.isBanker ? p.pointsAwarded - base : 0
+      }
+
       const provisional = preds.reduce(
         (sum, p) => sum + (provisionalPoints(p, p.fixture) ?? 0),
         0,
@@ -101,6 +142,7 @@ export async function computeLeaderboard(leagueId: string): Promise<LeaderboardE
         confirmedPoints,
         provisionalPoints: provisional,
         exactCount,
+        breakdown,
         streakPoints: bonus,
       }
     })

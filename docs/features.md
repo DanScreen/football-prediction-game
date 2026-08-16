@@ -146,15 +146,24 @@ bonus that replaced it is the same everywhere, so that came back out.
 ## Leaderboard (`/leaderboard`)
 
 Standings ranked by **confirmed** points (ties share a rank). Built on
-`computeLeaderboard()` (shared with the API). Shows exact-score count, streak bonus
-points (🔥+N — a total, not a count, since tiers vary), a per-player **form strip** (last 5 completed rounds, oldest → newest) and
+`computeLeaderboard()` (shared with the API). Shows a **points breakdown** per player, a
+per-player **form strip** (last 5 completed rounds, oldest → newest) and
 a `+X` provisional chip per row. Provisional never changes rank.
 
-Each form cell is **dual-encoded** — a glyph (▲ strong / ■ mixed / ▼ poor / · no picks)
-as well as a colour — so it's readable without colour vision, and carries an
-`aria-label` naming the round and points scored. The strip shows at every breakpoint.
+**Points breakdown.** Every row accounts for itself: **Result** (1-pointers), **Close**
+(1.5s — right result *and* goal difference), **Exact** (3s), **★** (the extra the banker
+doubling produced) and **🔥** (streak bonuses). The five always sum to the player's
+total, which is why they're derived by splitting the *stored* `pointsAwarded` rather than
+recomputing from scorelines — a parallel recomputation could drift from the total.
+Banker is counted as the extra only, so a bankered exact reads as 3 exact + 3 banker
+rather than 6 in a column claiming to mean "exact scores".
 
-## Host area (`/host`) — site hosts only
+Five extra numeric columns would force a phone to scroll the table sideways, so below
+`md` they collapse into a wrapping chip line under the player's name showing only the
+non-zero parts. The ★ and 🔥 headers carry `sr-only` labels, since an emoji alone
+announces nothing useful.
+
+Each form cell is **dual-encoded**## Host area (`/host`) — site hosts only
 
 | Page | Purpose |
 |------|---------|
@@ -165,8 +174,10 @@ as well as a colour — so it's readable without colour vision, and carries an
 
 ## League admin (`/admin`) — commissioners only
 
-Slimmed to `/admin/settings` only: rename league, invite
-code management. Fixtures and results are handled by hosts, so there's nothing else here.
+Slimmed to `/admin/settings` only: rename the league and manage its invite code, plus a
+read-only summary of the streak tiers (kept because commissioners used to configure the
+Grand Slam here and will look for it). Fixtures and results are handled by hosts, so
+there's nothing else.
 
 ## Fixture import (automatic + manual)
 

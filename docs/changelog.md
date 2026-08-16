@@ -6,6 +6,15 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — Leaderboard points breakdown
+Each row now shows where its points came from: **Result** (1s), **Close** (1.5s),
+**Exact** (3s), **★** banker doubling and **🔥** streak bonuses. The five sum to the
+total exactly — they split the stored `pointsAwarded` rather than recomputing from
+scorelines, so they can't drift from it. Banker counts only the *extra* from doubling, so
+a bankered exact reads 3 exact + 3 banker. Columns on desktop, a wrapping chip line of
+the non-zero parts on mobile. Exposed on the API as `pointsBreakdown`. Replaces the old
+exact-*count* column (the count survives as a tooltip). 170 tests.
+
 ## 2026-08-16 — Streak bonus replaces the Grand Slam
 Bonus points for calling a lot of a gameweek's results right: **+1** for 5–7 correct,
 **+2** for 8–9, **+3** for 10 or more. Replaces the all-or-nothing Grand Slam, which one

@@ -45,7 +45,10 @@ score fields carry the projected outcome.
 Standings ranked by confirmed points. Per player: `rank`, `id`, `displayName`, `isBot`,
 `totalPoints` (**confirmed**, incl. streak bonuses), `provisionalPoints`,
 `projectedPoints` (= confirmed + provisional), `exactCount`, `streakPoints` (total
-bonus points earned, not a count of bonuses). Delegates to the same
+bonus points earned, not a count of bonuses), and `pointsBreakdown`:
+`{ result, close, exact, banker, streak }` — where the confirmed total came from. The
+five sum to `totalPoints` exactly. `banker` is the *extra* the doubling produced, so a
+bankered exact score contributes 3 to `exact` and 3 to `banker`. Delegates to the same
 `computeLeaderboard()` the web leaderboard uses.
 
 ## Notes

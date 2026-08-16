@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { computeLeaderboard } from "@/lib/leaderboard"
+import { computeLeaderboard, type PointsBreakdown } from "@/lib/leaderboard"
 import { AnimatedPoints } from "./AnimatedPoints"
 
 type FormTier = "strong" | "mixed" | "poor" | "none"
@@ -17,6 +17,63 @@ const FORM_TIERS: Record<FormTier, { class: string; glyph: string; label: string
 }
 
 export const FORM_LEGEND = FORM_TIERS
+
+/**
+ * Where a player's points came from. These five sum to their total, so the row
+ * accounts for itself — useful when someone asks why they're behind.
+ *
+ * Banker is the *extra* the doubling produced, not the whole bankered fixture:
+ * a bankered exact score reads as 3 exact + 3 banker, which keeps the "exact"
+ * column meaning "points from exact scores" rather than silently including a
+ * multiplier.
+ */
+const BREAKDOWN_COLUMNS: {
+  key: keyof PointsBreakdown
+  label: string
+  /** Set where `label` is an emoji, which a screen reader can't announce usefully. */
+  srLabel?: string
+  short: string
+  title: string
+  tone: string
+}[] = [
+  {
+    key: "result",
+    label: "Result",
+    short: "result",
+    title: "Points from getting the result right only (1 each)",
+    tone: "text-ink-muted",
+  },
+  {
+    key: "close",
+    label: "Close",
+    short: "close",
+    title: "Points from the right result and goal difference, but not the exact score (1.5 each)",
+    tone: "text-info",
+  },
+  {
+    key: "exact",
+    label: "Exact",
+    short: "exact",
+    title: "Points from exact scorelines (3 each)",
+    tone: "text-good",
+  },
+  {
+    key: "banker",
+    label: "★",
+    srLabel: "Banker",
+    short: "banker",
+    title: "Extra points earned by doubling a banker pick",
+    tone: "text-clock",
+  },
+  {
+    key: "streak",
+    label: "🔥",
+    srLabel: "Streak",
+    short: "streak",
+    title: "Streak bonus points for calling a lot of a gameweek's results right",
+    tone: "text-clock",
+  },
+]
 
 type Props = {
   leagueId: string
@@ -159,12 +216,23 @@ export default async function LeagueBoard({
                 <th scope="col" className="text-right px-4 py-3 font-semibold text-board-gold">
                   Points
                 </th>
-                <th
-                  scope="col"
-                  className="text-right px-4 py-3 hidden sm:table-cell font-semibold text-board-muted"
-                >
-                  Exact ⚽
-                </th>
+                {BREAKDOWN_COLUMNS.map((col) => (
+                  <th
+                    key={col.key}
+                    scope="col"
+                    title={col.title}
+                    className="text-right px-3 py-3 hidden md:table-cell font-semibold text-board-muted whitespace-nowrap"
+                  >
+                    {col.srLabel ? (
+                      <>
+                        <span aria-hidden="true">{col.label}</span>
+                        <span className="sr-only">{col.srLabel}</span>
+                      </>
+                    ) : (
+                      col.label
+                    )}
+                  </th>
+                ))}
                 {last5Rounds.length > 0 && (
                   <th
                     scope="col"
@@ -195,17 +263,25 @@ export default async function LeagueBoard({
                       {entry.isBot && (
                         <span className="ml-1.5 text-xs text-ink-faint font-normal">🤖</span>
                       )}
-                      {entry.streakPoints > 0 && (
-                        <span
-                          className="ml-1.5 text-xs font-medium text-clock"
-                          title={`${entry.streakPoints} streak bonus point${entry.streakPoints !== 1 ? "s" : ""}`}
-                        >
-                          🔥+{entry.streakPoints}
-                        </span>
-                      )}
                       {entry.id === currentUserId && (
                         <span className="ml-1.5 text-xs text-pitch font-medium">(you)</span>
                       )}
+                      {/* The breakdown columns are desktop-only — five more numeric
+                          columns would force the table to scroll sideways on a phone.
+                          Below md it becomes a wrapping chip line, and only the
+                          non-zero parts show, so it stays short. */}
+                      <span className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] md:hidden">
+                        {BREAKDOWN_COLUMNS.filter((col) => entry.breakdown[col.key] > 0).map(
+                          (col) => (
+                            <span key={col.key} className={col.tone}>
+                              <span className="font-semibold tabular-nums">
+                                {entry.breakdown[col.key]}
+                              </span>{" "}
+                              {col.short}
+                            </span>
+                          ),
+                        )}
+                      </span>
                     </td>
                     <td className="score-digits px-4 py-3 text-right text-ink text-base">
                       <AnimatedPoints value={entry.confirmedPoints} />
@@ -218,9 +294,20 @@ export default async function LeagueBoard({
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right text-ink-muted hidden sm:table-cell tabular-nums">
-                      {entry.exactCount}
-                    </td>
+                    {BREAKDOWN_COLUMNS.map((col) => {
+                      const value = entry.breakdown[col.key]
+                      return (
+                        <td
+                          key={col.key}
+                          title={col.key === "exact" ? `${entry.exactCount} exact score${entry.exactCount !== 1 ? "s" : ""}` : undefined}
+                          className={`px-3 py-3 text-right hidden md:table-cell tabular-nums ${
+                            value > 0 ? col.tone : "text-ink-faint"
+                          }`}
+                        >
+                          {value > 0 ? value : "–"}
+                        </td>
+                      )
+                    })}
                     {last5Rounds.length > 0 && (
                       <td className="px-2 sm:px-4 py-3">
                         <div className="flex justify-end gap-1">

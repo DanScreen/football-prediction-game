@@ -37,7 +37,8 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   and API show projected scores/points (badged amber) once a proposed score exists,
   until a host confirms. Standings rank by **confirmed** points only.
 - **Leaderboard** — every league you're in, stacked: standings, exact-score count,
-  streak bonus points, per-player "form" strip over the last 5 rounds.
+  a points breakdown (result / close / exact / banker / streak), per-player "form" strip
+  over the last 5 rounds.
 - **Deadline reminder emails** — the same cron emails members who haven't predicted
   a fixture kicking off within 3 hours (via Resend).
 - **How it works** (`/rules`) — the rules in one public page. Nothing varies by league

@@ -128,3 +128,68 @@ describe("computeLeaderboard", () => {
     ])
   })
 })
+
+describe("points breakdown", () => {
+  // The breakdown is derived from the stored pointsAwarded + isBanker, not from
+  // the scoreline, so these fixtures only need those two fields.
+  const scored = (points: number, isBanker = false) => ({
+    userId: "alice",
+    pointsAwarded: points,
+    isBanker,
+    predictedHomeScore: 9,
+    predictedAwayScore: 9,
+    fixture: {
+      status: "COMPLETED",
+      actualHomeScore: 2,
+      actualAwayScore: 1,
+      proposedHomeScore: null,
+      proposedAwayScore: null,
+    },
+  })
+
+  it("splits confirmed points by source and always sums to the total", async () => {
+    leagueFindUnique.mockResolvedValue({
+      competitionId: "comp-pl",
+      memberships: [{ userId: "alice" }],
+    } as never)
+    userFindMany.mockResolvedValue([user("alice")] as never)
+    predictionFindMany.mockResolvedValue([
+      scored(3), //          exact
+      scored(6, true), //    exact, bankered → 3 exact + 3 banker
+      scored(1.5), //        right result + goal difference
+      scored(1), //          right result only
+      scored(0), //          wrong — lands in no bucket
+    ] as never)
+    bonusFindMany.mockResolvedValue([{ userId: "alice", points: 2 }] as never)
+
+    const [alice] = await computeLeaderboard("league-a")
+
+    expect(alice.breakdown).toEqual({
+      result: 1,
+      close: 1.5,
+      exact: 6,
+      banker: 3,
+      streak: 2,
+    })
+
+    // The invariant the UI leans on: the parts account for the whole.
+    const { result, close, exact, banker, streak } = alice.breakdown
+    expect(result + close + exact + banker + streak).toBe(alice.confirmedPoints)
+  })
+
+  it("credits a bankered pick to its own tier plus the doubling", async () => {
+    leagueFindUnique.mockResolvedValue({
+      competitionId: "comp-pl",
+      memberships: [{ userId: "alice" }],
+    } as never)
+    userFindMany.mockResolvedValue([user("alice")] as never)
+    // One bankered right-result pick: stored 2 = 1 base + 1 doubled.
+    predictionFindMany.mockResolvedValue([scored(2, true)] as never)
+    bonusFindMany.mockResolvedValue([] as never)
+
+    const [alice] = await computeLeaderboard("league-a")
+
+    expect(alice.breakdown).toEqual({ result: 1, close: 0, exact: 0, banker: 1, streak: 0 })
+    expect(alice.confirmedPoints).toBe(2)
+  })
+})
