@@ -50,6 +50,8 @@ Cloud SQL. Use the same container to verify risky migrations before pushing
 | `npm run lint` | ESLint |
 | `npx vitest run` | Full test suite (prisma/fetch mocked) |
 | `npx vitest run <path>` | One test file |
+| `npm run mobile:typecheck` | Typecheck the Expo app in `apps/mobile` |
+| `cd apps/mobile && npm start` | Expo dev server (see `apps/mobile/README.md`) |
 | `npx prisma generate` | Regenerate the client after schema edits (→ `app/generated/prisma`) |
 | `npx prisma db seed` | Seed test data (competitions, host + members, fixtures) |
 | `npx prisma studio` | Visual DB browser |

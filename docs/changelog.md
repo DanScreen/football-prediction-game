@@ -6,6 +6,12 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — Mobile Phase 2 Expo skeleton
+`apps/mobile` Expo Router app: login/register, SecureStore tokens, API client with
+refresh, tabs (Predictions / Leaderboard / Leagues / Rules), Quiet Product tokens.
+Rules tab hits live `/api/mobile/v1/rules`. Bundle id `uk.scorersonline.app`. See
+[mobile.md](mobile.md) and `apps/mobile/README.md`.
+
 ## 2026-08-16 — Mobile Phase 1 API (`/api/mobile/v1`)
 Player API for the future Expo apps: register/login, access JWT (30m) + rotating
 DB-backed refresh tokens (30d), me/rules/fixtures/predictions/leagues/competitions/

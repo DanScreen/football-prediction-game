@@ -1,0 +1,113 @@
+import { Link } from "expo-router"
+import { useState } from "react"
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native"
+import { ApiError } from "@/lib/api"
+import { useAuth } from "@/lib/auth"
+import { useTokens } from "@/lib/theme"
+import {
+  BrandMark,
+  ErrorBanner,
+  Field,
+  PrimaryButton,
+  Screen,
+  screenPadding,
+} from "@/components/ui"
+
+export default function RegisterScreen() {
+  const { register } = useAuth()
+  const t = useTokens()
+  const [displayName, setDisplayName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [inviteCode, setInviteCode] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function onSubmit() {
+    setError(null)
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.")
+      return
+    }
+    setLoading(true)
+    try {
+      await register({
+        displayName,
+        email,
+        password,
+        inviteCode: inviteCode || undefined,
+      })
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Could not create your account. Check your connection.",
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Screen>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView contentContainerStyle={screenPadding.pad} keyboardShouldPersistTaps="handled">
+          <View style={{ gap: 4, marginTop: 8, marginBottom: 8 }}>
+            <BrandMark />
+            <Text style={{ fontSize: 16, color: t.inkMuted, marginTop: 4 }}>
+              Join a league and start predicting.
+            </Text>
+          </View>
+
+          <ErrorBanner message={error} />
+
+          <Field
+            label="Display name"
+            value={displayName}
+            onChangeText={setDisplayName}
+            autoCapitalize="words"
+            textContentType="name"
+          />
+          <Field
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            textContentType="emailAddress"
+            autoComplete="email"
+          />
+          <Field
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            textContentType="newPassword"
+            autoComplete="new-password"
+          />
+          <Field
+            label="Invite code (optional)"
+            value={inviteCode}
+            onChangeText={setInviteCode}
+            autoCapitalize="characters"
+          />
+
+          <PrimaryButton
+            label="Create account"
+            onPress={onSubmit}
+            loading={loading}
+            disabled={!displayName || !email || !password}
+          />
+
+          <Link href="/(auth)/login" style={{ paddingVertical: 10, alignItems: "center" }}>
+            <Text style={{ color: t.pitch, fontSize: 15, fontWeight: "600" }}>
+              Already have an account? Sign in
+            </Text>
+          </Link>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </Screen>
+  )
+}

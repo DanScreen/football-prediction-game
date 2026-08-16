@@ -4,8 +4,9 @@ Plan and contract for the Scorers **iOS and Android** apps. Native apps were
 previously out of scope (responsive web only); this doc is the source of truth for
 how we reverse that and ship them.
 
-**Status:** Phase 1 API **shipped** (2026-08-16). Expo app not started — Phase 2 next.
-Agreed stack: **Expo (React Native)** in a **monorepo**. See [decisions.md](decisions.md).
+**Status:** Phase 1 API ✅ and Phase 2 Expo skeleton ✅ (2026-08-16). Phase 3
+(player features) next. Stack: **Expo (React Native)** in `apps/mobile/`. See
+[decisions.md](decisions.md).
 
 ---
 
@@ -313,10 +314,24 @@ Consistent JSON: `{ "error": "human-readable message" }` with appropriate HTTP s
 | Phase | Work |
 |-------|------|
 | **1 — Mobile API** | ✅ Shipped 2026-08-16 |
-| **2 — Expo skeleton** | `apps/mobile`, Expo Router tabs (Predictions / Leaderboard / Leagues / Rules), auth screens, secure token storage, API client |
+| **2 — Expo skeleton** | ✅ Shipped 2026-08-16 — `apps/mobile`, auth, tabs, SecureStore, API client |
 | **3 — Player features** | Fixtures + submit/banker, provisional badges, stacked leaderboards, create/join + invite share |
 | **4 — Store polish** | Push reminders, universal/app links for invites, icons/splash, error/empty states, TestFlight + Play internal |
 | **5 — Store release** | App Store + Play listing, privacy labels, review |
+
+### Phase 2 app layout (`apps/mobile`)
+
+| Path | Role |
+|------|------|
+| `app/(auth)/login\|register` | Email/password against `/api/mobile/v1/auth/*` |
+| `app/(tabs)/*` | Predictions / Leaderboard / Leagues / Rules (placeholders except Rules, which loads `/rules`) |
+| `lib/api.ts` | Fetch client with one-shot refresh on 401 |
+| `lib/auth.tsx` | Session context; tokens in SecureStore (localStorage on web) |
+| `lib/config.ts` | `EXPO_PUBLIC_API_URL` (default `https://scorersonline.uk`) |
+| `constants/tokens.ts` | Quiet Product light/dark colours |
+
+Run: `cd apps/mobile && npm start`. Typecheck: `npm run mobile:typecheck` from the repo root.
+See `apps/mobile/README.md`.
 
 ---
 

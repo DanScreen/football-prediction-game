@@ -10,8 +10,8 @@
 Scorers is deployed and running at **https://scorersonline.uk**. The
 platform-owned competitions model (the big refactor) is complete and live.
 
-**Native apps:** Phase 1 mobile API (`/api/mobile/v1`) shipped — access/refresh auth +
-player endpoints. Expo app not started; see [mobile.md](mobile.md).
+**Native apps:** Phase 1 API + Phase 2 Expo skeleton on `feature/mobile-apps`
+(`apps/mobile`). Player features (Phase 3) not started. See [mobile.md](mobile.md).
 
 ## What's built and working
 
