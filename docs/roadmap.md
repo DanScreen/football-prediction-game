@@ -3,21 +3,15 @@
 > What's planned, known gaps, and parked ideas. When you ship something from here,
 > move it to [changelog.md](changelog.md) and update [state.md](state.md).
 
-**Last updated:** 2026-07-09
+**Last updated:** 2026-08-16
 
 ## Known gaps / near-term
 
 Nothing is currently blocking, and the core product is live. Candidate next work:
 
-- **Node 20 → 24 in CI** — bump `actions/checkout` and `actions/setup-node` in
-  `.github/workflows/deploy.yml` to silence the deprecation warning.
-- **Local Postgres for dev** — the dev machine has no local PostgreSQL, so
-  migrations are authored offline (`prisma migrate diff`) and DB-backed flows can't
-  be run locally without spinning up Docker. Documented in
-  [development.md](development.md); a `docker compose` for a throwaway Postgres would
-  smooth this out.
 - **Staging environment** — a second Cloud Run service + DB from a `staging` branch,
   to review changes before they hit the live site instead of pushing straight to prod.
+  Now the only remaining safety gap in the pipeline (CI does gate on tests).
 
 ## Product ideas (parked, not scoped)
 

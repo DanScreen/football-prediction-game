@@ -87,6 +87,7 @@ A per-round bonus (currently only the Grand Slam), kept separate from
 
 ## Migrations
 
-Authored offline (no local Postgres) and applied by CI. See
+Authored offline by diffing schemas, verified against the local Docker Postgres, and
+applied by CI. See
 [development.md](development.md#migrations) for the workflow and the destructive
 competitions-refactor migration as a worked example.

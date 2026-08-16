@@ -13,7 +13,24 @@ from a shell where Homebrew is already on PATH.
 ```bash
 npm install
 cp .env.local.example .env.local   # fill in the values below
+docker compose up -d               # local Postgres (see below)
 ```
+
+### Local database
+
+There is no Postgres installed on the dev machine, so `docker-compose.yml` provides a
+throwaway one on port **55432** (avoids clashing with any host Postgres on 5432):
+
+```bash
+docker compose up -d
+export DATABASE_URL="postgresql://postgres:localdev@localhost:55432/football_prediction_app"
+npx prisma migrate deploy   # applies all migrations in order
+npx prisma db seed          # test users, competitions, fixtures
+```
+
+`docker compose down -v` wipes it for a clean start. This is dev-only — production is
+Cloud SQL. Use the same container to verify risky migrations before pushing
+(see [Migrations](#migrations)).
 
 `.env.local` (never committed) — see [deployment.md](deployment.md) for the full list:
 
@@ -52,8 +69,10 @@ Test users from the seed (password `password123`): `host@football.test` (site ad
 
 ## Migrations
 
-> **There is no local PostgreSQL on the dev machine.** Migrations are authored offline
-> and applied by CI (`prisma migrate deploy`) on push to `main`.
+> Migrations are **authored offline** (by diffing schemas, below) and applied by CI
+> (`prisma migrate deploy`) on push to `main`. Nothing is generated against a live dev
+> DB — but you can and should *verify* the result against the local Docker Postgres
+> from [Setup](#local-database).
 
 Author a migration by diffing schemas into SQL:
 
@@ -71,16 +90,15 @@ Then hand-edit the SQL as needed (ordering, data backfills, seed inserts). **Got
 
 ### Verifying a migration against a throwaway Postgres (recommended for risky ones)
 
-Because CI can't be a test bed for destructive SQL, verify locally with Docker:
+Because CI can't be a test bed for destructive SQL, verify locally first — start from a
+clean database so you exercise the migration from scratch:
 
 ```bash
-docker run -d --name fpa-verify -e POSTGRES_PASSWORD=verify \
-  -e POSTGRES_DB=football_prediction_app -p 55433:5432 postgres:16
-export DATABASE_URL="postgresql://postgres:verify@localhost:55433/football_prediction_app"
+docker compose down -v && docker compose up -d
+export DATABASE_URL="postgresql://postgres:localdev@localhost:55432/football_prediction_app"
 npx prisma migrate deploy   # applies all migrations in order
 npx prisma db seed          # confirms the seed still works
 # ...insert representative legacy rows, re-apply, and assert the end state...
-docker rm -f fpa-verify
 ```
 
 The competitions-refactor migration (`20260709000000_platform_competitions`) is a

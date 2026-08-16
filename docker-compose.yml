@@ -1,0 +1,27 @@
+# Throwaway local Postgres for development and migration verification.
+#
+#   docker compose up -d
+#   export DATABASE_URL="postgresql://postgres:localdev@localhost:55432/football_prediction_app"
+#   npx prisma migrate deploy && npx prisma db seed
+#
+# Nothing here is used in production — prod is Cloud SQL. See docs/development.md.
+services:
+  postgres:
+    image: postgres:16
+    container_name: scorers-postgres
+    environment:
+      POSTGRES_PASSWORD: localdev
+      POSTGRES_DB: football_prediction_app
+    # 55432 avoids clashing with any host Postgres on the default 5432.
+    ports:
+      - "55432:5432"
+    volumes:
+      - scorers-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d football_prediction_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  scorers-pgdata:

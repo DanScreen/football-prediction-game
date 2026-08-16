@@ -3,7 +3,7 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-07-09
+**Last updated:** 2026-08-16
 
 ## Status: live in production
 
@@ -55,6 +55,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 - **140 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - Production build is clean (`npm run build`, type-checked).
+- CI runs the suite **before** deploying, so a red test blocks production.
 
 ## Known rough edges
 
@@ -70,9 +71,10 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   fixed to the "Scorers" brand, and the login/register pages now carry a clear "what
   this site is" explainer to reduce the credential-page phishing false-positive.
   **Still needed from the owner:** the Search Console verification + review request.
-- The GitHub Actions workflow logs a **Node 20 deprecation warning** (actions are
-  forced onto Node 24). Harmless; bump `actions/checkout`/`setup-node` when convenient.
-- **No local PostgreSQL** on the dev machine — migrations are authored offline and
-  applied by CI. See [development.md](development.md#migrations).
+- Migrations are still **authored offline** (`prisma migrate diff`) rather than against
+  a live dev DB — but a local Docker Postgres now exists to verify them against
+  (`docker compose up -d`). See [development.md](development.md#local-database).
+- **No staging environment** — pushes to `main` go straight to production, gated only by
+  the test suite. See [roadmap.md](roadmap.md).
 
 For what's next, see [roadmap.md](roadmap.md).

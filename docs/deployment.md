@@ -77,18 +77,20 @@ domain is verified in Resend for outbound email.
 
 ## Deploy pipeline
 
-1. Cloud SQL Auth Proxy tunnels to Cloud SQL so migrations run in CI
+1. **Tests gate the deploy** — `npx prisma generate` then `npx vitest run`. A red suite
+   fails the job before anything touches Cloud SQL or Cloud Run. (The generate step is
+   required: several tests import types from `app/generated/prisma/client`.)
+2. Cloud SQL Auth Proxy tunnels to Cloud SQL so migrations run in CI
    (`npx prisma migrate deploy` via `DB_MIGRATION_URL`).
-2. Multi-stage Docker build (`deps → builder → runner`) → standalone image.
-3. Image pushed to Artifact Registry and deployed to Cloud Run, with env vars set from
+3. Multi-stage Docker build (`deps → builder → runner`) → standalone image.
+4. Image pushed to Artifact Registry and deployed to Cloud Run, with env vars set from
    the secrets above.
-4. `AUTH_URL` pinned to the custom domain.
+5. `AUTH_URL` pinned to the custom domain.
 
 > Pushing to `main` runs migrations against **production**. For a destructive or
 > hand-edited migration, verify it against a throwaway Postgres first
 > ([development.md](development.md#migrations)) and flag it before pushing.
 
-## Known rough edge
-
-The workflow logs a **Node 20 deprecation warning** (actions forced onto Node 24).
-Harmless; bump `actions/checkout` and `actions/setup-node` when convenient.
+Runner Node is **22** (matching the `Dockerfile`); the actions are pinned to their
+current majors (`checkout@v7`, `setup-node@v7`, `google-github-actions/auth@v3`,
+`setup-gcloud@v3`), which run on Node 24.

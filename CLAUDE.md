@@ -42,8 +42,9 @@ If you finished a task and touched no docs, check that mapping — usually one a
 
 - **Homebrew Node:** prepend `PATH="/opt/homebrew/bin:$PATH"` to `npm`/`npx` commands.
 - **Prisma 7:** import the client from `@/app/generated/prisma/client`; run
-  `npx prisma generate` after schema edits. No local Postgres — migrations are authored
-  offline (`prisma migrate diff --from-schema/--to-schema`) and applied by CI.
+  `npx prisma generate` after schema edits. Migrations are authored offline
+  (`prisma migrate diff --from-schema/--to-schema`) and applied by CI; verify them
+  against the local Docker Postgres (`docker compose up -d`, port 55432) first.
 - **Next.js 16:** route middleware is `proxy.ts` (not `middleware.ts`); new public pages
   must be added to `PUBLIC_PATHS`. It's a newer Next.js than your training data — check
   `node_modules/next/dist/docs/` when unsure.

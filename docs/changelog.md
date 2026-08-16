@@ -6,6 +6,16 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — CI hardening + local Postgres
+- **Tests now gate the deploy.** `deploy.yml` runs `prisma generate` + `vitest run`
+  before touching Cloud SQL or Cloud Run, so a red suite can't reach production.
+- **Actions bumped off Node 20** — `checkout@v7`, `setup-node@v7`,
+  `google-github-actions/auth@v3`, `setup-gcloud@v3`. Runner Node stays 22 (matches the
+  `Dockerfile`).
+- **`docker-compose.yml`** added: a throwaway local Postgres 16 on port 55432. Verified
+  by applying all five migrations and the seed from clean. Closes the "no local
+  Postgres" gotcha. See [development.md](development.md#local-database).
+
 ## 2026-07-10 — Docs reorganised into `docs/` wiki
 All markdown consolidated into this `docs/` folder as a human/AI wiki, with an agent
 operating protocol (read order + keep-docs-updated rule) in `docs/README.md`. Root
