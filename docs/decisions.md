@@ -240,6 +240,28 @@ the points it was awarded.
 
 ---
 
+## 2026-08-16 — Native apps via Expo in a monorepo; separate mobile API
+
+Scorers will ship **iOS and Android** player apps with **Expo (React Native)**, in the
+same git repo as the website (`apps/mobile/`, web relocates to `apps/web` later). Full
+plan and Phase 1 contract: [mobile.md](mobile.md).
+
+**Why Expo, not Swift+Kotlin or Flutter:** one TypeScript codebase, fits Cursor and the
+existing Next stack, one path to both stores. **Why not a WebView/Capacitor shell:** the
+product needs a real native client over HTTP, not the website framed in a store binary.
+
+**Why a new `/api/mobile/v1` instead of `/api/v1`:** the bot API is API-key auth and
+league-default scoped for automation. Phones need email/password → short-lived access +
+rotating refresh tokens, and response shapes closer to the web player UX (competition-
+scoped fixtures, stacked leaderboards). Bots stay on `/api/v1` unchanged.
+
+**Why API before Expo UI:** without login and player endpoints, the app cannot do
+anything real; scaffolding screens first would invent a fake client against cookies.
+
+Host/commissioner flows remain web-only for v1.
+
+---
+
 ## Foundational stack decisions (earlier)
 
 - **Prisma 7 + `@prisma/adapter-pg`** — Prisma 7 dropped no-adapter mode; the runtime

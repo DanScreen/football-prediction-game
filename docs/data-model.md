@@ -25,7 +25,8 @@ Platform-owned. Owns the canonical fixtures that leagues share.
 - `isSiteAdmin` — **site host**. Synced from the `SITE_ADMIN_EMAILS` env var on
   login (see `auth.ts`); gates the `/host` area.
 - `apiKey` (unique) — Bearer token for the public API.
-- Relations: `memberships[]`, `predictions[]`, `bonusAwards[]`, `resetTokens[]`.
+- Relations: `memberships[]`, `predictions[]`, `bonusAwards[]`, `resetTokens[]`,
+  `mobileRefreshTokens[]`, `mobileDeviceTokens[]`.
 
 ### League
 A group of players subscribed to one competition.
@@ -73,6 +74,12 @@ A per-round bonus (currently only the streak bonus), kept separate from
 ### PasswordResetToken
 - `id`, `userId`, `tokenHash` (unique — **SHA-256 hash only**, the raw token lives
   only in the email link), `expiresAt`, `usedAt` (nullable), `createdAt`.
+
+### MobileDeviceToken
+Expo push tokens for deadline reminders. Migration
+`20260816230000_add_mobile_device_token`.
+- `id`, `userId`, `expoPushToken` (unique), `platform` (nullable), `createdAt`, `updatedAt`.
+- Upserted by `POST /api/mobile/v1/devices`; used by `sendDeadlineReminders`.
 
 ## Key invariants
 

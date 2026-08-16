@@ -16,6 +16,7 @@ How the system fits together and where to find things in the code.
 | Infra | Terraform (`terraform/`) |
 | CI/CD | GitHub Actions (`.github/workflows/deploy.yml`) |
 | Domain | Cloudflare Worker proxy → Cloud Run (`cloudflare/worker.js`) |
+| Mobile | Expo app in `apps/mobile/` (Phases 1–4) — [mobile.md](mobile.md); store submit [store-release.md](store-release.md) |
 
 > **Next.js 16 caveat:** this is a newer Next.js than most training data. APIs and
 > conventions may differ — check `node_modules/next/dist/docs/` when unsure. Notably,
@@ -71,6 +72,7 @@ streak bonus fans out per subscribing league. Full schema in
 | `app/host/` | **Site-host area** (isSiteAdmin): competitions, fixtures, import, results |
 | `app/admin/` | **League commissioner area**: settings only |
 | `app/api/v1/` | Public bot API (fixtures, predictions, leaderboard) |
+| `app/api/mobile/v1/` | Native-app API (access/refresh auth + player endpoints) — [mobile.md](mobile.md) |
 | `app/api/cron/resolve/` | Cron entry point (sweep + reminders) |
 | `app/api/auth/[...nextauth]/` | NextAuth handler |
 | `app/api-docs/` | In-app API reference for bot authors |
@@ -95,6 +97,8 @@ streak bonus fans out per subscribing league. Full schema in
 | `lib/passwordReset.ts` / `lib/email.ts` | Password reset flow + Resend send helper |
 | `lib/adminAuth.ts` | `requireSiteAdmin` / `requireCommissioner` |
 | `lib/apiAuth.ts` | API-key auth + league/competition resolution |
+| `lib/mobileAuth.ts` | Mobile access JWT + refresh-token issue/rotate/revoke |
+| `lib/mobileHttp.ts` | Shared JSON error/body helpers for `/api/mobile/v1` |
 | `lib/activeLeague.ts` | Active-league cookie read/write |
 | `lib/inviteCode.ts` | Invite-code generation/normalisation + invite-link URL builder |
 | `lib/theme.ts` / `lib/theme.server.ts` | Theme constants (client-safe) and the cookie read. **Kept separate on purpose** — merging them breaks the build |

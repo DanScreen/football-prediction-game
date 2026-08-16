@@ -9,11 +9,24 @@
 
 Nothing is currently blocking, and the core product is live. Candidate next work:
 
+- **Mobile Phase 5 — store release** — Apple/Google accounts, EAS project id, TestFlight /
+  Play internal then public. Checklist: [store-release.md](store-release.md).
+  Phases 1–4 are done on `feature/mobile-apps`.
 - **Staging environment** — a second Cloud Run service + DB from a `staging` branch,
   to review changes before they hit the live site instead of pushing straight to prod.
   Now the only remaining safety gap in the pipeline (CI does gate on tests).
 - **Wider accessibility audit** — the polish pass fixed the form strip and `ink-faint`
   contrast; nothing has systematically checked focus order or screen-reader flow.
+
+### Mobile (Expo) — phased
+
+Agreed stack and contract: [mobile.md](mobile.md).
+
+1. **Phase 1** — Mobile API + auth ✅
+2. **Phase 2** — Expo skeleton ✅
+3. **Phase 3** — Player features ✅
+4. **Phase 4** — Push, deep links, polish ✅
+5. **Phase 5** — App Store + Play release ⏳ ([store-release.md](store-release.md))
 
 ## Product ideas (parked, not scoped)
 
@@ -39,4 +52,6 @@ These are wishlist items, noted for later:
 
 - Discovery/browsing of other people's leagues (leagues stay private — you need a link
   or code). Account creation itself is open; see [decisions.md](decisions.md).
-- Native mobile apps (responsive web only).
+- Host/commissioner tooling inside the native apps (web only).
+- Wrapping the website in a WebView/Capacitor shell as a substitute for Expo (see
+  [mobile.md](mobile.md)).

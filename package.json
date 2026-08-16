@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "mobile:typecheck": "npm --prefix apps/mobile run typecheck"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

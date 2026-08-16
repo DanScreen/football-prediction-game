@@ -20,7 +20,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.stubEnv("CRON_SECRET", "s3cret")
   sweep.mockResolvedValue({ transitioned: 1, proposed: 2, imported: 4, errors: [] })
-  reminders.mockResolvedValue({ sent: 3 })
+  reminders.mockResolvedValue({ sent: 3, pushSent: 1 })
 })
 
 afterEach(() => {
@@ -49,7 +49,7 @@ describe("POST /api/cron/resolve", () => {
       proposed: 2,
       imported: 4,
       errors: [],
-      reminders: { sent: 3 },
+      reminders: { sent: 3, pushSent: 1 },
     })
   })
 })

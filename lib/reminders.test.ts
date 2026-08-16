@@ -5,11 +5,13 @@ import { prisma } from "@/lib/prisma"
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     fixture: { findMany: vi.fn(), updateMany: vi.fn() },
+    mobileDeviceToken: { findMany: vi.fn() },
   },
 }))
 
 const fixtureFindMany = vi.mocked(prisma.fixture.findMany)
 const fixtureUpdateMany = vi.mocked(prisma.fixture.updateMany)
+const deviceFindMany = vi.mocked(prisma.mobileDeviceToken.findMany)
 const fetchMock = vi.fn()
 
 function member(id: string, opts: { isBot?: boolean } = {}) {
@@ -41,6 +43,7 @@ beforeEach(() => {
   vi.stubEnv("EMAIL_FROM", "Predictions <test@example.com>")
   fetchMock.mockResolvedValue({ ok: true })
   fixtureUpdateMany.mockResolvedValue({ count: 1 })
+  deviceFindMany.mockResolvedValue([])
 })
 
 afterEach(() => {
@@ -49,17 +52,20 @@ afterEach(() => {
 })
 
 describe("sendDeadlineReminders", () => {
-  it("no-ops without email configuration", async () => {
+  it("skips email without configuration but still scans for push", async () => {
     vi.stubEnv("RESEND_API_KEY", "")
+    fixtureFindMany.mockResolvedValue([dueFixture()] as never)
     const result = await sendDeadlineReminders()
     expect(result.sent).toBe(0)
+    expect(result.pushSent).toBe(0)
     expect(result.skipped).toMatch(/not configured/)
-    expect(fixtureFindMany).not.toHaveBeenCalled()
+    expect(fixtureFindMany).toHaveBeenCalled()
+    expect(fixtureUpdateMany).toHaveBeenCalled()
   })
 
   it("sends nothing when no fixtures are due", async () => {
     fixtureFindMany.mockResolvedValue([])
-    expect(await sendDeadlineReminders()).toEqual({ sent: 0 })
+    expect(await sendDeadlineReminders()).toEqual({ sent: 0, pushSent: 0 })
     expect(fetchMock).not.toHaveBeenCalled()
     expect(fixtureUpdateMany).not.toHaveBeenCalled()
   })
@@ -90,8 +96,9 @@ describe("sendDeadlineReminders", () => {
 
     const result = await sendDeadlineReminders()
     expect(result.sent).toBe(1)
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    const emailCalls = fetchMock.mock.calls.filter((c) => c[0] === "https://api.resend.com/emails")
+    expect(emailCalls).toHaveLength(1)
+    const body = JSON.parse(emailCalls[0]![1].body)
     expect(body.to).toBe("bob@test.com")
     expect(body.html).toContain("Arsenal vs Chelsea")
   })
@@ -111,10 +118,11 @@ describe("sendDeadlineReminders", () => {
 
     const result = await sendDeadlineReminders()
     expect(result.sent).toBe(2)
-    const bodies = fetchMock.mock.calls.map((c) => JSON.parse(c[1].body))
+    const bodies = fetchMock.mock.calls
+      .filter((c) => c[0] === "https://api.resend.com/emails")
+      .map((c) => JSON.parse(c[1].body))
     const aliceEmails = bodies.filter((b) => b.to === "alice@test.com")
     expect(aliceEmails).toHaveLength(1)
-    // The shared fixture appears once in alice's email, not once per league
     expect(aliceEmails[0].html.match(/Arsenal vs Chelsea/g)).toHaveLength(1)
   })
 
@@ -125,10 +133,10 @@ describe("sendDeadlineReminders", () => {
     ] as never)
 
     const result = await sendDeadlineReminders()
-    // alice + bob, one email each despite two fixtures
     expect(result.sent).toBe(2)
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    const firstBody = JSON.parse(fetchMock.mock.calls[0][1].body)
+    const emailCalls = fetchMock.mock.calls.filter((c) => c[0] === "https://api.resend.com/emails")
+    expect(emailCalls).toHaveLength(2)
+    const firstBody = JSON.parse(emailCalls[0]![1].body)
     expect(firstBody.html).toContain("Arsenal vs Chelsea")
     expect(firstBody.html).toContain("Liverpool vs Everton")
     expect(firstBody.subject).toContain("2 predictions")
@@ -137,14 +145,30 @@ describe("sendDeadlineReminders", () => {
   it("authenticates to Resend with the API key", async () => {
     fixtureFindMany.mockResolvedValue([dueFixture()] as never)
     await sendDeadlineReminders()
-    const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toBe("https://api.resend.com/emails")
-    expect(init.headers.Authorization).toBe("Bearer re_test")
+    const emailCall = fetchMock.mock.calls.find((c) => c[0] === "https://api.resend.com/emails")
+    expect(emailCall![1].headers.Authorization).toBe("Bearer re_test")
   })
 
   it("counts only successful sends", async () => {
     fixtureFindMany.mockResolvedValue([dueFixture()] as never)
     fetchMock.mockResolvedValue({ ok: false })
     expect((await sendDeadlineReminders()).sent).toBe(0)
+  })
+
+  it("sends Expo push to registered devices", async () => {
+    fixtureFindMany.mockResolvedValue([dueFixture()] as never)
+    deviceFindMany.mockResolvedValue([
+      { userId: "alice", expoPushToken: "ExponentPushToken[aaa]" },
+    ] as never)
+
+    const result = await sendDeadlineReminders()
+    expect(result.pushSent).toBe(1)
+    const pushCall = fetchMock.mock.calls.find(
+      (c) => c[0] === "https://exp.host/--/api/v2/push/send",
+    )
+    expect(pushCall).toBeTruthy()
+    const payload = JSON.parse(pushCall![1].body)
+    expect(payload[0].to).toBe("ExponentPushToken[aaa]")
+    expect(payload[0].title).toMatch(/closing soon/i)
   })
 })

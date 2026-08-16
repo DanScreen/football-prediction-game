@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { FixtureStatus } from "@/app/generated/prisma/client"
+import { sendExpoPush } from "@/lib/expoPush"
 
 /** How far ahead of kickoff the reminder window opens. */
 const REMINDER_WINDOW_MS = 3 * 60 * 60 * 1000
@@ -14,17 +15,16 @@ type ReminderFixture = {
 }
 
 /**
- * Email league members who haven't predicted fixtures kicking off within the
- * next 3 hours. One email per user per sweep, listing all their open fixtures.
- * No-ops unless RESEND_API_KEY and EMAIL_FROM are configured. Each fixture is
- * claimed via reminderSentAt before sending, so a fixture only ever triggers
- * one reminder batch.
+ * Remind league members who haven't predicted fixtures kicking off within the
+ * next 3 hours — via email (Resend) and/or Expo push. One batch per fixture
+ * (claimed via reminderSentAt). Emails no-op without RESEND config; pushes
+ * still go out when device tokens exist.
  */
-export async function sendDeadlineReminders(): Promise<{ sent: number; skipped?: string }> {
-  const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.EMAIL_FROM
-  if (!apiKey || !from) return { sent: 0, skipped: "RESEND_API_KEY / EMAIL_FROM not configured" }
-
+export async function sendDeadlineReminders(): Promise<{
+  sent: number
+  pushSent: number
+  skipped?: string
+}> {
   const now = new Date()
   const windowEnd = new Date(now.getTime() + REMINDER_WINDOW_MS)
 
@@ -52,20 +52,21 @@ export async function sendDeadlineReminders(): Promise<{ sent: number; skipped?:
       },
     },
   })
-  if (due.length === 0) return { sent: 0 }
+  if (due.length === 0) return { sent: 0, pushSent: 0 }
 
-  // Claim before sending so a concurrent sweep can't email twice
+  // Claim before sending so a concurrent sweep can't remind twice
   await prisma.fixture.updateMany({
     where: { id: { in: due.map((f) => f.id) }, reminderSentAt: null },
     data: { reminderSentAt: now },
   })
 
-  const byUser = new Map<string, { email: string; displayName: string; fixtures: ReminderFixture[] }>()
+  const byUser = new Map<
+    string,
+    { email: string; displayName: string; fixtures: ReminderFixture[] }
+  >()
   for (const f of due) {
     const predicted = new Set(f.predictions.map((p) => p.userId))
     const fixture: ReminderFixture = { ...f, competitionName: f.competition.name }
-    // A user in several leagues on this competition appears once — the map
-    // dedupes, and a fixture is only added on their first appearance
     const seenForFixture = new Set<string>()
     for (const league of f.competition.leagues) {
       for (const { user } of league.memberships) {
@@ -82,35 +83,69 @@ export async function sendDeadlineReminders(): Promise<{ sent: number; skipped?:
     }
   }
 
+  const apiKey = process.env.RESEND_API_KEY
+  const from = process.env.EMAIL_FROM
   const appUrl = process.env.AUTH_URL ?? ""
   let sent = 0
+  let emailSkipped: string | undefined
 
-  for (const [, { email, displayName, fixtures }] of byUser) {
-    const rows = fixtures
-      .map(
-        (f) =>
-          `<li><strong>${f.homeTeam} vs ${f.awayTeam}</strong> — kicks off ${f.kickoffTime.toLocaleString(
-            "en-GB",
-            { timeZone: "Europe/London", weekday: "short", hour: "2-digit", minute: "2-digit" },
-          )} (${f.competitionName} · ${f.round})</li>`,
-      )
-      .join("")
+  if (!apiKey || !from) {
+    emailSkipped = "RESEND_API_KEY / EMAIL_FROM not configured"
+  } else {
+    for (const [, { email, displayName, fixtures }] of byUser) {
+      const rows = fixtures
+        .map(
+          (f) =>
+            `<li><strong>${f.homeTeam} vs ${f.awayTeam}</strong> — kicks off ${f.kickoffTime.toLocaleString(
+              "en-GB",
+              { timeZone: "Europe/London", weekday: "short", hour: "2-digit", minute: "2-digit" },
+            )} (${f.competitionName} · ${f.round})</li>`,
+        )
+        .join("")
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from,
-        to: email,
-        subject: `⚽ ${fixtures.length} prediction${fixtures.length === 1 ? "" : "s"} closing soon!`,
-        html: `<p>Hi ${displayName},</p>
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from,
+          to: email,
+          subject: `⚽ ${fixtures.length} prediction${fixtures.length === 1 ? "" : "s"} closing soon!`,
+          html: `<p>Hi ${displayName},</p>
 <p>You haven't predicted these fixtures yet, and they lock at kickoff:</p>
 <ul>${rows}</ul>
 <p><a href="${appUrl}">Make your picks now</a> before the deadline! 🏆</p>`,
-      }),
-    })
-    if (res.ok) sent++
+        }),
+      })
+      if (res.ok) sent++
+    }
   }
 
-  return { sent }
+  const userIds = [...byUser.keys()]
+  const devices =
+    userIds.length === 0
+      ? []
+      : await prisma.mobileDeviceToken.findMany({
+          where: { userId: { in: userIds } },
+          select: { userId: true, expoPushToken: true },
+        })
+
+  const pushMessages = devices.map((d) => {
+    const entry = byUser.get(d.userId)!
+    const n = entry.fixtures.length
+    const first = entry.fixtures[0]!
+    const body =
+      n === 1
+        ? `${first.homeTeam} vs ${first.awayTeam} locks soon`
+        : `${n} fixtures lock soon — make your picks`
+    return {
+      to: d.expoPushToken,
+      title: "Predictions closing soon",
+      body,
+      data: { screen: "predictions" },
+    }
+  })
+
+  const { sent: pushSent } = await sendExpoPush(pushMessages)
+
+  return { sent, pushSent, skipped: emailSkipped }
 }
