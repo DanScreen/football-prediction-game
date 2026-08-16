@@ -14,7 +14,7 @@ export default async function HostFixturesPage() {
         <h1 className="text-2xl font-bold text-ink">Fixtures</h1>
         <Link
           href="/host/fixtures/new"
-          className="bg-pitch text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-pitch-deep transition-colors"
+          className="bg-pitch text-pitch-on px-4 py-2 rounded-lg font-semibold text-sm hover:bg-pitch-deep transition-colors"
         >
           + Add Fixture
         </Link>
@@ -90,9 +90,9 @@ export default async function HostFixturesPage() {
 
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { style: string; label: string }> = {
-    SCHEDULED: { style: "bg-blue-100 text-blue-700", label: "📅 Scheduled" },
-    AWAITING_RESULT: { style: "bg-yellow-100 text-yellow-700", label: "🟨 Awaiting Result" },
-    COMPLETED: { style: "bg-green-100 text-green-700", label: "✅ Completed" },
+    SCHEDULED: { style: "bg-info-tint text-info", label: "📅 Scheduled" },
+    AWAITING_RESULT: { style: "bg-clock-tint text-clock", label: "🟨 Awaiting Result" },
+    COMPLETED: { style: "bg-good-tint text-good", label: "✅ Completed" },
   }
   const { style, label } = config[status] ?? { style: "bg-chip text-ink-muted", label: status }
   return (

@@ -30,7 +30,7 @@ export default async function DashboardPage() {
           </p>
           <Link
             href="/leagues"
-            className="inline-block bg-pitch text-white px-6 py-3 rounded-xl font-semibold shadow-card hover:bg-pitch-deep transition-colors"
+            className="inline-block bg-pitch text-pitch-on px-6 py-3 rounded-xl font-semibold shadow-card hover:bg-pitch-deep transition-colors"
           >
             Get Started →
           </Link>
@@ -273,7 +273,7 @@ export default async function DashboardPage() {
                       })}
                     </p>
                     {f.proposedHomeScore === null && (
-                      <span className="shrink-0 text-xs font-semibold text-red-500">🔒 Locked</span>
+                      <span className="shrink-0 text-xs font-semibold text-bad">🔒 Locked</span>
                     )}
                   </div>
 

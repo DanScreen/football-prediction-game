@@ -21,7 +21,7 @@ export default async function HostImportPage() {
       </p>
 
       {!apiEnabled && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 mb-6 text-sm text-yellow-800">
+        <div className="bg-clock-tint border border-clock-line rounded-lg px-4 py-3 mb-6 text-sm text-clock">
           <strong>FOOTBALL_DATA_API_KEY not set.</strong> Add your free API key from{" "}
           <span className="font-mono">football-data.org</span> to <span className="font-mono">.env.local</span>,
           or add fixtures manually from the{" "}

@@ -26,7 +26,7 @@ export default function PredictionInput({ fixtureId, savedHome, savedAway }: Pro
       <button
         type="submit"
         disabled={pending}
-        className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-pitch text-white shadow-card hover:bg-pitch-deep disabled:opacity-50 transition-colors"
+        className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-pitch text-pitch-on shadow-card hover:bg-pitch-deep disabled:opacity-50 transition-colors"
       >
         {pending ? "…" : hasSaved ? "Update" : "Save"}
       </button>
@@ -35,7 +35,7 @@ export default function PredictionInput({ fixtureId, savedHome, savedAway }: Pro
         <span className="text-xs text-pitch-deep font-medium animate-pop">✓ Saved</span>
       )}
       {state.error && (
-        <span className="text-xs text-red-500">{state.error}</span>
+        <span className="text-xs text-bad">{state.error}</span>
       )}
     </form>
   )

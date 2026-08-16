@@ -40,21 +40,21 @@ export default function ConfirmResultForm({
     <div className="space-y-4">
       {/* API Lookup Panel */}
       {apiEnabled && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
-          <h2 className="font-semibold text-blue-900 mb-3">Result Lookup</h2>
+        <div className="bg-info-tint border border-info-line rounded-xl p-5">
+          <h2 className="font-semibold text-info mb-3">Result Lookup</h2>
 
           {proposed && !isEditing ? (
             // Show proposed result with Accept / Edit / Retry
             <div>
-              <p className="text-blue-700 text-sm mb-1">Result found:</p>
-              <p className="text-3xl font-bold text-blue-900 text-center tracking-wide mb-1">
+              <p className="text-info text-sm mb-1">Result found:</p>
+              <p className="text-3xl font-bold text-info text-center tracking-wide mb-1">
                 {proposed.homeScore} – {proposed.awayScore}
               </p>
-              <p className="text-center text-blue-600 text-xs mb-4">
+              <p className="text-center text-info text-xs mb-4">
                 {homeTeam} vs {awayTeam}
               </p>
               {confirmState.error && (
-                <p className="text-red-600 text-sm mb-3">{confirmState.error}</p>
+                <p className="text-bad text-sm mb-3">{confirmState.error}</p>
               )}
               <div className="flex gap-2">
                 <form action={confirmAction} className="flex-1">
@@ -65,7 +65,7 @@ export default function ConfirmResultForm({
                   <button
                     type="submit"
                     disabled={confirmPending}
-                    className="w-full bg-pitch text-white py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
+                    className="w-full bg-pitch text-pitch-on py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
                   >
                     {confirmPending ? "Saving…" : "✓ Accept"}
                   </button>
@@ -87,7 +87,7 @@ export default function ConfirmResultForm({
                   <button
                     type="submit"
                     disabled={lookupPending}
-                    className="border border-blue-300 text-blue-700 py-2 px-3 rounded-lg font-semibold text-sm hover:bg-blue-100 disabled:opacity-50 transition-colors"
+                    className="border border-info-line text-info py-2 px-3 rounded-lg font-semibold text-sm hover:bg-info-tint disabled:opacity-50 transition-colors"
                   >
                     Retry
                   </button>
@@ -97,7 +97,7 @@ export default function ConfirmResultForm({
           ) : isEditing ? (
             // Editable scores
             <div>
-              <p className="text-blue-700 text-sm mb-3">Edit the result:</p>
+              <p className="text-info text-sm mb-3">Edit the result:</p>
               <form action={confirmAction}>
                 <input type="hidden" name="fixtureId" value={fixtureId} />
                 <input type="hidden" name="source" value="MANUAL" />
@@ -110,7 +110,7 @@ export default function ConfirmResultForm({
                       min={0}
                       value={editState!.home}
                       onChange={(e) => setEditState((s) => s && { ...s, home: e.target.value })}
-                      className="w-full border border-line-strong rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-line-strong rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-info"
                     />
                   </div>
                   <span className="text-ink-faint font-bold pb-2">–</span>
@@ -122,18 +122,18 @@ export default function ConfirmResultForm({
                       min={0}
                       value={editState!.away}
                       onChange={(e) => setEditState((s) => s && { ...s, away: e.target.value })}
-                      className="w-full border border-line-strong rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-line-strong rounded-lg px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-info"
                     />
                   </div>
                 </div>
                 {confirmState.error && (
-                  <p className="text-red-600 text-sm mb-3">{confirmState.error}</p>
+                  <p className="text-bad text-sm mb-3">{confirmState.error}</p>
                 )}
                 <div className="flex gap-2">
                   <button
                     type="submit"
                     disabled={confirmPending}
-                    className="flex-1 bg-pitch text-white py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
+                    className="flex-1 bg-pitch text-pitch-on py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
                   >
                     {confirmPending ? "Saving…" : "Confirm"}
                   </button>
@@ -151,7 +151,7 @@ export default function ConfirmResultForm({
             // Initial lookup button
             <div>
               {lookupState.error && (
-                <p className="text-red-600 text-sm mb-3">{lookupState.error}</p>
+                <p className="text-bad text-sm mb-3">{lookupState.error}</p>
               )}
               <form action={lookupAction}>
                 <input type="hidden" name="fixtureId" value={fixtureId} />
@@ -172,7 +172,7 @@ export default function ConfirmResultForm({
       <div className="bg-surface border border-line rounded-xl p-5">
         <h2 className="font-semibold text-ink mb-3">Manual Entry</h2>
         {!apiEnabled && confirmState.error && (
-          <p className="text-red-600 text-sm mb-3">{confirmState.error}</p>
+          <p className="text-bad text-sm mb-3">{confirmState.error}</p>
         )}
         <form action={confirmAction}>
           <input type="hidden" name="fixtureId" value={fixtureId} />
@@ -201,12 +201,12 @@ export default function ConfirmResultForm({
             </div>
           </div>
           {apiEnabled && confirmState.error && !proposed && (
-            <p className="text-red-600 text-sm mb-3">{confirmState.error}</p>
+            <p className="text-bad text-sm mb-3">{confirmState.error}</p>
           )}
           <button
             type="submit"
             disabled={confirmPending}
-            className="w-full bg-pitch text-white py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
+            className="w-full bg-pitch text-pitch-on py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
           >
             {confirmPending ? "Saving…" : "Save Result"}
           </button>

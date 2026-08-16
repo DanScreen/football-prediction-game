@@ -44,7 +44,7 @@ export default async function HostResultsPage() {
             <form action={acceptAllAction}>
               <button
                 type="submit"
-                className="rounded-lg bg-pitch px-4 py-2 text-sm font-semibold text-white shadow-card hover:bg-pitch-deep transition-colors"
+                className="rounded-lg bg-pitch px-4 py-2 text-sm font-semibold text-pitch-on shadow-card hover:bg-pitch-deep transition-colors"
               >
                 Accept All ({proposedCount})
               </button>

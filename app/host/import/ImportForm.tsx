@@ -81,7 +81,7 @@ export default function ImportForm({
                   onClick={() => setRounds(n)}
                   className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${
                     rounds === n
-                      ? "bg-pitch text-white border-pitch"
+                      ? "bg-pitch text-pitch-on border-pitch"
                       : "bg-surface text-ink-mid border-line-strong hover:border-ink-faint"
                   }`}
                 >
@@ -94,7 +94,7 @@ export default function ImportForm({
             </p>
           </div>
 
-          {fetchState.error && <p className="text-red-600 text-sm">{fetchState.error}</p>}
+          {fetchState.error && <p className="text-bad text-sm">{fetchState.error}</p>}
 
           <button
             type="submit"
@@ -148,7 +148,7 @@ export default function ImportForm({
           </div>
 
           {confirmState.error && (
-            <p className="text-red-600 text-sm mb-3">{confirmState.error}</p>
+            <p className="text-bad text-sm mb-3">{confirmState.error}</p>
           )}
 
           <form action={confirmAction}>
@@ -157,7 +157,7 @@ export default function ImportForm({
             <button
               type="submit"
               disabled={confirmPending || selectedFixtures.length === 0}
-              className="w-full bg-pitch text-white py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
+              className="w-full bg-pitch text-pitch-on py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
             >
               {confirmPending
                 ? "Importing…"

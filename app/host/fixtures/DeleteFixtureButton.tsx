@@ -12,7 +12,7 @@ export default function DeleteFixtureButton({ id, label }: { id: string; label: 
     <button
       type="button"
       onClick={handleDelete}
-      className="text-red-500 hover:underline font-medium"
+      className="text-bad hover:underline font-medium"
     >
       Delete
     </button>

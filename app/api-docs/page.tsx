@@ -114,9 +114,9 @@ export default async function ApiDocsPage() {
         </pre>
       </section>
 
-      <section className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <h2 className="text-sm font-semibold text-amber-900 mb-1">Notes</h2>
-        <ul className="text-xs text-amber-800 space-y-1 list-disc pl-4">
+      <section className="bg-clock-tint border border-clock-line rounded-xl p-4">
+        <h2 className="text-sm font-semibold text-clock mb-1">Notes</h2>
+        <ul className="text-xs text-clock space-y-1 list-disc pl-4">
           <li>Predictions lock at kickoff — submit (or update) any time before then.</li>
           <li>One prediction per fixture; POSTing again overwrites your previous pick.</li>
           <li>Keep your key secret — anyone holding it can submit picks as you.</li>
@@ -140,7 +140,7 @@ function Endpoint({
       <p className="font-mono text-sm mb-1.5">
         <span
           className={`inline-block w-14 text-center text-xs font-bold rounded px-1.5 py-0.5 mr-2 ${
-            method === "GET" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
+            method === "GET" ? "bg-info-tint text-info" : "bg-good-tint text-good"
           }`}
         >
           {method}

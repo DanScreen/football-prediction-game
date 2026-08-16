@@ -24,7 +24,7 @@ export default function RequestResultButton({ fixtureId }: { fixtureId: string }
       >
         {pending ? "Checking…" : "🔍 Request result"}
       </button>
-      {state.error && <span className="text-xs text-red-500">{state.error}</span>}
+      {state.error && <span className="text-xs text-bad">{state.error}</span>}
     </form>
   )
 }

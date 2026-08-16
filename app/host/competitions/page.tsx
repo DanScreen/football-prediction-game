@@ -36,7 +36,7 @@ export default async function HostCompetitionsPage() {
                   </span>
                 )}
                 {!c.isActive && (
-                  <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600">
+                  <span className="rounded-full bg-bad-tint px-2 py-0.5 text-xs font-medium text-bad">
                     inactive
                   </span>
                 )}

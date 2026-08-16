@@ -45,7 +45,7 @@ export default function InviteCodeCard({ inviteCode }: { inviteCode: string }) {
                   setConfirming(false)
                 })
               }
-              className="text-sm font-semibold text-red-600 border border-red-300 rounded-lg px-3 py-1.5 hover:bg-red-50 disabled:opacity-50 transition-colors"
+              className="text-sm font-semibold text-bad border border-bad-line rounded-lg px-3 py-1.5 hover:bg-bad-tint disabled:opacity-50 transition-colors"
             >
               {pending ? "Regenerating…" : "Yes, regenerate"}
             </button>
@@ -61,7 +61,7 @@ export default function InviteCodeCard({ inviteCode }: { inviteCode: string }) {
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="text-sm text-ink-muted hover:text-red-600 transition-colors"
+            className="text-sm text-ink-muted hover:text-bad transition-colors"
           >
             Regenerate code…
           </button>

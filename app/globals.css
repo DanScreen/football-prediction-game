@@ -7,7 +7,11 @@
    Neutrals are green-biased (never pure grey). One accent (pitch),
    one urgency colour (clock amber) for deadlines, and a dark
    "board" palette reserved for scoreboard/match-header moments.
-   Semantic colours (red errors, green success) stay Tailwind stock.
+
+   EVERY colour is a token, including the semantic good/bad/info
+   families — nothing in the app should reference a stock Tailwind
+   colour. That's what makes the dark theme below a single edit
+   rather than a `dark:` variant on every element.
    ────────────────────────────────────────────────────────────── */
 
 @theme {
@@ -27,14 +31,31 @@
   --color-line-soft: #eef1ee;
   --color-line-strong: #d7ded9;
 
-  /* Accent — pitch green */
+  /* Accent — pitch green.
+     `pitch` is the accent/text green; `pitch-deep` is its hover
+     partner; `pitch-on` is the text colour that sits ON a pitch
+     fill (white in light, near-black in dark, where the accent
+     inverts to a bright green). */
   --color-pitch: #128749;
   --color-pitch-deep: #0d6b3a;
   --color-pitch-tint: #eaf4ee;
+  --color-pitch-on: #ffffff;
 
-  /* Deadline urgency */
+  /* Deadline urgency / provisional state */
   --color-clock: #b45309;
   --color-clock-tint: #fdf3e7;
+  --color-clock-line: #f0d3a8;
+
+  /* Semantic — success / error / partial-credit */
+  --color-good: #15803d;
+  --color-good-tint: #dcfce7;
+  --color-good-line: #bbf7d0;
+  --color-bad: #b91c1c;
+  --color-bad-tint: #fee2e2;
+  --color-bad-line: #fecaca;
+  --color-info: #1d4ed8;
+  --color-info-tint: #dbeafe;
+  --color-info-line: #bfdbfe;
 
   /* Broadcast board (scoreboard moments only) */
   --color-board: #0a1020;
@@ -49,6 +70,68 @@
 
   --shadow-card: 0 1px 2px rgb(16 24 20 / 0.04);
   --shadow-raised: 0 1px 3px rgb(16 24 20 / 0.08), 0 4px 12px rgb(16 24 20 / 0.06);
+}
+
+/* ── Dark theme ──────────────────────────────────────────────
+   Follows the OS setting. Only the token VALUES change; every
+   utility in the app resolves through these variables, so no
+   component needs a dark-mode branch.
+
+   Two things genuinely invert rather than darken:
+   - `pitch` brightens (it must read as text on a dark ground), so
+     `pitch-on` flips to near-black for text sitting on a pitch fill.
+   - `pitch-deep` becomes *lighter* than `pitch`, because hover
+     should still move toward the light in a dark theme.
+   ──────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-ground: #0e1411;
+    --color-surface: #151d19;
+    --color-chip: #1e2823;
+
+    --color-ink: #e8eeea;
+    --color-ink-mid: #b9c5be;
+    --color-ink-muted: #8c9a92;
+    --color-ink-faint: #63706a;
+
+    --color-line: #263029;
+    --color-line-soft: #1d2621;
+    --color-line-strong: #36443d;
+
+    --color-pitch: #45c47d;
+    --color-pitch-deep: #6ad698;
+    --color-pitch-tint: #12291d;
+    --color-pitch-on: #04140b;
+
+    --color-clock: #e8a33d;
+    --color-clock-tint: #2c2013;
+    --color-clock-line: #4a3418;
+
+    --color-good: #4ade80;
+    --color-good-tint: #10281a;
+    --color-good-line: #1e462f;
+    --color-bad: #f87171;
+    --color-bad-tint: #2b1414;
+    --color-bad-line: #4a2020;
+    --color-info: #60a5fa;
+    --color-info-tint: #131f37;
+    --color-info-line: #1f3358;
+
+    /* The board is already dark; nudge it deeper so it still reads
+       as a raised panel against the dark ground. */
+    --color-board: #05090f;
+    --color-board-panel: #0c1421;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-raised: 0 1px 3px rgb(0 0 0 / 0.5), 0 4px 12px rgb(0 0 0 / 0.4);
+  }
+}
+
+/* Tells the browser to theme native UI — form controls, scrollbars, and
+   crucially the date/time pickers in the host fixture forms. Without this
+   they render as light widgets on a dark page. */
+:root {
+  color-scheme: light dark;
 }
 
 body {

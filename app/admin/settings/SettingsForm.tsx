@@ -21,12 +21,12 @@ export default function SettingsForm({ defaultValues }: Props) {
   return (
     <form action={formAction} className="space-y-5 max-w-lg">
       {state.error && (
-        <p className="text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm">
+        <p className="text-bad bg-bad-tint border border-bad-line rounded-lg px-4 py-3 text-sm">
           {state.error}
         </p>
       )}
       {state.success && !state.error && (
-        <p className="text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm">
+        <p className="text-good bg-good-tint border border-good-line rounded-lg px-4 py-3 text-sm">
           ✓ Settings saved.
         </p>
       )}
@@ -43,7 +43,7 @@ export default function SettingsForm({ defaultValues }: Props) {
         />
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+      <div className="bg-clock-tint border border-clock-line rounded-xl p-4 space-y-3">
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -76,7 +76,7 @@ export default function SettingsForm({ defaultValues }: Props) {
       <button
         type="submit"
         disabled={pending}
-        className="bg-pitch text-white px-6 py-2 rounded-lg font-semibold hover:bg-pitch disabled:opacity-50 transition-colors"
+        className="bg-pitch text-pitch-on px-6 py-2 rounded-lg font-semibold hover:bg-pitch disabled:opacity-50 transition-colors"
       >
         {pending ? "Saving…" : "Save Settings"}
       </button>

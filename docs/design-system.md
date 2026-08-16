@@ -15,9 +15,19 @@ colours. The families:
 | Surfaces | `ground`, `surface`, `chip` | Page bg, cards, subtle fills |
 | Ink | `ink`, `ink-mid`, `ink-muted`, `ink-faint` | Text hierarchy |
 | Lines | `line`, `line-soft`, `line-strong` | Borders/dividers |
-| Accent (pitch) | `pitch`, `pitch-deep`, `pitch-tint` (#128749) | Primary green accent |
-| Deadline (clock) | `clock`, `clock-tint` | **Amber** — deadlines **and provisional** state |
+| Accent (pitch) | `pitch`, `pitch-deep`, `pitch-tint`, `pitch-on` | Primary green accent |
+| Deadline (clock) | `clock`, `clock-tint`, `clock-line` | **Amber** — deadlines **and provisional** state |
+| Semantic | `good`, `bad`, `info` (each with `-tint` and `-line`) | Success / error / partial-credit |
 | Scoreboard (board) | `board`, `board-panel`, `board-fore`, `board-muted`, `board-gold`, `board-cyan` | Navy scoreboard palette |
+
+**There are no stock Tailwind colours in the app.** `bg-red-50`, `text-green-700` and
+friends were swept out in favour of the `good`/`bad`/`info` families — that is what
+makes the dark theme a single edit instead of a `dark:` variant on every element. If
+you find yourself reaching for a numbered Tailwind colour, add or reuse a token instead.
+
+- **`pitch-on`** is the text colour that sits *on* a pitch fill. Use it for button
+  labels rather than `text-white`: in dark mode the accent inverts to a bright green
+  and the label has to go near-black to stay legible.
 
 - **Amber (`clock`) means "provisional / awaiting"** throughout — provisional scores,
   provisional points badges (`+X prov.`), "awaiting confirmation". Keep this consistent.
@@ -25,6 +35,25 @@ colours. The families:
   code blocks, and proposed-score chips.
 - **`.score-digits`** class = Geist Mono bold, tabular — used for scores, countdowns,
   and stat tiles. Reach for it wherever digits should line up.
+
+## Dark theme
+
+The app follows the **OS setting** via `@media (prefers-color-scheme: dark)` in
+`app/globals.css` — there is no in-app toggle. Only the token *values* change inside
+that block; no component carries a dark-mode branch.
+
+Two tokens genuinely invert rather than just darken:
+
+- **`pitch` brightens** (it has to read as text on a dark ground), so `pitch-on` flips
+  to near-black for labels sitting on a pitch fill.
+- **`pitch-deep` becomes lighter than `pitch`**, because a hover state should still
+  move toward the light in a dark theme.
+
+`:root { color-scheme: light dark }` is set so native UI — scrollbars, and crucially the
+date/time pickers in the host fixture forms — themes itself too.
+
+When adding UI: use tokens and it is dark-ready for free. If you must hardcode a colour,
+you own styling both themes.
 
 ## Type
 
@@ -41,7 +70,7 @@ Small celebration/interaction touches, used sparingly:
 
 ## Rules for UI work
 
-- Style **both** light and dark where the design isn't deliberately single-theme.
+- **Use tokens, never stock Tailwind colours** — that is what keeps both themes working.
 - Wide content (tables) scrolls inside its own `overflow-x-auto` container; the page
   body never scrolls sideways.
 - Keep the playful bits restrained — the base is quiet; the scoreboard moments are the

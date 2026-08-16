@@ -20,17 +20,17 @@ export default function LoginForm({
   return (
     <form action={formAction} className="space-y-4">
       {registered && (
-        <div className="rounded-md bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm">
+        <div className="rounded-md bg-good-tint border border-good-line text-good px-4 py-3 text-sm">
           Account created! Sign in to continue.
         </div>
       )}
       {reset && (
-        <div className="rounded-md bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm">
+        <div className="rounded-md bg-good-tint border border-good-line text-good px-4 py-3 text-sm">
           Password reset! Sign in with your new password.
         </div>
       )}
       {state.error && (
-        <div className="rounded-md bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+        <div className="rounded-md bg-bad-tint border border-bad-line text-bad px-4 py-3 text-sm">
           {state.error}
         </div>
       )}
@@ -75,7 +75,7 @@ export default function LoginForm({
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-md bg-pitch px-4 py-2 text-sm font-semibold text-white shadow hover:bg-pitch-deep focus:outline-none focus:ring-2 focus:ring-pitch focus:ring-offset-2 disabled:opacity-60 transition-colors"
+        className="w-full rounded-md bg-pitch px-4 py-2 text-sm font-semibold text-pitch-on shadow-card hover:bg-pitch-deep focus:outline-none focus:ring-2 focus:ring-pitch focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-60 transition-colors"
       >
         {isPending ? "Signing in…" : "Sign In"}
       </button>

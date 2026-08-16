@@ -15,7 +15,7 @@ export default function CompetitionForm({ action, defaultValues, submitLabel }: 
   return (
     <form action={formAction} className="space-y-4">
       {state.error && (
-        <p className="text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm">
+        <p className="text-bad bg-bad-tint border border-bad-line rounded-lg px-4 py-3 text-sm">
           {state.error}
         </p>
       )}
@@ -73,7 +73,7 @@ export default function CompetitionForm({ action, defaultValues, submitLabel }: 
       <button
         type="submit"
         disabled={pending}
-        className="bg-pitch text-white px-6 py-2 rounded-lg font-semibold hover:bg-pitch-deep disabled:opacity-50 transition-colors"
+        className="bg-pitch text-pitch-on px-6 py-2 rounded-lg font-semibold hover:bg-pitch-deep disabled:opacity-50 transition-colors"
       >
         {pending ? "Saving…" : submitLabel}
       </button>

@@ -9,9 +9,9 @@ type FormColor = "green" | "yellow" | "red" | "grey"
 
 function formColorClass(c: FormColor) {
   return {
-    green: "bg-green-500",
-    yellow: "bg-yellow-400",
-    red: "bg-red-500",
+    green: "bg-good",
+    yellow: "bg-clock",
+    red: "bg-bad",
     grey: "bg-line",
   }[c]
 }
@@ -99,13 +99,16 @@ export default async function LeaderboardPage() {
   const rankDisplay = (i: number) =>
     i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : ranked[i].rank
 
+  // Podium rows fade from a gold-ish tint down to the plain surface. Tinting by
+  // opacity of one token keeps the ramp readable in both themes — stock oranges
+  // and ambers turned to mud on the dark ground.
   const rowBg = (i: number) =>
     i === 0
-      ? "bg-amber-50 hover:bg-amber-100"
+      ? "bg-clock-tint hover:bg-clock-tint/70"
       : i === 1
         ? "bg-chip/60 hover:bg-chip"
         : i === 2
-          ? "bg-orange-50 hover:bg-orange-100"
+          ? "bg-clock-tint/40 hover:bg-clock-tint/60"
           : "hover:bg-ground"
 
   return (
@@ -215,9 +218,9 @@ export default async function LeaderboardPage() {
               <span className="font-semibold text-ink-mid">Form key:</span>
               {(
                 [
-                  ["bg-green-500", ">40% of pts"],
-                  ["bg-yellow-400", "21–40%"],
-                  ["bg-red-500", "≤20%"],
+                  ["bg-good", ">40% of pts"],
+                  ["bg-clock", "21–40%"],
+                  ["bg-bad", "≤20%"],
                   ["bg-line", "No picks"],
                 ] as const
               ).map(([cls, label]) => (

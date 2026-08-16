@@ -50,12 +50,12 @@ export default async function LeaguesPage() {
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="font-bold text-ink truncate">{m.league.name}</p>
                   {m.role === "COMMISSIONER" && (
-                    <span className="text-xs bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-full px-2 py-0.5 font-medium shrink-0">
+                    <span className="text-xs bg-clock-tint text-clock border border-clock-line rounded-full px-2 py-0.5 font-medium shrink-0">
                       Commissioner
                     </span>
                   )}
                   {m.leagueId === activeLeagueId && (
-                    <span className="text-xs bg-green-100 text-green-700 border border-green-200 rounded-full px-2 py-0.5 font-medium shrink-0">
+                    <span className="text-xs bg-good-tint text-good border border-good-line rounded-full px-2 py-0.5 font-medium shrink-0">
                       Active
                     </span>
                   )}

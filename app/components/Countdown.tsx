@@ -30,7 +30,7 @@ export default function Countdown({ kickoffTime }: { kickoffTime: string }) {
   return (
     <span
       className={`score-digits inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-sm ${
-        locked ? "bg-red-50 text-red-600" : "bg-clock-tint text-clock"
+        locked ? "bg-bad-tint text-bad" : "bg-clock-tint text-clock"
       }`}
     >
       {locked ? "🔒 Locked" : label}

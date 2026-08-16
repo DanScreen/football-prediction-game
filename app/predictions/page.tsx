@@ -238,7 +238,7 @@ export default async function MyPredictionsPage() {
                                 <div className="flex flex-col items-start gap-1">
                                   <PointsBadge points={baseScore} />
                                   {baseScore === 3 && (
-                                    <span className="text-xs font-bold text-green-700 bg-green-100 border border-green-200 rounded-full px-2 py-0.5 animate-pop whitespace-nowrap">
+                                    <span className="text-xs font-bold text-good bg-good-tint border border-good-line rounded-full px-2 py-0.5 animate-pop whitespace-nowrap">
                                       Nailed it! ⚽
                                     </span>
                                   )}
@@ -269,11 +269,11 @@ export default async function MyPredictionsPage() {
 function PointsBadge({ points }: { points: number }) {
   const color =
     points === 3
-      ? "bg-green-100 text-green-700 border border-green-200"
+      ? "bg-good-tint text-good border border-good-line"
       : points === 1.5
-        ? "bg-blue-100 text-blue-700 border border-blue-200"
+        ? "bg-info-tint text-info border border-info-line"
         : points === 1
-          ? "bg-yellow-100 text-yellow-700 border border-yellow-200"
+          ? "bg-clock-tint text-clock border border-clock-line"
           : "bg-chip text-ink-muted border border-line"
 
   return (

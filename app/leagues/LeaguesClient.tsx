@@ -65,7 +65,7 @@ export default function LeaguesClient({
                     key={c.id}
                     className={`flex flex-col items-center gap-1.5 p-4 border-2 rounded-xl cursor-pointer transition-colors ${
                       selectedComp === c.id
-                        ? "border-pitch bg-green-50"
+                        ? "border-pitch bg-good-tint"
                         : "border-line hover:border-line-strong"
                     }`}
                   >
@@ -91,12 +91,12 @@ export default function LeaguesClient({
               — just pick your competition and start predicting.
             </p>
 
-            {createState.error && <p className="text-red-600 text-sm">{createState.error}</p>}
+            {createState.error && <p className="text-bad text-sm">{createState.error}</p>}
 
             <button
               type="submit"
               disabled={createPending || !selectedComp}
-              className="w-full bg-pitch text-white py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
+              className="w-full bg-pitch text-pitch-on py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
             >
               {createPending ? "Creating league…" : "Create League"}
             </button>
@@ -116,11 +116,11 @@ export default function LeaguesClient({
             <p className="text-xs text-ink-muted">
               Ask your league commissioner for the invite code.
             </p>
-            {joinState.error && <p className="text-red-600 text-sm">{joinState.error}</p>}
+            {joinState.error && <p className="text-bad text-sm">{joinState.error}</p>}
             <button
               type="submit"
               disabled={joinPending}
-              className="w-full bg-pitch text-white py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
+              className="w-full bg-pitch text-pitch-on py-2 rounded-lg font-semibold text-sm hover:bg-pitch disabled:opacity-50 transition-colors"
             >
               {joinPending ? "Joining…" : "Join League"}
             </button>

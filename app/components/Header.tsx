@@ -87,7 +87,7 @@ export default async function Header() {
               </Link>
               <Link
                 href="/register"
-                className="rounded-lg bg-pitch px-3 py-1.5 text-xs font-semibold text-white shadow-card transition-colors hover:bg-pitch-deep"
+                className="rounded-lg bg-pitch px-3 py-1.5 text-xs font-semibold text-pitch-on shadow-card transition-colors hover:bg-pitch-deep"
               >
                 Register
               </Link>
