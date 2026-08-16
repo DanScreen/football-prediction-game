@@ -27,12 +27,13 @@ to work in the repo. If you're an agent picking this up cold, read
 
 ```bash
 npm install
-cp .env.local.example .env.local   # fill in DATABASE_URL, FOOTBALL_DATA_API_KEY, AUTH_SECRET, ...
+cp .env.local.example .env.local   # fill in FOOTBALL_DATA_API_KEY, AUTH_SECRET, ...
+docker compose up -d               # local Postgres on port 55432
 npx prisma migrate deploy && npx prisma db seed
 npm run dev                        # http://localhost:3000
 ```
 
-Full setup, commands, and the (no-local-Postgres) migration workflow are in
+Full setup, commands, and the offline migration workflow are in
 [docs/development.md](docs/development.md).
 
 ## Tech stack

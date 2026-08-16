@@ -63,6 +63,7 @@ per-league Grand Slam bonus fans out per subscribing league. Full schema in
 |------|---------|
 | `app/page.tsx` | **Predictions** — open fixtures (with inputs), kicked-off picks, settled results |
 | `app/PredictionHistory.tsx` | Settled picks grouped by competition + round |
+| `app/FixtureRoundGroup.tsx` | Collapsible gameweek section + `groupByRound()`, shared by Open and Kicked Off |
 | `app/predictions/` | `actions.ts` (the prediction server action) + a permanent redirect to `/` |
 | `app/leaderboard/` | Standings table + form strip |
 | `app/leagues/` | Create/join/switch leagues; competition picker |
@@ -73,13 +74,15 @@ per-league Grand Slam bonus fans out per subscribing league. Full schema in
 | `app/api/cron/resolve/` | Cron entry point (sweep + reminders) |
 | `app/api/auth/[...nextauth]/` | NextAuth handler |
 | `app/api-docs/` | In-app API reference for bot authors |
+| `app/rules/` | **How it works** — the rules of the game. Public; personalised per league when signed in |
+| `app/error.tsx`, `app/not-found.tsx` | Error boundary (logs rather than renders the message) and 404 |
 | `app/login`, `app/register`, `app/forgot-password`, `app/reset-password/[token]` | Auth pages |
 
 ### Domain logic (`lib/`)
 
 | File | Responsibility |
 |------|----------------|
-| `lib/scoring.ts` | Pure scoring function (`scoreOnePrediction`) |
+| `lib/scoring.ts` | Pure scoring: `scoreOnePrediction`, plus `awardedPoints` (the banker multiplier) |
 | `lib/results.ts` | `confirmFixtureResult` (score once + Grand Slam fan-out), `acceptAllProposed` |
 | `lib/provisional.ts` | Read-time provisional score/points helpers (never stored) |
 | `lib/leaderboard.ts` | `computeLeaderboard` — shared by the leaderboard page **and** the API |
@@ -87,11 +90,14 @@ per-league Grand Slam bonus fans out per subscribing league. Full schema in
 | `lib/autoImport.ts` | Auto-import upcoming fixtures for active competitions |
 | `lib/footballData.ts` | football-data.org client (fetch fixtures, look up results) |
 | `lib/predictions.ts` | `upsertPrediction` (one canonical prediction per fixture) |
+| `lib/banker.ts` | `setBanker` — one double-points pick per (user, competition, round) |
 | `lib/reminders.ts` | Deadline reminder email fan-out |
 | `lib/passwordReset.ts` / `lib/email.ts` | Password reset flow + Resend send helper |
 | `lib/adminAuth.ts` | `requireSiteAdmin` / `requireCommissioner` |
 | `lib/apiAuth.ts` | API-key auth + league/competition resolution |
 | `lib/activeLeague.ts` | Active-league cookie read/write |
+| `lib/inviteCode.ts` | Invite-code generation/normalisation + invite-link URL builder |
+| `lib/theme.ts` / `lib/theme.server.ts` | Theme constants (client-safe) and the cookie read. **Kept separate on purpose** — merging them breaks the build |
 | `lib/prisma.ts` | Prisma client (Prisma 7 needs an explicit pg adapter) |
 
 ### Other

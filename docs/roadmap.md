@@ -19,10 +19,11 @@ Nothing is currently blocking, and the core product is live. Candidate next work
 
 These are wishlist items, noted for later:
 
-- **Chips** — one-off boosts/wildcards a user can play on a fixture or round (double
-  points, safety net against a wrong score), à la fantasy football. Needs a
-  per-user/per-season budget and a way to flag the active chip on a prediction.
-- **Double-down pick** — each round a user nominates one fixture for double points.
+- **Chips** — one-off boosts/wildcards a user can play on a fixture or round (a safety
+  net against a wrong score, say), à la fantasy football. Needs a per-user/per-season
+  budget and a way to flag the active chip on a prediction. The **banker** shipped on
+  2026-08-16 is the always-available version of this; chips would be the scarce,
+  strategic ones.
 - **Model arena** — a first-class mode pitting AI models/bot strategies against
   humans on the same leaderboard, for comparison and fun.
 - **Downloadable summaries** — end-of-round/season exportable recap (image or PDF)
