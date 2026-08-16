@@ -1,7 +1,7 @@
 import LoginForm from "./LoginForm"
 
 export const metadata = {
-  title: "Sign in — Scorers",
+  title: "Sign in",
   description:
     "Sign in to Scorers, a private football score-prediction game where friends predict match results and compete on a leaderboard.",
 }

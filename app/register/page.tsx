@@ -1,7 +1,7 @@
 import RegisterForm from "./RegisterForm"
 
 export const metadata = {
-  title: "Register — Scorers",
+  title: "Register",
   description:
     "Create your Scorers account. Scorers is a private, invite-only football score-prediction game for friends.",
 }

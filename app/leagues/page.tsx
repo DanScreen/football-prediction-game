@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma"
 import { getActiveLeagueId } from "@/lib/activeLeague"
 import LeaguesClient from "./LeaguesClient"
 
+export const metadata = { title: "My Leagues" }
+
 export default async function LeaguesPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")

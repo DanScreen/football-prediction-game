@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { checkTransitions, acceptAllAction } from "./actions"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
 
+export const metadata = { title: "Results Queue" }
+
 export default async function HostResultsPage() {
   const now = new Date()
   const cutoff = new Date(now.getTime() - RESULT_DELAY_MS)

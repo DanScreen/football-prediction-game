@@ -2,6 +2,8 @@ import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import DeleteFixtureButton from "./DeleteFixtureButton"
 
+export const metadata = { title: "Fixtures" }
+
 export default async function HostFixturesPage() {
   const fixtures = await prisma.fixture.findMany({
     orderBy: { kickoffTime: "asc" },

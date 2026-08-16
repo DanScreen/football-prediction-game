@@ -3,6 +3,8 @@ import { fetchImportProposal, confirmImport } from "./actions"
 import ImportForm from "./ImportForm"
 import { prisma } from "@/lib/prisma"
 
+export const metadata = { title: "Import Fixtures" }
+
 export default async function HostImportPage() {
   const apiEnabled = Boolean(process.env.FOOTBALL_DATA_API_KEY)
 

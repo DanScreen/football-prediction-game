@@ -5,6 +5,8 @@ import { getActiveLeagueId } from "@/lib/activeLeague"
 import { scoreOnePrediction } from "@/lib/scoring"
 import { provisionalScore, provisionalPoints } from "@/lib/provisional"
 
+export const metadata = { title: "My Predictions" }
+
 export default async function MyPredictionsPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")

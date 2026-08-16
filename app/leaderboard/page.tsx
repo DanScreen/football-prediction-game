@@ -5,6 +5,8 @@ import { getActiveLeagueId } from "@/lib/activeLeague"
 import { computeLeaderboard } from "@/lib/leaderboard"
 import { AnimatedPoints } from "./AnimatedPoints"
 
+export const metadata = { title: "Leaderboard" }
+
 type FormColor = "green" | "yellow" | "red" | "grey"
 
 function formColorClass(c: FormColor) {

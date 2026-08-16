@@ -2,7 +2,7 @@ import Link from "next/link"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 
-export const metadata = { title: "API Docs — Football Prediction App" }
+export const metadata = { title: "API Docs" }
 
 const CURL_FIXTURES = `curl -H "Authorization: Bearer YOUR_API_KEY" \\
   "$BASE_URL/api/v1/fixtures?status=open"`

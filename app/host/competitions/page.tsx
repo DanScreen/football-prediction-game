@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma"
 import CompetitionForm from "./CompetitionForm"
 import { createCompetition, updateCompetition } from "./actions"
 
+export const metadata = { title: "Competitions" }
+
 export default async function HostCompetitionsPage() {
   const competitions = await prisma.competition.findMany({
     orderBy: { createdAt: "asc" },

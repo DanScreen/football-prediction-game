@@ -16,7 +16,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Scorers",
+  // `template` appends the brand to every page that sets its own title;
+  // `default` covers pages that don't.
+  title: {
+    default: "Scorers",
+    template: "%s — Scorers",
+  },
   description: "Predict match scores and compete with friends",
 };
 

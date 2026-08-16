@@ -4,6 +4,8 @@ import { getActiveLeagueId } from "@/lib/activeLeague"
 import SettingsForm from "./SettingsForm"
 import InviteCodeCard from "./InviteCodeCard"
 
+export const metadata = { title: "League Settings" }
+
 export default async function SettingsPage() {
   const activeLeagueId = await getActiveLeagueId()
   if (!activeLeagueId) redirect("/leagues")
