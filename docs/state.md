@@ -62,18 +62,22 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Known rough edges
 
-- **⚠️ Google Safe Browsing flag on `scorersonline.uk`** (observed 2026-07-10) —
-  Chrome shows a "Dangerous site" / social-engineering warning. The app is **not
-  compromised** (serves correctly on both the domain and the run.app URL, no injected
-  content); this is a domain-reputation flag, most likely inherited prior use of the
-  purchased `.uk` domain or a new-domain + credential-form heuristic. **Fix:** verify
-  the domain in Google Search Console → Security Issues → Request Review (social-eng
-  reviews clear in ~72h). Interim: the direct Cloud Run URL is a separate domain and
-  unlikely to be flagged. Also hurts Resend email deliverability until cleared.
-  **Mitigation deployed:** login/register/forgot/reset page titles use the "Scorers"
-  brand, and the login/register pages carry a clear "what this site is" explainer to
-  reduce the credential-page phishing false-positive.
-  **Still needed from the owner:** the Search Console verification + review request.
+- **Google Safe Browsing flag on `scorersonline.uk` — appears cleared, not confirmed.**
+  Flagged 2026-07-10 with a Chrome "Dangerous site" / social-engineering warning. The app
+  was never compromised; it was a domain-reputation flag, most likely inherited prior use
+  of the purchased `.uk` domain or a new-domain + credential-form heuristic.
+  **Rechecked 2026-08-16:** the site loads in Chrome with **no interstitial**, and the
+  Safe Browsing transparency report returns "No available data" (i.e. no verdict, which
+  is not a positive all-clear). Treat as resolved unless a warning reappears.
+  **Caveat:** the recheck ran on the owner's own machine, where a warning may have been
+  dismissed back in July and remembered — Chrome suppresses it per-site after a bypass.
+  A clean load on another device or a guest profile would settle it.
+  **If it does reappear:** verify the domain in Google Search Console → Security Issues →
+  Request Review (social-engineering reviews clear in ~72h). It also hurts Resend email
+  deliverability while listed.
+  **Mitigation deployed:** auth page titles use the "Scorers" brand, and login/register
+  carry a plain-English "what this site is" explainer. Since 2026-08-16 that copy is also
+  accurate about open sign-up, which it previously wasn't.
 - Migrations are still **authored offline** (`prisma migrate diff`) rather than against
   a live dev DB — but a local Docker Postgres now exists to verify them against
   (`docker compose up -d`). See [development.md](development.md#local-database).
