@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { upsertPrediction, type PredictionState } from "@/app/predictions/actions"
 
 type Props = {
@@ -14,6 +14,16 @@ export default function PredictionInput({ fixtureId, savedHome, savedAway }: Pro
   const [state, formAction, pending] = useActionState<PredictionState, FormData>(action, {})
 
   const hasSaved = savedHome !== undefined && savedAway !== undefined
+
+  // "✓ Saved" used to stick around forever. Clear it after a moment so the
+  // control returns to a resting state and doesn't imply an unsaved edit is saved.
+  const [showSaved, setShowSaved] = useState(false)
+  useEffect(() => {
+    if (!state.success) return
+    setShowSaved(true)
+    const t = setTimeout(() => setShowSaved(false), 2500)
+    return () => clearTimeout(t)
+  }, [state])
 
   return (
     <form action={formAction} className="flex items-center gap-3">
@@ -31,12 +41,15 @@ export default function PredictionInput({ fixtureId, savedHome, savedAway }: Pro
         {pending ? "…" : hasSaved ? "Update" : "Save"}
       </button>
 
-      {state.success && (
-        <span className="text-xs text-pitch-deep font-medium animate-pop">✓ Saved</span>
-      )}
-      {state.error && (
-        <span className="text-xs text-bad">{state.error}</span>
-      )}
+      {/* Fixed-width, always-present status slot: feedback used to be inserted
+          into the flex row, shoving the inputs sideways as it appeared. */}
+      <span className="w-14 shrink-0 text-xs leading-tight" role="status" aria-live="polite">
+        {state.error ? (
+          <span className="text-bad">{state.error}</span>
+        ) : showSaved ? (
+          <span className="font-medium text-pitch animate-pop">✓ Saved</span>
+        ) : null}
+      </span>
     </form>
   )
 }

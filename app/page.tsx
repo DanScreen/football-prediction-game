@@ -145,6 +145,11 @@ export default async function DashboardPage() {
     return sum + (myPick ? (provisionalPoints(myPick, f) ?? 0) : 0)
   }, 0)
 
+  // The most actionable thing on the page: how many open fixtures still need a
+  // pick, and when the soonest of those kicks off.
+  const missing = open.filter((f) => !f.predictions.some((p) => p.userId === userId))
+  const nextDeadline = missing[0]?.kickoffTime ?? null
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* League header */}
@@ -161,30 +166,64 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {/* Performance card */}
-      {scoredPredictions.length > 0 && (
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
-            <p className="score-digits text-2xl text-ink">
-              {myRank === 1 ? "🥇" : myRank === 2 ? "🥈" : myRank === 3 ? "🥉" : `#${myRank}`}
+      {/* Performance card. Shown from the first round — a new league used to see
+          nothing here at all, which read as a broken page rather than a fresh start. */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
+          <p className="score-digits text-2xl text-ink">
+            {scoredPredictions.length === 0
+              ? "–"
+              : myRank === 1
+                ? "🥇"
+                : myRank === 2
+                  ? "🥈"
+                  : myRank === 3
+                    ? "🥉"
+                    : `#${myRank}`}
+          </p>
+          <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">Rank</p>
+        </div>
+        <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
+          <p className="score-digits text-2xl text-ink">{myPoints}</p>
+          <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">
+            Points
+            {myProvisional > 0 && (
+              <span className="ml-1 normal-case text-clock font-semibold">
+                +{myProvisional} prov.
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
+          <p className="score-digits text-2xl text-ink">{myExact}</p>
+          <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">Exact ⚽</p>
+        </div>
+      </div>
+
+      {scoredPredictions.length === 0 && (
+        <p className="mb-8 text-center text-xs text-ink-muted">
+          Your rank and points appear once the first results are confirmed.
+        </p>
+      )}
+
+      {/* Outstanding predictions — the one thing worth acting on right now. */}
+      {missing.length > 0 && (
+        <div className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-clock-line bg-clock-tint px-4 py-3">
+          <p className="text-sm font-semibold text-clock">
+            {missing.length} fixture{missing.length !== 1 ? "s" : ""} still to predict
+          </p>
+          {nextDeadline && (
+            <p className="text-xs text-clock/90">
+              Next deadline{" "}
+              {new Date(nextDeadline).toLocaleString("en-GB", {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </p>
-            <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">Rank</p>
-          </div>
-          <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
-            <p className="score-digits text-2xl text-ink">{myPoints}</p>
-            <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">
-              Points
-              {myProvisional > 0 && (
-                <span className="ml-1 normal-case text-clock font-semibold">
-                  +{myProvisional} prov.
-                </span>
-              )}
-            </p>
-          </div>
-          <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
-            <p className="score-digits text-2xl text-ink">{myExact}</p>
-            <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">Exact ⚽</p>
-          </div>
+          )}
         </div>
       )}
 
@@ -207,7 +246,11 @@ export default async function DashboardPage() {
             return (
               <div
                 key={f.id}
-                className="bg-surface rounded-xl border border-line shadow-card overflow-hidden"
+                // An amber left edge marks the fixtures the "still to predict"
+                // count is referring to, so the nudge points somewhere.
+                className={`bg-surface rounded-xl border shadow-card overflow-hidden border-l-4 ${
+                  myPick ? "border-line border-l-pitch/40" : "border-clock-line border-l-clock"
+                }`}
               >
                 <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-2.5">
                   <p className="min-w-0 truncate text-xs font-medium text-ink-muted">
