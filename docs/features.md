@@ -110,9 +110,9 @@ above). Three sections, top to bottom:
 - **Results** — settled picks grouped by competition and round, newest first, with the
   round subtotal and any Grand Slam bonus.
 
-Above them: tiles for points (with `+X prov.`), exact count, and how many fixtures are
-still to predict. Rank is deliberately *not* here — it belongs to the Leaderboard, and
-it differs per league.
+Above them, when anything is outstanding: an amber nudge with the count and the next
+deadline. Standing totals (points, exact count, rank) are deliberately *not* here — they
+belong to the Leaderboard, where they can be read per league and against other people.
 
 Whose picks show under Kicked Off: everyone who shares a league with you **on that
 competition**. A league-mate on the World Cup doesn't surface on your Premier League

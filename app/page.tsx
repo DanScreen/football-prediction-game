@@ -1,7 +1,6 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { scoreOnePrediction } from "@/lib/scoring"
 import Link from "next/link"
 import Countdown from "@/app/components/Countdown"
 import PredictionInput from "@/app/components/PredictionInput"
@@ -123,27 +122,6 @@ export default async function PredictionsPage() {
     bonusByRound.set(key, (bonusByRound.get(key) ?? 0) + b.points)
   }
 
-  const confirmedPoints =
-    myPredictions.reduce((sum, p) => sum + (p.pointsAwarded ?? 0), 0) +
-    bonusAwards.reduce((sum, b) => sum + b.points, 0)
-
-  const provisional = myPredictions.reduce(
-    (sum, p) => sum + (provisionalPoints(p, p.fixture) ?? 0),
-    0,
-  )
-
-  const exactCount = myPredictions.filter(
-    (p) =>
-      p.fixture.actualHomeScore !== null &&
-      p.fixture.actualAwayScore !== null &&
-      scoreOnePrediction(
-        p.predictedHomeScore,
-        p.predictedAwayScore,
-        p.fixture.actualHomeScore,
-        p.fixture.actualAwayScore,
-      ) === 3,
-  ).length
-
   const missing = open.filter((f) => !f.predictions.some((p) => p.userId === userId))
   const nextDeadline = missing[0]?.kickoffTime ?? null
 
@@ -182,26 +160,6 @@ export default async function PredictionsPage() {
           ? `${competitionIds.length} competitions · your picks count in every league you're in`
           : memberships[0].league.competition.name}
       </p>
-
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
-          <p className="score-digits text-2xl text-ink">{confirmedPoints}</p>
-          <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">
-            Points
-            {provisional > 0 && (
-              <span className="ml-1 normal-case text-clock font-semibold">+{provisional} prov.</span>
-            )}
-          </p>
-        </div>
-        <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
-          <p className="score-digits text-2xl text-ink">{exactCount}</p>
-          <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">Exact ⚽</p>
-        </div>
-        <div className="bg-surface rounded-xl border border-line shadow-card px-4 py-3 text-center">
-          <p className="score-digits text-2xl text-ink">{missing.length}</p>
-          <p className="text-xs text-ink-muted mt-1 font-medium uppercase tracking-wide">To predict</p>
-        </div>
-      </div>
 
       {missing.length > 0 && nextDeadline && (
         <div className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-clock-line bg-clock-tint px-4 py-3">

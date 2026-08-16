@@ -6,6 +6,11 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-16 — Drop the stat tiles from Predictions
+The Points / Exact / To predict tiles came off the top of `/`. Points and exact count are
+standings data that the Leaderboard already shows per league and in context; "to predict"
+duplicated the amber nudge directly below it and the per-gameweek badges. The nudge stays.
+
 ## 2026-08-16 — Group fixtures into gameweeks
 Open and Kicked Off fixtures are now grouped by round instead of one flat list — a full
 Premier League round is 10 fixtures and several import at once, so the page ran past 20
