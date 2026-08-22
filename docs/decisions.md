@@ -262,6 +262,16 @@ Host/commissioner flows remain web-only for v1.
 
 ---
 
+## 2026-08-22 — Split Predictions and Results tabs
+
+**Predictions** (`/`) = Open + Kicked Off (active pick flow). **Results** (`/results`) =
+settled fixtures with every league-mate's pick. Mobile gets a fifth tab bar item.
+**Why:** the single combined page grew without bound as settled rounds accumulated and
+each fixture now lists every league-mate; splitting active vs archive matches how
+people use the app. Open fixtures stay private until kickoff.
+
+---
+
 ## 2026-08-22 — Results section shows all league-mate picks
 
 The Predictions **Results** section lists every league-mate's settled pick per fixture,

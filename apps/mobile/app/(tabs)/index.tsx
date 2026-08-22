@@ -28,11 +28,16 @@ function draftFrom(f: MobileFixture): Draft {
   }
 }
 
+async function fetchLiveFixtures(): Promise<MobileFixture[]> {
+  const [open, locked] = await Promise.all([fetchFixtures("open"), fetchFixtures("locked")])
+  return [...open, ...locked]
+}
+
 export default function PredictionsScreen() {
   const { user } = useAuth()
   const t = useTokens()
   const { data, setData, error, loading, refreshing, reload } = useAsyncData(
-    () => fetchFixtures("all"),
+    fetchLiveFixtures,
     [],
   )
   const [drafts, setDrafts] = useState<Record<string, Draft>>({})
@@ -57,10 +62,6 @@ export default function PredictionsScreen() {
       ),
     [data],
   )
-  const completed = useMemo(
-    () => (data ?? []).filter((f) => f.status === "COMPLETED"),
-    [data],
-  )
 
   async function save(f: MobileFixture) {
     const d = getDraft(f)
@@ -79,7 +80,7 @@ export default function PredictionsScreen() {
         awayScore,
         isBanker: d.isBanker,
       })
-      const next = await fetchFixtures("all")
+      const next = await fetchLiveFixtures()
       setData(next)
       setDrafts((prev) => {
         const copy = { ...prev }
@@ -113,9 +114,10 @@ export default function PredictionsScreen() {
 
         {loading && !data ? <ActivityIndicator color={t.pitch} /> : null}
 
-        {!loading && open.length === 0 && locked.length === 0 && completed.length === 0 ? (
+        {!loading && open.length === 0 && locked.length === 0 ? (
           <Text style={{ color: t.inkMuted, lineHeight: 22 }}>
-            No fixtures yet. Join a league that follows an active competition, then pull to refresh.
+            No fixtures to predict right now. Pull to refresh, or check the Results tab for
+            settled rounds.
           </Text>
         ) : null}
 
@@ -164,27 +166,6 @@ export default function PredictionsScreen() {
             ))}
           </Section>
         ) : null}
-
-        {completed.length > 0 ? (
-          <Section title="Results">
-            {completed.slice(0, 30).map((f) => (
-              <FixtureCard
-                key={f.id}
-                fixture={f}
-                viewerUserId={user?.id}
-                editable={false}
-                home=""
-                away=""
-                isBanker={false}
-                saving={false}
-                onChangeHome={() => {}}
-                onChangeAway={() => {}}
-                onToggleBanker={() => {}}
-                onSave={() => {}}
-              />
-            ))}
-          </Section>
-        ) : null}
       </ScrollView>
     </Screen>
   )
@@ -193,7 +174,7 @@ export default function PredictionsScreen() {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   const t = useTokens()
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 10, marginBottom: 20 }}>
       <Text style={{ fontSize: 13, fontWeight: "700", color: t.inkMuted, letterSpacing: 0.6 }}>
         {title.toUpperCase()}
       </Text>

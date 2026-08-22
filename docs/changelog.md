@@ -6,6 +6,13 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-22 — Split Predictions and Results into separate tabs
+
+Predictions (`/`) now holds **Open** and **Kicked Off** only; settled history moved to
+**Results** (`/results`). The combined page had grown unbounded once every league-mate's
+pick appeared on each settled fixture. Mobile mirrors the split with a fifth tab bar
+destination. See [features.md](features.md#navigation--shell).
+
 ## 2026-08-22 — Results show every league-mate's picks (web + mobile)
 The Predictions **Results** section now lists all league-mates' settled picks per
 fixture (same peer visibility as Kicked Off), not just your own. Round headers still

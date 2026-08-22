@@ -5,18 +5,19 @@ when behaviour changes.** For the public bot API see [api.md](api.md).
 
 ## Navigation & shell
 
-**Four destinations, one job each:** Predictions (`/`), Leaderboard, My Leagues, Rules —
-plus Admin/Host chips when the user holds those roles. Dashboard and My Predictions merged on
-2026-08-16; they duplicated the same picks and results either side of kickoff.
-`/predictions` is a permanent redirect to `/` so old links still land.
+**Five destinations, one job each:** Predictions (`/`), Results (`/results`), Leaderboard,
+My Leagues, Rules — plus Admin/Host chips when the user holds those roles. Predictions
+holds **Open** and **Kicked Off** only; settled history moved to **Results** on
+2026-08-22 so the pick flow stays short. `/predictions` is a permanent redirect to `/`
+so old links still land.
 
 - **Desktop (≥640px):** top-bar links.
 - **Mobile (<640px):** a fixed **bottom tab bar** (`app/components/MobileNav.tsx`) with
   the same destinations. The top-bar nav is hidden at this width, so before this existed
   there was no way to reach any page but the dashboard. Both share their link list and
   active-state logic from `NavLinks.tsx`. Profile stays reachable via the header name.
-- **Loading states:** `loading.tsx` skeletons for the predictions and leaderboard
-  pages — these matter because Cloud Run runs at `--min-instances 0`, so a
+- **Loading states:** `loading.tsx` skeletons for the predictions, results, and
+  leaderboard pages — these matter because Cloud Run runs at `--min-instances 0`, so a
   cold start is a visible wait.
 - **Errors:** `app/error.tsx` (retry + dashboard link; the error text is logged, not
   rendered, since it can carry connection strings) and `app/not-found.tsx`.
@@ -35,6 +36,7 @@ picks appear beside yours and who you're ranked against:
 | Surface | Scoped by | Why |
 |---|---|---|
 | Predictions (`/`) | **Competition** | Per-league would render the same fixtures and the same inputs once per league |
+| Results (`/results`) | **Competition** | Same fixtures/peers as predictions, but settled only |
 | Leaderboard | **League** — all of them, stacked | Standings are genuinely per-league; stacking removes the need to switch |
 | `/admin` | **League**, explicitly chosen | Managing settings is a deliberate act on one league |
 
@@ -95,8 +97,8 @@ populated by the link. Consequences that are deliberate:
 
 ## Predictions (`/`)
 
-The single home for a player's picks, scoped by **competition** (see League scoping
-above). Three sections, top to bottom:
+Open fixtures to pick on and kicked-off fixtures still in play, scoped by **competition**
+(see League scoping above). Two sections, top to bottom:
 
 - **Open** — upcoming fixtures with a countdown and a score input each, **grouped into
   gameweeks** (`FixtureRoundGroup.tsx`). Cards carry an amber left edge when unpredicted,
@@ -114,10 +116,6 @@ above). Three sections, top to bottom:
   provisional points (amber `+X prov.`), plus an "awaiting confirmation" note. A
   bankered pick is tagged ★ ×2 and its points already include the double. A member
   can press **Request result** to trigger the lookup early.
-- **Results** — settled fixtures grouped by competition and round, newest first. Each
-  fixture shows the confirmed scoreline and **every league-mate's pick** with points
-  (same visibility as Kicked Off). The round header still shows **your** subtotal and
-  any streak bonus. Left-edge colour reflects your outcome on that fixture.
 
 Above them, when picks are outstanding: an amber nudge with the count and the next
 deadline. It counts only the **next gameweek needing picks in each competition**, not
@@ -126,9 +124,18 @@ everything open — fixtures import a couple of rounds ahead, so counting all of
 their own gameweek badge. Standing totals (points, exact count, rank) are deliberately *not* here — they
 belong to the Leaderboard, where they can be read per league and against other people.
 
-Whose picks show under Kicked Off and Results: everyone who shares a league with you
-**on that competition**. A league-mate on the World Cup doesn't surface on your Premier
-League fixtures.
+Whose picks show under Kicked Off: everyone who shares a league with you **on that
+competition**. A league-mate on the World Cup doesn't surface on your Premier League
+fixtures.
+
+## Results (`/results`)
+
+Settled fixtures grouped by competition and round, newest first (`PredictionHistory.tsx`).
+Each fixture shows the confirmed scoreline and **every league-mate's pick** with points
+(same visibility as Kicked Off). The round header still shows **your** subtotal and any
+streak bonus. Left-edge colour reflects your outcome on that fixture. Split from
+Predictions on 2026-08-22 — the combined page grew unbounded once every league-mate's
+pick appeared on each settled fixture.
 
 ## How it works (`/rules`)
 

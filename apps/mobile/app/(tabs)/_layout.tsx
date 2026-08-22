@@ -34,6 +34,19 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="results"
+        options={{
+          title: "Results",
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{ ios: "list.bullet.clipboard", android: "assignment", web: "assignment" }}
+              tintColor={color}
+              size={26}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="leaderboard"
         options={{
           title: "Leaderboard",
