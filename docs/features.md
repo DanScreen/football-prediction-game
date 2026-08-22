@@ -102,20 +102,20 @@ Open fixtures to pick on and kicked-off fixtures still in play, scoped by **comp
 
 - **Open** — upcoming fixtures with a countdown and a score input each, **grouped into
   gameweeks** (`FixtureRoundGroup.tsx`). Cards carry an amber left edge when unpredicted,
-  green when predicted.
-  Only the nearest round that still needs picks is expanded; later rounds collapse to a
-  one-line summary with a "N to predict" badge. A full Premier League round is 10
-  fixtures and several rounds import at once, so a flat list ran past 20 cards.
-  Built on native `<details>` — no client JS, keyboard accessible. Each card carries a
-  **☆ Banker** toggle (double points, one per gameweek — see Scoring), and the gameweek
-  header names the banker or says "no banker yet", since it's a per-round decision you'd
-  otherwise have to expand and scan for.
+  green when predicted. Scores **auto-save** once both boxes have a valid integer
+  (debounced ~450ms, also on blur) — there is no Save button. A brief ✓ Saved / Saving
+  status appears beside the inputs. Only the nearest round that still needs picks is
+  expanded; later rounds collapse to a one-line summary with a "N to predict" badge. A
+  full Premier League round is 10 fixtures and several rounds import at once, so a flat
+  list ran past 20 cards. Built on native `<details>` — no client JS for the grouping,
+  keyboard accessible. Each card carries a **☆ Banker** toggle (double points, one per
+  gameweek — see Scoring), enabled once both scores are saved; the gameweek header names
+  the banker or says "no banker yet".
 - **Kicked Off** — grouped into gameweeks the same way (most recent expanded).
-  Predictions lock at kickoff and everyone's picks reveal. If a
-  proposed score exists the fixture shows the **provisional** scoreline and each pick's
-  provisional points (amber `+X prov.`), plus an "awaiting confirmation" note. A
-  bankered pick is tagged ★ ×2 and its points already include the double. A member
-  can press **Request result** to trigger the lookup early.
+  Predictions lock at kickoff and everyone's picks reveal. Until the API confirms a
+  score the fixture shows "awaiting result"; once confirmed it moves to Results with
+  points. A bankered pick is tagged ★ ×2. A member can press **Request result** to
+  trigger the lookup early.
 
 Above them, when picks are outstanding: an amber nudge with the count and the next
 deadline. It counts only the **next gameweek needing picks in each competition**, not

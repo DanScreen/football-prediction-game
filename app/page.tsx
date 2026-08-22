@@ -2,9 +2,7 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
-import Countdown from "@/app/components/Countdown"
-import PredictionInput from "@/app/components/PredictionInput"
-import BankerButton from "@/app/components/BankerButton"
+import OpenFixtureCard from "@/app/components/OpenFixtureCard"
 import BankerTag from "@/app/components/BankerTag"
 import RequestResultButton from "@/app/components/RequestResultButton"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
@@ -147,7 +145,9 @@ export default async function PredictionsPage() {
       )}
 
       <h2 className="text-lg font-bold text-ink mb-1">Open</h2>
-      <p className="text-ink-muted text-sm mb-4">Submit your predictions before each kickoff.</p>
+      <p className="text-ink-muted text-sm mb-4">
+        Enter both scores — they save automatically before each kickoff.
+      </p>
 
       {open.length === 0 ? (
         <div className="text-center py-12 text-ink-faint mb-8">
@@ -176,45 +176,17 @@ export default async function PredictionsPage() {
               {group.fixtures.map((f) => {
                 const myPick = f.predictions.find((p) => p.userId === userId)
                 return (
-                  <div
+                  <OpenFixtureCard
                     key={f.id}
-                    className={`bg-surface rounded-xl border shadow-card overflow-hidden border-l-4 ${
-                      myPick ? "border-line border-l-pitch/40" : "border-clock-line border-l-clock"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-2.5">
-                      <p className="min-w-0 truncate text-xs font-medium text-ink-muted">
-                        {fixtureMeta(f)}
-                      </p>
-                      <div className="shrink-0">
-                        <Countdown kickoffTime={f.kickoffTime.toISOString()} />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 px-5 py-4">
-                      <p className="order-1 min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">
-                        {f.homeTeam}
-                      </p>
-                      <div className="order-3 flex w-full justify-center sm:order-2 sm:w-auto">
-                        <PredictionInput
-                          fixtureId={f.id}
-                          savedHome={myPick?.predictedHomeScore}
-                          savedAway={myPick?.predictedAwayScore}
-                        />
-                      </div>
-                      <p className="order-2 min-w-0 flex-1 truncate text-right text-[15px] font-semibold text-ink sm:order-3">
-                        {f.awayTeam}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-end gap-2 border-t border-line-soft px-5 py-2">
-                      <BankerButton
-                        fixtureId={f.id}
-                        isBanker={myPick?.isBanker ?? false}
-                        hasPrediction={Boolean(myPick)}
-                      />
-                    </div>
-                  </div>
+                    fixtureId={f.id}
+                    homeTeam={f.homeTeam}
+                    awayTeam={f.awayTeam}
+                    kickoffIso={f.kickoffTime.toISOString()}
+                    kickoffLabel={fixtureMeta(f)}
+                    savedHome={myPick?.predictedHomeScore}
+                    savedAway={myPick?.predictedAwayScore}
+                    isBanker={myPick?.isBanker ?? false}
+                  />
                 )
               })}
             </FixtureRoundGroup>

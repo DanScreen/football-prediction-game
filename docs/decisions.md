@@ -262,6 +262,15 @@ Host/commissioner flows remain web-only for v1.
 
 ---
 
+## 2026-08-22 — Auto-save score inputs (no Save button)
+
+Predictions save as soon as both home and away are valid integers (debounced typing +
+blur). **Why:** an explicit Save button was friction for a two-number pick; once both
+scores are in, the intent is clear. Banker stays gated on a saved prediction so you
+can't banker an empty card. Mobile matches the web.
+
+---
+
 ## 2026-08-22 — Auto-confirm API results; hosts edit after the fact
 
 Results from football-data.org are confirmed automatically as soon as the sweep finds

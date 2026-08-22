@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import {
   ActivityIndicator,
   RefreshControl,
@@ -20,12 +20,21 @@ import { useAsyncData } from "@/lib/useAsyncData"
 
 type Draft = { home: string; away: string; isBanker: boolean }
 
+const DEBOUNCE_MS = 450
+
 function draftFrom(f: MobileFixture): Draft {
   return {
     home: f.prediction ? String(f.prediction.homeScore) : "",
     away: f.prediction ? String(f.prediction.awayScore) : "",
     isBanker: f.prediction?.isBanker ?? false,
   }
+}
+
+function parseScore(raw: string): number | null {
+  if (raw === "") return null
+  const n = Number(raw)
+  if (!Number.isInteger(n) || n < 0) return null
+  return n
 }
 
 async function fetchLiveFixtures(): Promise<MobileFixture[]> {
@@ -41,8 +50,12 @@ export default function PredictionsScreen() {
     [],
   )
   const [drafts, setDrafts] = useState<Record<string, Draft>>({})
-  const [savingId, setSavingId] = useState<string | null>(null)
-  const [saveError, setSaveError] = useState<string | null>(null)
+  const [savingIds, setSavingIds] = useState<Record<string, boolean>>({})
+  const [justSavedIds, setJustSavedIds] = useState<Record<string, boolean>>({})
+  const [saveErrors, setSaveErrors] = useState<Record<string, string>>({})
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const savedFlashTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const inFlight = useRef<Record<string, string>>({})
 
   const getDraft = useCallback(
     (f: MobileFixture): Draft => drafts[f.id] ?? draftFrom(f),
@@ -63,22 +76,48 @@ export default function PredictionsScreen() {
     [data],
   )
 
-  async function save(f: MobileFixture) {
-    const d = getDraft(f)
-    const homeScore = Number(d.home)
-    const awayScore = Number(d.away)
-    if (!Number.isInteger(homeScore) || !Number.isInteger(awayScore)) {
-      setSaveError("Enter whole-number scores for both teams.")
+  useEffect(() => {
+    return () => {
+      for (const t of Object.values(debounceTimers.current)) clearTimeout(t)
+      for (const t of Object.values(savedFlashTimers.current)) clearTimeout(t)
+    }
+  }, [])
+
+  async function persist(f: MobileFixture, draft: Draft) {
+    const homeScore = parseScore(draft.home)
+    const awayScore = parseScore(draft.away)
+    if (homeScore === null || awayScore === null) return
+
+    const key = `${homeScore}-${awayScore}-${draft.isBanker}`
+    if (
+      f.prediction &&
+      f.prediction.homeScore === homeScore &&
+      f.prediction.awayScore === awayScore &&
+      f.prediction.isBanker === draft.isBanker
+    ) {
       return
     }
-    setSaveError(null)
-    setSavingId(f.id)
+    if (inFlight.current[f.id] === key) return
+    inFlight.current[f.id] = key
+
+    setSavingIds((prev) => ({ ...prev, [f.id]: true }))
+    setSaveErrors((prev) => {
+      const next = { ...prev }
+      delete next[f.id]
+      return next
+    })
+    setJustSavedIds((prev) => {
+      const next = { ...prev }
+      delete next[f.id]
+      return next
+    })
+
     try {
       await submitPrediction({
         fixtureId: f.id,
         homeScore,
         awayScore,
-        isBanker: d.isBanker,
+        isBanker: draft.isBanker,
       })
       const next = await fetchLiveFixtures()
       setData(next)
@@ -87,18 +126,76 @@ export default function PredictionsScreen() {
         delete copy[f.id]
         return copy
       })
+      setJustSavedIds((prev) => ({ ...prev, [f.id]: true }))
+      if (savedFlashTimers.current[f.id]) clearTimeout(savedFlashTimers.current[f.id])
+      savedFlashTimers.current[f.id] = setTimeout(() => {
+        setJustSavedIds((prev) => {
+          const copy = { ...prev }
+          delete copy[f.id]
+          return copy
+        })
+      }, 2500)
     } catch (err) {
-      setSaveError(err instanceof ApiError ? err.message : "Could not save pick.")
+      setSaveErrors((prev) => ({
+        ...prev,
+        [f.id]: err instanceof ApiError ? err.message : "Could not save pick.",
+      }))
     } finally {
-      setSavingId(null)
+      if (inFlight.current[f.id] === key) delete inFlight.current[f.id]
+      setSavingIds((prev) => {
+        const copy = { ...prev }
+        delete copy[f.id]
+        return copy
+      })
     }
   }
 
-  function patchDraft(id: string, f: MobileFixture, patch: Partial<Draft>) {
-    setDrafts((prev) => ({
-      ...prev,
-      [id]: { ...draftFrom(f), ...prev[id], ...patch },
-    }))
+  function scheduleSave(f: MobileFixture, draft: Draft) {
+    if (debounceTimers.current[f.id]) clearTimeout(debounceTimers.current[f.id])
+    debounceTimers.current[f.id] = setTimeout(() => {
+      void persist(f, draft)
+    }, DEBOUNCE_MS)
+  }
+
+  function flushSave(f: MobileFixture) {
+    if (debounceTimers.current[f.id]) {
+      clearTimeout(debounceTimers.current[f.id])
+      delete debounceTimers.current[f.id]
+    }
+    void persist(f, getDraft(f))
+  }
+
+  function patchDraft(f: MobileFixture, patch: Partial<Draft>, autosaveScores = true) {
+    setDrafts((prev) => {
+      const next = { ...draftFrom(f), ...prev[f.id], ...patch }
+      const updated = { ...prev, [f.id]: next }
+      if (autosaveScores) {
+        // Defer so the state update is visible to flush/schedule via getDraft after render;
+        // schedule with the computed next draft directly.
+        scheduleSave(f, next)
+      }
+      return updated
+    })
+  }
+
+  async function toggleBanker(f: MobileFixture) {
+    const d = getDraft(f)
+    const nextBanker = !d.isBanker
+    const homeScore = parseScore(d.home)
+    const awayScore = parseScore(d.away)
+
+    // No prediction yet — keep banker in the draft until scores autosave.
+    if (homeScore === null || awayScore === null) {
+      patchDraft(f, { isBanker: nextBanker }, false)
+      return
+    }
+
+    patchDraft(f, { isBanker: nextBanker }, false)
+    if (debounceTimers.current[f.id]) {
+      clearTimeout(debounceTimers.current[f.id])
+      delete debounceTimers.current[f.id]
+    }
+    await persist(f, { ...d, isBanker: nextBanker })
   }
 
   return (
@@ -110,7 +207,7 @@ export default function PredictionsScreen() {
         }
       >
         <Text style={{ fontSize: 15, color: t.inkMuted }}>Hi {user?.displayName}</Text>
-        <ErrorBanner message={error ?? saveError} />
+        <ErrorBanner message={error} />
 
         {loading && !data ? <ActivityIndicator color={t.pitch} /> : null}
 
@@ -133,11 +230,13 @@ export default function PredictionsScreen() {
                 home={d.home}
                 away={d.away}
                 isBanker={d.isBanker}
-                saving={savingId === f.id}
-                onChangeHome={(home) => patchDraft(f.id, f, { home })}
-                onChangeAway={(away) => patchDraft(f.id, f, { away })}
-                onToggleBanker={() => patchDraft(f.id, f, { isBanker: !d.isBanker })}
-                onSave={() => void save(f)}
+                saving={Boolean(savingIds[f.id])}
+                justSaved={Boolean(justSavedIds[f.id])}
+                saveError={saveErrors[f.id] ?? null}
+                onChangeHome={(home) => patchDraft(f, { home })}
+                onChangeAway={(away) => patchDraft(f, { away })}
+                onToggleBanker={() => void toggleBanker(f)}
+                onBlurScores={() => flushSave(f)}
               />
             )
           })}
@@ -158,10 +257,12 @@ export default function PredictionsScreen() {
                 away=""
                 isBanker={false}
                 saving={false}
+                justSaved={false}
+                saveError={null}
                 onChangeHome={() => {}}
                 onChangeAway={() => {}}
                 onToggleBanker={() => {}}
-                onSave={() => {}}
+                onBlurScores={() => {}}
               />
             ))}
           </Section>

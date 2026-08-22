@@ -1,4 +1,4 @@
-import { Pressable, Text, TextInput, View } from "react-native"
+import { Pressable, Text, TextInput, View, ActivityIndicator } from "react-native"
 import { useTokens } from "@/lib/theme"
 import type { FixturePrediction, MobileFixture } from "@/lib/api"
 
@@ -23,6 +23,13 @@ function pointsLabel(pred: FixturePrediction, settled: boolean): string | null {
   return null
 }
 
+function parseScore(raw: string): number | null {
+  if (raw === "") return null
+  const n = Number(raw)
+  if (!Number.isInteger(n) || n < 0) return null
+  return n
+}
+
 export function FixtureCard({
   fixture,
   viewerUserId,
@@ -32,8 +39,10 @@ export function FixtureCard({
   onChangeHome,
   onChangeAway,
   onToggleBanker,
-  onSave,
+  onBlurScores,
   saving,
+  justSaved,
+  saveError,
   editable,
 }: {
   fixture: MobileFixture
@@ -44,8 +53,11 @@ export function FixtureCard({
   onChangeHome: (v: string) => void
   onChangeAway: (v: string) => void
   onToggleBanker: () => void
-  onSave: () => void
+  /** Flush any pending autosave when a score field blurs. */
+  onBlurScores: () => void
   saving: boolean
+  justSaved: boolean
+  saveError: string | null
   editable: boolean
 }) {
   const t = useTokens()
@@ -53,6 +65,14 @@ export function FixtureCard({
   const settled = fixture.actualHomeScore != null && fixture.actualAwayScore != null
   const showPeers = !editable && fixture.peerPredictions.length > 0
   const awaitingResult = !editable && !settled
+
+  const homeScore = parseScore(home)
+  const awayScore = parseScore(away)
+  const bothValid = homeScore !== null && awayScore !== null
+  const matchesSaved =
+    pred != null && homeScore === pred.homeScore && awayScore === pred.awayScore
+  const showSavedStyle = bothValid && (matchesSaved || saving || justSaved)
+  const hasPrediction = pred != null || (justSaved && bothValid)
 
   return (
     <View
@@ -77,30 +97,61 @@ export function FixtureCard({
       </Text>
 
       {editable ? (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <ScoreBox value={home} onChange={onChangeHome} />
-          <Text style={{ color: t.inkMuted, fontWeight: "700" }}>–</Text>
-          <ScoreBox value={away} onChange={onChangeAway} />
-          <Pressable
-            onPress={onToggleBanker}
-            style={{
-              marginLeft: "auto",
-              paddingHorizontal: 10,
-              paddingVertical: 8,
-              borderRadius: 8,
-              backgroundColor: isBanker ? t.clock : t.chip,
-            }}
-          >
-            <Text
+        <View style={{ gap: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <ScoreBox
+              value={home}
+              onChange={onChangeHome}
+              onBlur={onBlurScores}
+              saved={showSavedStyle}
+            />
+            <Text style={{ color: t.inkMuted, fontWeight: "700" }}>–</Text>
+            <ScoreBox
+              value={away}
+              onChange={onChangeAway}
+              onBlur={onBlurScores}
+              saved={showSavedStyle}
+            />
+            <Pressable
+              onPress={onToggleBanker}
+              disabled={!hasPrediction}
               style={{
-                color: isBanker ? t.clockOn : t.inkMuted,
-                fontWeight: "700",
-                fontSize: 13,
+                marginLeft: "auto",
+                paddingHorizontal: 10,
+                paddingVertical: 8,
+                borderRadius: 8,
+                backgroundColor: isBanker ? t.clock : t.chip,
+                opacity: hasPrediction ? 1 : 0.45,
               }}
             >
-              ★ Banker
-            </Text>
-          </Pressable>
+              <Text
+                style={{
+                  color: isBanker ? t.clockOn : t.inkMuted,
+                  fontWeight: "700",
+                  fontSize: 13,
+                }}
+              >
+                ★ Banker
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={{ minHeight: 18, justifyContent: "center" }}>
+            {saveError ? (
+              <Text style={{ color: t.bad, fontSize: 12, fontWeight: "600" }}>{saveError}</Text>
+            ) : saving ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <ActivityIndicator size="small" color={t.pitch} />
+                <Text style={{ color: t.inkMuted, fontSize: 12, fontWeight: "600" }}>Saving…</Text>
+              </View>
+            ) : justSaved ? (
+              <Text style={{ color: t.pitch, fontSize: 12, fontWeight: "700" }}>✓ Saved</Text>
+            ) : !hasPrediction ? (
+              <Text style={{ color: t.inkFaint, fontSize: 12 }}>
+                Enter both scores — saves automatically
+              </Text>
+            ) : null}
+          </View>
         </View>
       ) : (
         <View style={{ gap: 8 }}>
@@ -183,34 +234,27 @@ export function FixtureCard({
           )}
         </View>
       )}
-
-      {editable ? (
-        <Pressable
-          onPress={onSave}
-          disabled={saving}
-          style={{
-            backgroundColor: t.pitch,
-            borderRadius: 8,
-            paddingVertical: 10,
-            alignItems: "center",
-            opacity: saving ? 0.7 : 1,
-          }}
-        >
-          <Text style={{ color: t.pitchOn, fontWeight: "700" }}>
-            {saving ? "Saving…" : pred ? "Update pick" : "Save pick"}
-          </Text>
-        </Pressable>
-      ) : null}
     </View>
   )
 }
 
-function ScoreBox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function ScoreBox({
+  value,
+  onChange,
+  onBlur,
+  saved,
+}: {
+  value: string
+  onChange: (v: string) => void
+  onBlur: () => void
+  saved: boolean
+}) {
   const t = useTokens()
   return (
     <TextInput
       value={value}
       onChangeText={(v) => onChange(v.replace(/[^0-9]/g, "").slice(0, 2))}
+      onBlur={onBlur}
       keyboardType="number-pad"
       style={{
         width: 48,
@@ -218,12 +262,12 @@ function ScoreBox({ value, onChange }: { value: string; onChange: (v: string) =>
         fontSize: 20,
         fontWeight: "700",
         fontVariant: ["tabular-nums"],
-        borderWidth: 1,
-        borderColor: t.lineStrong,
+        borderWidth: 1.5,
+        borderColor: saved ? t.pitch : t.lineStrong,
         borderRadius: 8,
         paddingVertical: 8,
-        color: t.ink,
-        backgroundColor: t.ground,
+        color: saved ? t.pitch : t.ink,
+        backgroundColor: saved ? t.pitchTint : t.ground,
       }}
     />
   )

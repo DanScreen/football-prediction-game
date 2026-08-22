@@ -115,7 +115,7 @@ export default async function RulesPage() {
             becomes {3 * BANKER_MULTIPLIER} points.
           </Bullet>
           <Bullet>
-            Save a prediction on the fixture first, then press <em>Banker</em>. Choosing another
+            Enter both scores first (they save automatically), then press <em>Banker</em>. Choosing another
             fixture in the same gameweek moves it — you never have to clear the old one.
           </Bullet>
           <Bullet>

@@ -325,7 +325,7 @@ Still out of native scope: host/commissioner endpoints; API-key management in-ap
 |------|------|
 | `app/(auth)/login\|register` | Auth (+ forgot password via API) |
 | `app/join` | Deep-link join (`scorers://join?code=`) |
-| `app/(tabs)/index` | Predictions — Open + Kicked off |
+| `app/(tabs)/index` | Predictions — Open + Kicked off; scores auto-save |
 | `app/(tabs)/results` | Settled fixtures with every league-mate's pick |
 | `app/(tabs)/leaderboard` | Stacked standings |
 | `app/(tabs)/leagues` | List / create / join / share |

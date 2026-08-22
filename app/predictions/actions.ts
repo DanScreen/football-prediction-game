@@ -9,19 +9,15 @@ import { setBanker } from "@/lib/banker"
 export type PredictionState = { error?: string; success?: boolean }
 export type BankerState = { error?: string }
 
-export async function upsertPrediction(
+async function saveScoresForUser(
+  userId: string,
   fixtureId: string,
-  _prev: PredictionState,
-  formData: FormData,
+  home: number,
+  away: number,
 ): Promise<PredictionState> {
-  const session = await auth()
-  if (!session?.user?.id) return { error: "Not signed in." }
-  const userId = session.user.id
-
   const fixture = await prisma.fixture.findUnique({ where: { id: fixtureId } })
   if (!fixture) return { error: "Fixture not found." }
 
-  // Fixtures are canonical — the user must be in a league on this competition
   const membership = await prisma.leagueMembership.findFirst({
     where: { userId, league: { competitionId: fixture.competitionId } },
   })
@@ -31,26 +27,48 @@ export async function upsertPrediction(
     return { error: "Deadline has passed — this fixture is locked." }
   }
 
-  const home = parseInt(String(formData.get("home") ?? ""), 10)
-  const away = parseInt(String(formData.get("away") ?? ""), 10)
-
-  if (isNaN(home) || isNaN(away) || home < 0 || away < 0) {
+  if (!Number.isInteger(home) || !Number.isInteger(away) || home < 0 || away < 0) {
     return { error: "Please enter valid scores (0 or above)." }
   }
 
   await savePrediction(userId, fixture.id, home, away, "WEB")
-
   revalidatePath("/")
   revalidatePath("/predictions")
   return { success: true }
+}
+
+/** FormData-based save — kept for any remaining form posts. */
+export async function upsertPrediction(
+  fixtureId: string,
+  _prev: PredictionState,
+  formData: FormData,
+): Promise<PredictionState> {
+  const session = await auth()
+  if (!session?.user?.id) return { error: "Not signed in." }
+
+  const home = parseInt(String(formData.get("home") ?? ""), 10)
+  const away = parseInt(String(formData.get("away") ?? ""), 10)
+  if (isNaN(home) || isNaN(away)) {
+    return { error: "Please enter valid scores (0 or above)." }
+  }
+  return saveScoresForUser(session.user.id, fixtureId, home, away)
+}
+
+/** Direct save used by auto-save on the predictions page. */
+export async function savePredictionScores(
+  fixtureId: string,
+  home: number,
+  away: number,
+): Promise<PredictionState> {
+  const session = await auth()
+  if (!session?.user?.id) return { error: "Not signed in." }
+  return saveScoresForUser(session.user.id, fixtureId, home, away)
 }
 
 /**
  * Make this fixture the user's banker for its gameweek, or clear it. The
  * one-per-round rule and the kickoff locks live in `setBanker()`.
  */
-// Takes neither the previous state nor the form body — everything it needs is
-// bound at the call site — but it's still a valid `useActionState` action.
 export async function toggleBanker(fixtureId: string, on: boolean): Promise<BankerState> {
   const session = await auth()
   if (!session?.user?.id) return { error: "Not signed in." }

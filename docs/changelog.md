@@ -6,6 +6,12 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-22 — Auto-save predictions (web + mobile)
+Open fixture score inputs save automatically once both sides are valid integers
+(debounced ~450ms, also on blur). No Save button. Brief Saving / ✓ Saved feedback;
+Banker enables after the first successful save. Same behaviour on the Expo Predictions
+tab. See [features.md](features.md#predictions-).
+
 ## 2026-08-22 — Auto-confirm results from API; hosts can edit after
 Results from football-data.org are applied automatically when the sweep finds them —
 no provisional state or host **Accept All** step. Site hosts can enter missing results
