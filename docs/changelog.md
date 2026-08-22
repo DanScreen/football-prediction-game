@@ -6,6 +6,12 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-22 — Auto-confirm results from API; hosts can edit after
+Results from football-data.org are applied automatically when the sweep finds them —
+no provisional state or host **Accept All** step. Site hosts can enter missing results
+or edit confirmed scores from `/host/results` and `/host/fixtures`; saving re-scores
+predictions and streak bonuses. See [features.md](features.md#result-resolution).
+
 ## 2026-08-22 — Split Predictions and Results into separate tabs
 
 Predictions (`/`) now holds **Open** and **Kicked Off** only; settled history moved to

@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
-import { checkTransitions, acceptAllAction } from "./actions"
+import { checkTransitions } from "./actions"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
 
 export const metadata = { title: "Results Queue" }
@@ -20,40 +20,28 @@ export default async function HostResultsPage() {
     }),
   ])
 
-  const proposedCount = awaitingFixtures.filter(
-    (f) => f.proposedHomeScore !== null && f.proposedAwayScore !== null,
-  ).length
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+      <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
         <h1 className="text-2xl font-bold text-ink">Pending Results</h1>
-        <div className="flex items-center gap-2">
-          <form action={checkTransitions}>
-            <button
-              type="submit"
-              className="flex items-center gap-2 rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink-mid hover:bg-chip transition-colors"
-            >
-              Check for Updates
-              {scheduledReadyCount > 0 && (
-                <span className="bg-clock-tint text-clock rounded-full px-2 py-0.5 text-xs font-bold">
-                  {scheduledReadyCount}
-                </span>
-              )}
-            </button>
-          </form>
-          {proposedCount > 0 && (
-            <form action={acceptAllAction}>
-              <button
-                type="submit"
-                className="rounded-lg bg-pitch px-4 py-2 text-sm font-semibold text-pitch-on shadow-card hover:bg-pitch-deep transition-colors"
-              >
-                Accept All ({proposedCount})
-              </button>
-            </form>
-          )}
-        </div>
+        <form action={checkTransitions}>
+          <button
+            type="submit"
+            className="flex items-center gap-2 rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink-mid hover:bg-chip transition-colors"
+          >
+            Check for Updates
+            {scheduledReadyCount > 0 && (
+              <span className="bg-clock-tint text-clock rounded-full px-2 py-0.5 text-xs font-bold">
+                {scheduledReadyCount}
+              </span>
+            )}
+          </button>
+        </form>
       </div>
+      <p className="text-sm text-ink-muted mb-6">
+        Results from football-data.org are confirmed automatically once available. Enter or
+        edit a score manually when needed — changes re-score every prediction.
+      </p>
 
       {awaitingFixtures.length === 0 ? (
         <div className="text-center py-16 text-ink-muted">
@@ -62,7 +50,7 @@ export default async function HostResultsPage() {
           {scheduledReadyCount > 0 && (
             <p className="text-sm mt-2">
               {scheduledReadyCount} scheduled fixture{scheduledReadyCount !== 1 ? "s" : ""} may be
-              ready — click &quot;Check for Updates&quot; to move them to this queue.
+              ready — click &quot;Check for Updates&quot; to move them into the queue.
             </p>
           )}
         </div>
@@ -100,11 +88,6 @@ export default async function HostResultsPage() {
                     })}
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
-                    {f.proposedHomeScore !== null && f.proposedAwayScore !== null && (
-                      <span className="score-digits mr-3 rounded-md bg-board px-2 py-0.5 text-xs text-board-gold">
-                        {f.proposedHomeScore}–{f.proposedAwayScore} found
-                      </span>
-                    )}
                     <Link
                       href={`/host/results/${f.id}`}
                       className="text-pitch hover:underline font-medium"
@@ -118,6 +101,14 @@ export default async function HostResultsPage() {
           </table>
         </div>
       )}
+
+      <p className="mt-8 text-sm text-ink-muted">
+        Need to fix a confirmed score?{" "}
+        <Link href="/host/fixtures" className="font-medium text-pitch hover:underline">
+          Edit from Fixtures
+        </Link>
+        .
+      </p>
     </div>
   )
 }

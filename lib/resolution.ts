@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma"
-import { FixtureStatus } from "@/app/generated/prisma/client"
+import { FixtureStatus, ResultSource } from "@/app/generated/prisma/client"
 import { fetchFinishedMatches, findMatchScore, isoDate } from "@/lib/footballData"
 import { autoImportFixtures } from "@/lib/autoImport"
+import { confirmFixtureResult } from "@/lib/results"
 
 /** Fixtures become eligible for a result this long after kickoff (1h45m ≈ full time + stoppage). */
 export const RESULT_DELAY_MS = 1.75 * 60 * 60 * 1000
@@ -20,18 +21,50 @@ export async function transitionDueFixtures(): Promise<number> {
 }
 
 /**
- * Fetch proposed scores for AWAITING_RESULT fixtures that don't have one yet —
- * one football-data.org call per competition. Proposed scores surface to users
- * as provisional results/points until a site host confirms; nothing is scored here.
+ * Confirm any AWAITING_RESULT fixtures that still carry legacy proposed scores from
+ * the old confirm-before-save flow.
  */
-export async function fetchProposals(): Promise<{ proposed: number; errors: string[] }> {
-  if (!process.env.FOOTBALL_DATA_API_KEY) return { proposed: 0, errors: [] }
+async function confirmLegacyProposals(): Promise<number> {
+  const fixtures = await prisma.fixture.findMany({
+    where: {
+      status: FixtureStatus.AWAITING_RESULT,
+      proposedHomeScore: { not: null },
+      proposedAwayScore: { not: null },
+    },
+    select: { id: true, proposedHomeScore: true, proposedAwayScore: true },
+  })
+
+  let confirmed = 0
+  for (const f of fixtures) {
+    try {
+      await confirmFixtureResult(
+        f.id,
+        f.proposedHomeScore!,
+        f.proposedAwayScore!,
+        ResultSource.AI_CONFIRMED,
+      )
+      confirmed++
+    } catch {
+      /* isolated — manual entry remains */
+    }
+  }
+  return confirmed
+}
+
+/**
+ * Look up AWAITING_RESULT fixtures from football-data.org and confirm each match
+ * as soon as a score is found. Failures are isolated per fixture.
+ */
+export async function confirmResultsFromApi(): Promise<{ confirmed: number; errors: string[] }> {
+  if (!process.env.FOOTBALL_DATA_API_KEY) return { confirmed: 0, errors: [] }
+
+  let confirmed = await confirmLegacyProposals()
 
   const fixtures = await prisma.fixture.findMany({
-    where: { status: FixtureStatus.AWAITING_RESULT, proposedHomeScore: null },
+    where: { status: FixtureStatus.AWAITING_RESULT },
     include: { competition: { select: { id: true, name: true, code: true } } },
   })
-  if (fixtures.length === 0) return { proposed: 0, errors: [] }
+  if (fixtures.length === 0) return { confirmed, errors: [] }
 
   const byCompetition = new Map<string, typeof fixtures>()
   for (const f of fixtures) {
@@ -40,7 +73,6 @@ export async function fetchProposals(): Promise<{ proposed: number; errors: stri
     byCompetition.set(f.competitionId, arr)
   }
 
-  let proposed = 0
   const errors: string[] = []
 
   for (const [, comps] of byCompetition) {
@@ -62,24 +94,33 @@ export async function fetchProposals(): Promise<{ proposed: number; errors: stri
     for (const f of comps) {
       const score = findMatchScore(matches, f.homeTeam, f.awayTeam)
       if (!score) continue
-      const { count } = await prisma.fixture.updateMany({
-        where: { id: f.id, status: FixtureStatus.AWAITING_RESULT },
-        data: { proposedHomeScore: score.homeScore, proposedAwayScore: score.awayScore },
-      })
-      proposed += count
+      try {
+        await confirmFixtureResult(
+          f.id,
+          score.homeScore,
+          score.awayScore,
+          ResultSource.AI_CONFIRMED,
+        )
+        confirmed++
+      } catch {
+        /* isolated — host can enter manually */
+      }
     }
   }
 
-  return { proposed, errors }
+  return { confirmed, errors }
 }
+
+/** @deprecated Use confirmResultsFromApi — kept for callers mid-migration. */
+export const fetchProposals = confirmResultsFromApi
 
 export async function runResolutionSweep() {
   const imported = await autoImportFixtures()
   const transitioned = await transitionDueFixtures()
-  const { proposed, errors } = await fetchProposals()
+  const { confirmed, errors } = await confirmResultsFromApi()
   return {
     transitioned,
-    proposed,
+    confirmed,
     imported: imported.imported,
     errors: [...imported.errors, ...errors],
   }

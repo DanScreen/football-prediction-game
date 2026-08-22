@@ -8,7 +8,6 @@ import BankerButton from "@/app/components/BankerButton"
 import BankerTag from "@/app/components/BankerTag"
 import RequestResultButton from "@/app/components/RequestResultButton"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
-import { provisionalPoints } from "@/lib/provisional"
 import { resolvePeerContext } from "@/lib/peers"
 import FixtureRoundGroup, { groupByRound } from "@/app/FixtureRoundGroup"
 
@@ -255,33 +254,21 @@ export default async function PredictionsPage() {
                         <p className="min-w-0 truncate text-xs font-medium text-ink-muted">
                           {fixtureMeta(f)}
                         </p>
-                        {f.proposedHomeScore === null && (
-                          <span className="shrink-0 text-xs font-semibold text-bad">🔒 Locked</span>
-                        )}
-                      </div>
+                    {f.proposedHomeScore === null && (
+                      <span className="shrink-0 text-xs font-semibold text-bad">🔒 Locked</span>
+                    )}
+                  </div>
 
-                      <div className="flex flex-wrap items-center gap-3 px-5 pt-4 pb-1">
-                        <p className="order-1 min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">
-                          {f.homeTeam}
-                        </p>
-                        <div className="order-3 flex w-full flex-col items-center sm:order-2 sm:w-auto">
-                          {f.proposedHomeScore !== null && f.proposedAwayScore !== null ? (
-                            <>
-                              <span className="score-digits inline-flex items-center gap-2 rounded-lg bg-board px-3.5 py-1.5 text-xl text-board-gold">
-                                {f.proposedHomeScore}
-                                <span className="text-board-muted">–</span>
-                                {f.proposedAwayScore}
-                              </span>
-                              <span className="mt-1 text-xs font-medium text-clock">
-                                awaiting confirmation
-                              </span>
-                            </>
-                          ) : (
-                            <span className="score-digits inline-flex items-center gap-2 rounded-lg bg-board px-3.5 py-1.5 text-xl text-board-muted">
-                              ·<span>–</span>·
-                            </span>
-                          )}
-                        </div>
+                  <div className="flex flex-wrap items-center gap-3 px-5 pt-4 pb-1">
+                    <p className="order-1 min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">
+                      {f.homeTeam}
+                    </p>
+                    <div className="order-3 flex w-full flex-col items-center sm:order-2 sm:w-auto">
+                      <span className="score-digits inline-flex items-center gap-2 rounded-lg bg-board px-3.5 py-1.5 text-xl text-board-muted">
+                        ·<span>–</span>·
+                      </span>
+                      <span className="mt-1 text-xs font-medium text-ink-muted">awaiting result</span>
+                    </div>
                         <p className="order-2 min-w-0 flex-1 truncate text-right text-[15px] font-semibold text-ink sm:order-3">
                           {f.awayTeam}
                         </p>
@@ -294,14 +281,9 @@ export default async function PredictionsPage() {
                             <span className="font-bold tabular-nums">
                               {myPick.predictedHomeScore} – {myPick.predictedAwayScore}
                             </span>
-                            {myPick.isBanker && <BankerTag />}
-                            {provisionalPoints(myPick, f) !== null && (
-                              <span className="rounded-md bg-clock-tint px-1.5 py-0.5 text-xs font-semibold text-clock">
-                                +{provisionalPoints(myPick, f)} prov.
-                              </span>
-                            )}
-                          </div>
-                        ) : (
+                        {myPick.isBanker && <BankerTag />}
+                      </div>
+                    ) : (
                           <p className="text-xs text-ink-faint italic">
                             You didn&apos;t submit a prediction.
                           </p>
@@ -315,14 +297,9 @@ export default async function PredictionsPage() {
                             <span className="font-medium tabular-nums">
                               {p.predictedHomeScore} – {p.predictedAwayScore}
                             </span>
-                            {p.isBanker && <BankerTag />}
-                            {provisionalPoints(p, f) !== null && (
-                              <span className="rounded-md bg-clock-tint px-1.5 py-0.5 text-xs font-medium text-clock">
-                                +{provisionalPoints(p, f)}
-                              </span>
-                            )}
-                          </div>
-                        ))}
+                        {p.isBanker && <BankerTag />}
+                      </div>
+                    ))}
                         {visible.length === 0 && (
                           <p className="text-xs text-ink-faint italic">No predictions submitted.</p>
                         )}

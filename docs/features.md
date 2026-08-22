@@ -179,7 +179,7 @@ Each form cell is **dual-encoded**## Host area (`/host`) — site hosts only
 | `/host/competitions` | Create/edit competitions (name, football-data code, flag, active). No delete. |
 | `/host/fixtures` | Add/edit/delete canonical fixtures for a competition. |
 | `/host/import` | Manually import upcoming fixtures from football-data.org (1–3 rounds). Override for the auto-import. |
-| `/host/results` | **Platform-wide** queue of fixtures awaiting a result, with pre-fetched scores. Accept, edit, retry, or **Accept All**. |
+| `/host/results` | **Platform-wide** queue of fixtures awaiting a result, with manual entry. Edit confirmed scores from here or `/host/fixtures`. |
 
 ## League admin (`/admin`) — commissioners only
 
@@ -202,24 +202,24 @@ there's nothing else.
 
 ## Result resolution
 
-Results flow through a **confirm-before-save** pipeline, with provisional scores shown
-in the meantime:
+Results are applied automatically once football-data.org has them:
 
 1. **Sweep** (`POST /api/cron/resolve`, every 10 min) moves fixtures ≥1h45m past
-   kickoff to `AWAITING_RESULT` and pre-fetches the final score from football-data.org
+   kickoff to `AWAITING_RESULT`, then looks up the final score from football-data.org
    (one API call per competition/date window, fuzzy-matched by team name).
-2. **Provisional everywhere** — once `proposed*` scores exist, the projected scoreline
-   and points show (amber) across the predictions page, leaderboard, and API,
-   until a host confirms. Computed at read time (`lib/provisional.ts`); never stored;
-   standings still rank by confirmed points.
-3. **Host confirms** at `/host/results` — a platform-wide queue with **Accept All**.
-   `confirmFixtureResult()` (`lib/results.ts`) saves the scores + `COMPLETED`, scores
-   every prediction on the fixture once, then fans out streak bonuses per subscribing
-   league. Nothing scores without host sign-off — the
-   human check keeps bad data (postponements, ambiguous names) off the leaderboard.
-4. **Fallbacks** — members can Request result from the dashboard; hosts have a "Check
-   for Updates" button (runs the sweep on demand); manual entry and per-fixture API
-   lookup always work.
+2. **Auto-confirm** — when a score is found, `confirmFixtureResult()` (`lib/results.ts`)
+   saves it immediately, marks the fixture `COMPLETED`, scores every prediction once,
+   and fans out streak bonuses per subscribing league. No host sign-off step.
+3. **Host correction** — site hosts can enter a missing result or **edit a confirmed
+   score** from `/host/results` or `/host/fixtures` (re-scores every prediction and
+   updates streak bonuses for the round). API lookup on the enter-result page also
+   confirms immediately.
+4. **Fallbacks** — members can **Request result** from Predictions once the fixture is
+   due; hosts have a **Check for Updates** button (runs the sweep on demand); manual
+   entry always works when the API has nothing yet.
+
+Fixtures still in **Kicked Off** with no result yet show everyone's picks but no
+scoreline — there is no provisional/pre-confirm state any more.
 
 ## Scoring
 

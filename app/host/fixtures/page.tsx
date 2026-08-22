@@ -70,8 +70,31 @@ export default async function HostFixturesPage() {
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={f.status} />
+                    {f.status === "COMPLETED" &&
+                      f.actualHomeScore !== null &&
+                      f.actualAwayScore !== null && (
+                        <p className="text-xs text-ink-muted mt-1 score-digits">
+                          {f.actualHomeScore}–{f.actualAwayScore}
+                        </p>
+                      )}
                   </td>
                   <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
+                    {f.status === "COMPLETED" && (
+                      <Link
+                        href={`/host/results/${f.id}`}
+                        className="text-pitch hover:underline font-medium"
+                      >
+                        Edit result
+                      </Link>
+                    )}
+                    {f.status === "AWAITING_RESULT" && (
+                      <Link
+                        href={`/host/results/${f.id}`}
+                        className="text-pitch hover:underline font-medium"
+                      >
+                        Enter result
+                      </Link>
+                    )}
                     <Link
                       href={`/host/fixtures/${f.id}/edit`}
                       className="text-pitch hover:underline font-medium"

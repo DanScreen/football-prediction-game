@@ -50,10 +50,9 @@ export function FixtureCard({
 }) {
   const t = useTokens()
   const pred = fixture.prediction
-  const hasProv =
-    fixture.provisionalHomeScore != null && fixture.provisionalAwayScore != null
   const settled = fixture.actualHomeScore != null && fixture.actualAwayScore != null
   const showPeers = !editable && fixture.peerPredictions.length > 0
+  const awaitingResult = !editable && !settled
 
   return (
     <View
@@ -109,10 +108,8 @@ export function FixtureCard({
             <Text style={{ color: t.inkMid }}>
               Result: {fixture.actualHomeScore}–{fixture.actualAwayScore}
             </Text>
-          ) : hasProv ? (
-            <Text style={{ color: t.clock }}>
-              Provisional: {fixture.provisionalHomeScore}–{fixture.provisionalAwayScore}
-            </Text>
+          ) : awaitingResult ? (
+            <Text style={{ color: t.inkMuted }}>Awaiting result</Text>
           ) : null}
 
           {showPeers ? (
@@ -158,7 +155,7 @@ export function FixtureCard({
                     {pts ? (
                       <Text
                         style={{
-                          color: settled ? t.good : t.clock,
+                          color: settled ? t.good : t.inkMuted,
                           fontWeight: "700",
                           fontSize: 13,
                         }}
@@ -181,12 +178,6 @@ export function FixtureCard({
               ) : null}
               {pred && settled && pred.pointsAwarded != null ? (
                 <Text style={{ color: t.good, fontWeight: "700" }}> · {pred.pointsAwarded} pts</Text>
-              ) : null}
-              {pred && !settled && pred.provisionalPoints != null ? (
-                <Text style={{ color: t.clock, fontWeight: "700" }}>
-                  {" "}
-                  · +{pred.provisionalPoints} prov.
-                </Text>
               ) : null}
             </Text>
           )}

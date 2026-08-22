@@ -40,9 +40,8 @@ for how it's modelled.
 2. **Zero-touch fixtures & results.** Fixtures appear automatically; results are
    fetched automatically and confirmed by a host. Nobody chases spreadsheets.
 3. **Trustworthy standings.** Results occasionally go wrong (postponements, TBD
-   teams, ambiguous names). A human host confirms every result before it scores —
-   but players still see **provisional** scores and points immediately, so the game
-   feels live without letting bad data pollute the official table.
+   teams, ambiguous names). Site hosts can correct a confirmed score after the fact —
+   players see points as soon as football-data.org has a result.
 4. **Bots welcome.** Anything a human can do in the UI, a bot can do via the API.
 5. **Fun, not corporate.** A playful, broadcast-scoreboard aesthetic with small
    celebration moments (an exact score gets a "Nailed it!"), not a dry admin tool.

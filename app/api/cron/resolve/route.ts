@@ -4,7 +4,7 @@ import { sendDeadlineReminders } from "@/lib/reminders"
 /**
  * Called by Cloud Scheduler (see terraform/scheduler.tf). Imports upcoming
  * fixtures for active competitions, moves due fixtures to AWAITING_RESULT,
- * pre-fetches proposed scores for host confirmation, and emails deadline
+ * confirms results from football-data.org when available, and emails deadline
  * reminders to members who haven't predicted yet.
  */
 export async function POST(request: Request) {

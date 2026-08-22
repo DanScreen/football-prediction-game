@@ -4,34 +4,32 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { lookupResult as fetchResult } from "@/lib/footballData"
-import { ResultSource } from "@/app/generated/prisma/client"
+import { FixtureStatus, ResultSource } from "@/app/generated/prisma/client"
 import { requireSiteAdmin } from "@/lib/adminAuth"
-import { transitionDueFixtures, fetchProposals } from "@/lib/resolution"
-import { confirmFixtureResult, acceptAllProposed } from "@/lib/results"
+import { transitionDueFixtures, confirmResultsFromApi } from "@/lib/resolution"
+import { confirmFixtureResult } from "@/lib/results"
 
 export type ResultFormState = {
   error?: string
-  proposed?: { homeScore: number; awayScore: number }
 }
 
-/** Move due fixtures to AWAITING_RESULT and pre-fetch proposals, platform-wide */
+function revalidatePlayerPaths() {
+  revalidatePath("/")
+  revalidatePath("/results")
+  revalidatePath("/leaderboard")
+}
+
+/** Move due fixtures to AWAITING_RESULT and confirm any API results found. */
 export async function checkTransitions(): Promise<void> {
   await requireSiteAdmin()
   await transitionDueFixtures()
-  await fetchProposals().catch(() => {}) // best-effort; manual lookup remains available
+  await confirmResultsFromApi().catch(() => {})
   revalidatePath("/host/results")
+  revalidatePlayerPaths()
 }
 
-/** Confirm every fixture with a proposed score in one click */
-export async function acceptAllAction(): Promise<void> {
-  await requireSiteAdmin()
-  await acceptAllProposed()
-  revalidatePath("/host/results")
-  revalidatePath("/")
-}
-
-/** API lookup — returns proposed score in form state without saving anything */
-export async function lookupResult(
+/** Look up from football-data.org and confirm immediately when found. */
+export async function lookupAndConfirmResult(
   _prev: ResultFormState,
   formData: FormData,
 ): Promise<ResultFormState> {
@@ -60,13 +58,18 @@ export async function lookupResult(
       fixture.competition.code,
       fixture.kickoffTime,
     )
-    return { proposed: result }
+    await confirmFixtureResult(fixtureId, result.homeScore, result.awayScore, ResultSource.AI_CONFIRMED)
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Result lookup failed." }
   }
+
+  revalidatePath("/host/results")
+  revalidatePath("/host/fixtures")
+  revalidatePlayerPaths()
+  redirect("/host/results")
 }
 
-/** Confirm result: save scores, score predictions, fan out streak bonuses per league */
+/** Save or update a result — scores predictions and streak bonuses. */
 export async function confirmResult(
   _prev: ResultFormState,
   formData: FormData,
@@ -91,6 +94,7 @@ export async function confirmResult(
   await confirmFixtureResult(fixtureId, homeRaw, awayRaw, source)
 
   revalidatePath("/host/results")
-  revalidatePath("/")
+  revalidatePath("/host/fixtures")
+  revalidatePlayerPaths()
   redirect("/host/results")
 }

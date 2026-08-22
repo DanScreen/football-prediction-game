@@ -262,6 +262,18 @@ Host/commissioner flows remain web-only for v1.
 
 ---
 
+## 2026-08-22 — Auto-confirm API results; hosts edit after the fact
+
+Results from football-data.org are confirmed automatically as soon as the sweep finds
+them — no provisional/pre-confirm step, no **Accept All**. Site hosts can still enter a
+missing result or **edit a confirmed score** from `/host/results` or `/host/fixtures`;
+saving re-scores every prediction and updates streak bonuses. **Why:** the manual
+confirm step added friction once results were reliable enough; correction after the
+fact is enough when the API is wrong. Supersedes the 2026-08-16 provisional/confirm-queue
+decisions below (those entries are kept for history).
+
+---
+
 ## 2026-08-22 — Split Predictions and Results tabs
 
 **Predictions** (`/`) = Open + Kicked Off (active pick flow). **Results** (`/results`) =
