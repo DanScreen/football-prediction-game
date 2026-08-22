@@ -9,7 +9,7 @@ import BankerTag from "@/app/components/BankerTag"
 import RequestResultButton from "@/app/components/RequestResultButton"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
 import { provisionalPoints } from "@/lib/provisional"
-import PredictionHistory, { type HistoryPrediction } from "@/app/PredictionHistory"
+import PredictionHistory, { type HistoryFixture } from "@/app/PredictionHistory"
 import FixtureRoundGroup, { groupByRound } from "@/app/FixtureRoundGroup"
 
 /**
@@ -85,7 +85,7 @@ export default async function PredictionsPage() {
   const now = new Date()
   const cutoff = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
 
-  const [liveFixtures, myPredictions, bonusAwards] = await Promise.all([
+  const [liveFixtures, completedFixtures, bonusAwards] = await Promise.all([
     prisma.fixture.findMany({
       where: {
         competitionId: { in: competitionIds },
@@ -101,10 +101,20 @@ export default async function PredictionsPage() {
         },
       },
     }),
-    prisma.prediction.findMany({
-      where: { userId, fixture: { competitionId: { in: competitionIds } } },
-      orderBy: { fixture: { kickoffTime: "desc" } },
-      include: { fixture: { include: { competition: { select: { name: true } } } } },
+    prisma.fixture.findMany({
+      where: {
+        competitionId: { in: competitionIds },
+        status: "COMPLETED",
+        predictions: { some: { userId: { in: allPeerIds } } },
+      },
+      orderBy: { kickoffTime: "desc" },
+      include: {
+        competition: { select: { name: true } },
+        predictions: {
+          where: { userId: { in: allPeerIds } },
+          include: { user: { select: { id: true, displayName: true, isBot: true } } },
+        },
+      },
     }),
     prisma.bonusAward.findMany({
       where: { userId, leagueId: { in: myLeagueIds } },
@@ -114,7 +124,6 @@ export default async function PredictionsPage() {
 
   const open = liveFixtures.filter((f) => f.kickoffTime > now)
   const locked = liveFixtures.filter((f) => f.kickoffTime <= now)
-  const liveIds = new Set(liveFixtures.map((f) => f.id))
 
   /**
    * The banker is one pick per (competition, round), but a round's fixtures
@@ -134,8 +143,14 @@ export default async function PredictionsPage() {
   }
   const bankerOf = (group: { key: string }) => bankerByRound.get(group.key) ?? null
 
-  // History is everything not already shown in the live sections above.
-  const history: HistoryPrediction[] = myPredictions.filter((p) => !liveIds.has(p.fixtureId))
+  // Settled fixtures with every league-mate's pick visible (same peers as Kicked Off).
+  const history: HistoryFixture[] = completedFixtures.map((f) => {
+    const peers = peersByCompetition.get(f.competitionId) ?? new Set<string>()
+    return {
+      ...f,
+      predictions: f.predictions.filter((p) => peers.has(p.userId)),
+    }
+  })
 
   // Streak bonuses keyed to match PredictionHistory's competition·round key.
   const competitionNameById = new Map(memberships.map((m) => [m.league.competition.id, m.league.competition.name]))
@@ -435,8 +450,10 @@ export default async function PredictionsPage() {
       {history.length > 0 && (
         <>
           <h2 className="text-lg font-bold text-ink mb-1">Results</h2>
-          <p className="text-ink-muted text-sm mb-4">Your settled picks, newest round first.</p>
-          <PredictionHistory predictions={history} bonusByRound={bonusByRound} />
+          <p className="text-ink-muted text-sm mb-4">
+            Settled fixtures with everyone&apos;s picks — newest round first.
+          </p>
+          <PredictionHistory fixtures={history} userId={userId} bonusByRound={bonusByRound} />
         </>
       )}
 

@@ -114,8 +114,10 @@ above). Three sections, top to bottom:
   provisional points (amber `+X prov.`), plus an "awaiting confirmation" note. A
   bankered pick is tagged ★ ×2 and its points already include the double. A member
   can press **Request result** to trigger the lookup early.
-- **Results** — settled picks grouped by competition and round, newest first, with the
-  round subtotal and any streak bonus.
+- **Results** — settled fixtures grouped by competition and round, newest first. Each
+  fixture shows the confirmed scoreline and **every league-mate's pick** with points
+  (same visibility as Kicked Off). The round header still shows **your** subtotal and
+  any streak bonus. Left-edge colour reflects your outcome on that fixture.
 
 Above them, when picks are outstanding: an amber nudge with the count and the next
 deadline. It counts only the **next gameweek needing picks in each competition**, not
@@ -124,9 +126,9 @@ everything open — fixtures import a couple of rounds ahead, so counting all of
 their own gameweek badge. Standing totals (points, exact count, rank) are deliberately *not* here — they
 belong to the Leaderboard, where they can be read per league and against other people.
 
-Whose picks show under Kicked Off: everyone who shares a league with you **on that
-competition**. A league-mate on the World Cup doesn't surface on your Premier League
-fixtures.
+Whose picks show under Kicked Off and Results: everyone who shares a league with you
+**on that competition**. A league-mate on the World Cup doesn't surface on your Premier
+League fixtures.
 
 ## How it works (`/rules`)
 

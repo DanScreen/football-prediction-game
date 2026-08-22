@@ -262,6 +262,17 @@ Host/commissioner flows remain web-only for v1.
 
 ---
 
+## 2026-08-22 — Results section shows all league-mate picks
+
+The Predictions **Results** section lists every league-mate's settled pick per fixture,
+not just the viewer's. Same peer filter as Kicked Off (everyone sharing any league on
+that competition). Round headers still show **your** subtotal and streak bonus only.
+**Why:** comparing picks after a round settles is part of the social loop; hiding others'
+picks in Results while showing them in Kicked Off was inconsistent. Open fixtures stay
+private until kickoff.
+
+---
+
 ## Foundational stack decisions (earlier)
 
 - **Prisma 7 + `@prisma/adapter-pg`** — Prisma 7 dropped no-adapter mode; the runtime
