@@ -6,10 +6,12 @@ initial build; later work is listed individually.
 
 ---
 
-## 2026-08-22 — Results show every league-mate's picks
+## 2026-08-22 — Results show every league-mate's picks (web + mobile)
 The Predictions **Results** section now lists all league-mates' settled picks per
 fixture (same peer visibility as Kicked Off), not just your own. Round headers still
-show your subtotal and streak bonus. See [features.md](features.md#predictions-).
+show your subtotal and streak bonus. The mobile app matches: **Kicked off** and
+**Results** fixture cards list every league-mate's pick once the fixture has kicked off.
+See [features.md](features.md#predictions-) and [mobile.md](mobile.md).
 
 ## 2026-08-16 — Mobile Phases 3–4 (player app + push)
 Expo app: predictions with banker, stacked leaderboards, create/join/share leagues,

@@ -222,7 +222,8 @@ Each fixture:
 | `status` | Same enum as DB / web |
 | `actualHomeScore`, `actualAwayScore` | When completed |
 | `provisionalHomeScore`, `provisionalAwayScore` | When awaiting host confirm |
-| `prediction` | Optional nested current pick: `{ homeScore, awayScore, isBanker, pointsAwarded, provisionalPoints }` |
+| `prediction` | Optional nested current pick: `{ userId, displayName, isBot, homeScore, awayScore, isBanker, pointsAwarded, provisionalPoints }` |
+| `peerPredictions` | League-mate picks on this fixture — **empty before kickoff**, populated once the fixture has kicked off (same peer filter as the web). Sorted with the viewer first, then alphabetical. |
 
 #### `POST /api/mobile/v1/predictions`
 

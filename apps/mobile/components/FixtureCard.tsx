@@ -1,6 +1,6 @@
 import { Pressable, Text, TextInput, View } from "react-native"
 import { useTokens } from "@/lib/theme"
-import type { MobileFixture } from "@/lib/api"
+import type { FixturePrediction, MobileFixture } from "@/lib/api"
 
 function formatKickoff(iso: string): string {
   const d = new Date(iso)
@@ -13,8 +13,19 @@ function formatKickoff(iso: string): string {
   })
 }
 
+function formatPick(pred: Pick<FixturePrediction, "homeScore" | "awayScore">): string {
+  return `${pred.homeScore}–${pred.awayScore}`
+}
+
+function pointsLabel(pred: FixturePrediction, settled: boolean): string | null {
+  if (settled && pred.pointsAwarded != null) return `${pred.pointsAwarded} pts`
+  if (!settled && pred.provisionalPoints != null) return `+${pred.provisionalPoints} prov.`
+  return null
+}
+
 export function FixtureCard({
   fixture,
+  viewerUserId,
   home,
   away,
   isBanker,
@@ -26,6 +37,7 @@ export function FixtureCard({
   editable,
 }: {
   fixture: MobileFixture
+  viewerUserId?: string
   home: string
   away: string
   isBanker: boolean
@@ -40,6 +52,8 @@ export function FixtureCard({
   const pred = fixture.prediction
   const hasProv =
     fixture.provisionalHomeScore != null && fixture.provisionalAwayScore != null
+  const settled = fixture.actualHomeScore != null && fixture.actualAwayScore != null
+  const showPeers = !editable && fixture.peerPredictions.length > 0
 
   return (
     <View
@@ -90,32 +104,92 @@ export function FixtureCard({
           </Pressable>
         </View>
       ) : (
-        <View style={{ gap: 6 }}>
-          <Text style={{ color: t.inkMid, fontVariant: ["tabular-nums"] }}>
-            Your pick:{" "}
-            <Text style={{ fontWeight: "700", color: t.ink }}>
-              {pred ? `${pred.homeScore}–${pred.awayScore}` : "—"}
-            </Text>
-            {pred?.isBanker ? (
-              <Text style={{ color: t.clock, fontWeight: "700" }}> ★</Text>
-            ) : null}
-          </Text>
-          {fixture.actualHomeScore != null ? (
+        <View style={{ gap: 8 }}>
+          {settled ? (
             <Text style={{ color: t.inkMid }}>
               Result: {fixture.actualHomeScore}–{fixture.actualAwayScore}
-              {pred?.pointsAwarded != null ? (
-                <Text style={{ color: t.good, fontWeight: "700" }}>
-                  {" "}
-                  · {pred.pointsAwarded} pts
-                </Text>
-              ) : null}
             </Text>
           ) : hasProv ? (
             <Text style={{ color: t.clock }}>
               Provisional: {fixture.provisionalHomeScore}–{fixture.provisionalAwayScore}
-              {pred?.provisionalPoints != null ? ` · +${pred.provisionalPoints} prov.` : ""}
             </Text>
           ) : null}
+
+          {showPeers ? (
+            <View
+              style={{
+                borderTopWidth: 1,
+                borderTopColor: t.lineSoft,
+                paddingTop: 8,
+                gap: 6,
+              }}
+            >
+              {fixture.peerPredictions.map((p) => {
+                const isYou = viewerUserId != null && p.userId === viewerUserId
+                const pts = pointsLabel(p, settled)
+                return (
+                  <View
+                    key={p.userId}
+                    style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}
+                  >
+                    <Text
+                      style={{
+                        width: 96,
+                        color: isYou ? t.pitch : t.inkMuted,
+                        fontWeight: isYou ? "700" : "500",
+                        fontSize: 14,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {isYou ? "You" : `${p.isBot ? "🤖 " : ""}${p.displayName}`}
+                    </Text>
+                    <Text
+                      style={{
+                        fontWeight: "700",
+                        color: isYou ? t.ink : t.inkMid,
+                        fontVariant: ["tabular-nums"],
+                      }}
+                    >
+                      {formatPick(p)}
+                    </Text>
+                    {p.isBanker ? (
+                      <Text style={{ color: t.clock, fontWeight: "700", fontSize: 13 }}>★</Text>
+                    ) : null}
+                    {pts ? (
+                      <Text
+                        style={{
+                          color: settled ? t.good : t.clock,
+                          fontWeight: "700",
+                          fontSize: 13,
+                        }}
+                      >
+                        {pts}
+                      </Text>
+                    ) : null}
+                  </View>
+                )
+              })}
+            </View>
+          ) : (
+            <Text style={{ color: t.inkMid, fontVariant: ["tabular-nums"] }}>
+              Your pick:{" "}
+              <Text style={{ fontWeight: "700", color: t.ink }}>
+                {pred ? formatPick(pred) : "—"}
+              </Text>
+              {pred?.isBanker ? (
+                <Text style={{ color: t.clock, fontWeight: "700" }}> ★</Text>
+              ) : null}
+              {pred && settled && pred.pointsAwarded != null ? (
+                <Text style={{ color: t.good, fontWeight: "700" }}> · {pred.pointsAwarded} pts</Text>
+              ) : null}
+              {pred && !settled && pred.provisionalPoints != null ? (
+                <Text style={{ color: t.clock, fontWeight: "700" }}>
+                  {" "}
+                  · +{pred.provisionalPoints} prov.
+                </Text>
+              ) : null}
+            </Text>
+          )}
         </View>
       )}
 

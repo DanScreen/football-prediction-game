@@ -126,6 +126,7 @@ export default function PredictionsScreen() {
               <FixtureCard
                 key={f.id}
                 fixture={f}
+                viewerUserId={user?.id}
                 editable
                 home={d.home}
                 away={d.away}
@@ -149,6 +150,7 @@ export default function PredictionsScreen() {
               <FixtureCard
                 key={f.id}
                 fixture={f}
+                viewerUserId={user?.id}
                 editable={false}
                 home=""
                 away=""
@@ -169,6 +171,7 @@ export default function PredictionsScreen() {
               <FixtureCard
                 key={f.id}
                 fixture={f}
+                viewerUserId={user?.id}
                 editable={false}
                 home=""
                 away=""
