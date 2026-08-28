@@ -57,7 +57,7 @@ still written by the explicit "Manage" action on `/leagues`.
 | Role | Flag/check | Can do |
 |------|-----------|--------|
 | Player | any member | Predict, view leaderboard, use the API |
-| League commissioner | `LeagueMembership.role = COMMISSIONER` | Manage league settings at `/admin` |
+| League commissioner | `LeagueMembership.role = COMMISSIONER` | Manage league settings and view pick status at `/admin` |
 | Site host | `User.isSiteAdmin` | Own competitions/fixtures/results at `/host` |
 
 Site hosts are bootstrapped from the `SITE_ADMIN_EMAILS` env var (comma-separated,
@@ -183,10 +183,14 @@ Each form cell is **dual-encoded**## Host area (`/host`) — site hosts only
 
 ## League admin (`/admin`) — commissioners only
 
-Slimmed to `/admin/settings` only: rename the league and manage its invite code, plus a
-read-only summary of the streak tiers (kept because commissioners used to configure the
-Grand Slam here and will look for it). Fixtures and results are handled by hosts, so
-there's nothing else.
+Two destinations, scoped to the league chosen via **Manage** on `/leagues`:
+
+| Page | Purpose |
+|---|---|
+| `/admin/picks` | **Pick status** — for each upcoming fixture, see which league members have submitted a prediction and which haven't. Actual scores stay hidden until kickoff; commissioners only see picked vs not yet. Includes a per-member summary across all open fixtures. |
+| `/admin/settings` | Rename the league, manage its invite code, plus a read-only summary of the streak tiers (kept because commissioners used to configure the Grand Slam here and will look for it). |
+
+Fixtures and results are handled by site hosts, not league commissioners.
 
 ## Fixture import (automatic + manual)
 

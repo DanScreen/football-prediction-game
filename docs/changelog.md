@@ -6,6 +6,11 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-28 — League admins can see pick status on upcoming fixtures
+Commissioners get `/admin/picks`: per-fixture and per-member views of who has predicted
+on upcoming matches in their league. Scores stay hidden until kickoff — only picked vs
+not yet. See [features.md](features.md#league-admin-admin--commissioners-only).
+
 ## 2026-08-22 — Auto-save predictions (web + mobile)
 Open fixture score inputs save automatically once both sides are valid integers
 (debounced ~450ms, also on blur). No Save button. Brief Saving / ✓ Saved feedback;
