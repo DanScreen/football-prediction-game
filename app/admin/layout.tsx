@@ -24,6 +24,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             League Admin
           </span>
           <Link
+            href="/admin/picks"
+            className="text-sm text-board-muted hover:text-board-fore transition-colors"
+          >
+            Pick status
+          </Link>
+          <Link
             href="/admin/settings"
             className="text-sm text-board-muted hover:text-board-fore transition-colors"
           >

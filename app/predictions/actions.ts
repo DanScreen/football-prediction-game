@@ -34,6 +34,7 @@ async function saveScoresForUser(
   await savePrediction(userId, fixture.id, home, away, "WEB")
   revalidatePath("/")
   revalidatePath("/predictions")
+  revalidatePath("/admin/picks")
   return { success: true }
 }
 
