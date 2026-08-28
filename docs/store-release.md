@@ -129,10 +129,30 @@ npm run store:shots   # capture the app, then compose the framed panels
 `store:capture` writes `store-assets/screens/*.png` (bare app screens);
 `store:promos` writes `store-assets/promo/*.png` (framed, captioned — the ones you
 upload). Edit the `PANELS` array in `scripts/build-store-promos.mjs` to change a
-caption or which screen a panel uses.
+headline or which screen a panel uses.
+
+The set is **all dark**, on a dark background, because that is the better-looking
+theme and one palette makes the six panels read as a sequence. Light captures of
+the predictions and leaderboard screens are still produced as alternates; to use
+one, point a panel at it and flip `PANEL_THEME`.
+
+Two things worth knowing when adding a panel:
+
+- A panel showing a **short screen** (the rules screen, say) should set `frameH`
+  so the device closes inside the canvas. The default frame runs off the bottom
+  edge, which looks deliberate over a long screen and looks broken over a short
+  one that ends in empty ground.
+- To show a **different part** of a screen, scroll it in `capture-store-shots.mjs`
+  via `scrollToText` and capture it separately. Do not try to slide the image
+  inside the frame — at the default size the capture is shorter than the frame,
+  so there is nothing to slide.
 
 `npm run store:seed` is destructive to the **local** Premier League fixtures and
-their predictions, and is idempotent. Never point it at production.
+their predictions, and is idempotent. It owns the whole demo picture — two
+leagues (`The Sunday League`, `Five-a-side FC`), eight players, four settled
+gameweeks, one awaiting confirmation and two open — and detaches the hero
+account from anything an earlier local session left behind, so the screenshots
+are reproducible. Never point it at production.
 
 ---
 

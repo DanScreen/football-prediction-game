@@ -34,16 +34,23 @@ const OUT = path.resolve("store-assets/screens")
 /** Apple's 6.9" display class: 1290×2796 = 430×932 CSS at 3×. */
 const DEVICE = { width: 430, height: 932, deviceScaleFactor: 3, mobile: true }
 
+/**
+ * Dark is the house look for the listing, so every panel screen is captured in
+ * dark. The two light variants at the end are kept as alternates — swap one in
+ * from `build-store-promos.mjs` if a panel ever needs the light theme back.
+ */
 const SHOTS = [
-  { name: "01-predictions", route: "/", theme: "light", settle: 2500 },
-  { name: "02-predictions-dark", route: "/", theme: "dark", settle: 2500 },
-  { name: "03-leaderboard", route: "/leaderboard", theme: "light", settle: 2500 },
-  { name: "04-leaderboard-dark", route: "/leaderboard", theme: "dark", settle: 2500 },
-  // The settled rounds sit below the open ones, so scroll to reach the points
-  // badges and the "Nailed it!" moment — the best thing the app has to show.
-  { name: "05-results", route: "/", theme: "light", settle: 2500, scrollToText: "RESULTS" },
-  { name: "06-leagues", route: "/leagues", theme: "light", settle: 2000 },
-  { name: "07-rules", route: "/rules", theme: "light", settle: 2000 },
+  { name: "01-predictions", route: "/", theme: "dark", settle: 2500 },
+  // The kicked-off and settled rounds sit below the open ones, so scroll to
+  // reach them: the amber provisional state, and the points badges and
+  // "Nailed it!" moment, are the best things the app has to show.
+  { name: "02-provisional", route: "/", theme: "dark", settle: 2500, scrollToText: "KICKED OFF" },
+  { name: "03-results", route: "/", theme: "dark", settle: 2500, scrollToText: "RESULTS" },
+  { name: "04-leaderboard", route: "/leaderboard", theme: "dark", settle: 2500 },
+  { name: "05-leagues", route: "/leagues", theme: "dark", settle: 2000 },
+  { name: "06-rules", route: "/rules", theme: "dark", settle: 2000 },
+  { name: "07-predictions-light", route: "/", theme: "light", settle: 2500 },
+  { name: "08-leaderboard-light", route: "/leaderboard", theme: "light", settle: 2500 },
 ]
 
 async function tokens() {

@@ -26,55 +26,63 @@ const OUT = path.resolve("store-assets/promo")
 const DEVICE = { width: 430, height: 932, deviceScaleFactor: 3, mobile: false }
 
 /**
- * The six panels, in listing order. `crop` is how far down the source capture
- * to slide it inside the bezel, as a fraction of its overscan — 0 keeps the top
- * of the screen, 1 pins the bottom.
+ * The six panels, in listing order.
+ *
+ * `frameH` overrides the visible screen height — set it for a screen whose
+ * content does not fill the default frame, so the phone closes inside the canvas
+ * instead of bleeding off the bottom onto empty ground.
  */
 const PANELS = [
   {
     name: "01-predict",
     screen: "01-predictions.png",
     headline: "Predict every scoreline",
-    sub: "Every fixture, right up to kickoff",
-    theme: "light",
+    sub: "Set a banker to double one pick a week",
   },
   {
-    name: "02-banker",
-    screen: "01-predictions.png",
-    headline: "Double down\nwith your Banker",
-    sub: "One pick a week scores twice",
-    theme: "light",
-    crop: 0.16,
+    name: "02-provisional",
+    screen: "02-provisional.png",
+    headline: "Watch it land\nin real time",
+    sub: "Provisional points as results land",
   },
   {
     name: "03-results",
-    screen: "05-results.png",
+    screen: "03-results.png",
     headline: "See how close\nyou got",
     sub: "Exact, close, or nowhere near",
-    theme: "light",
   },
   {
     name: "04-leaderboard",
-    screen: "04-leaderboard-dark.png",
-    headline: "One table,\nall your leagues",
+    screen: "04-leaderboard.png",
+    headline: "The table that\nsettles it",
     sub: "Points, form and every exact score",
-    theme: "dark",
   },
   {
     name: "05-leagues",
-    screen: "06-leagues.png",
+    screen: "05-leagues.png",
     headline: "Private leagues,\none invite link",
     sub: "No strangers, no discovery feed",
-    theme: "light",
   },
   {
-    name: "06-dark",
-    screen: "02-predictions-dark.png",
-    headline: "Looks right\nat night, too",
-    sub: "Follows your system theme",
-    theme: "dark",
+    name: "06-rules",
+    screen: "06-rules.png",
+    headline: "No luck about it",
+    sub: "3 for an exact score, 1.5 for close",
+    // The rules screen has less content than the others, so the default frame —
+    // which runs off the bottom of the canvas — would end on a slab of empty
+    // ground. A shorter frame that finishes inside the canvas ends on the last
+    // line of copy and reads as a whole phone rather than a truncated one.
+    frameH: 344,
   },
 ]
+
+/**
+ * The listing is a dark set — the app's dark theme is the better-looking one and
+ * a single palette makes the six panels read as one sequence rather than six
+ * unrelated ads. `light` is kept because the capture script still produces light
+ * alternates; point a panel at one and set PANEL_THEME to "light" to use them.
+ */
+const PANEL_THEME = "dark"
 
 const THEMES = {
   light: {
@@ -83,6 +91,7 @@ const THEMES = {
     sub: "#5e6b63",
     accent: "#128749",
     bezel: "#17201b",
+    bezelRim: "rgba(255,255,255,0.10)",
     glow: "rgba(18,135,73,0.16)",
   },
   dark: {
@@ -90,7 +99,11 @@ const THEMES = {
     ink: "#eef7f1",
     sub: "#a9c9b6",
     accent: "#f2c74e",
-    bezel: "#04140b",
+    // Lighter than the app's own dark ground (#0e1411) on purpose: a bezel the
+    // same colour as the screen it surrounds vanishes, and the panel stops
+    // reading as a phone.
+    bezel: "#1b2a22",
+    bezelRim: "rgba(255,255,255,0.14)",
     glow: "rgba(242,199,78,0.14)",
   },
 }
@@ -99,7 +112,7 @@ const dataUri = async (file) =>
   `data:image/png;base64,${(await readFile(path.join(SCREENS, file))).toString("base64")}`
 
 function html({ panel, screenUri }) {
-  const t = THEMES[panel.theme]
+  const t = THEMES[PANEL_THEME]
 
   // The device bleeds off the bottom of the canvas rather than sitting fully
   // inside it. That buys a much larger screen — the app itself is the thing
@@ -108,10 +121,9 @@ function html({ panel, screenUri }) {
   const frameW = 322
   const imgH = (frameW * 932) / 430
   const frameTop = 306
-  // Visible screen height, plus enough to run past the bottom edge.
-  const frameH = 932 - frameTop + 90
-  const overscan = Math.max(0, imgH - frameH)
-  const offset = -(overscan * (panel.crop ?? 0))
+  // By default the device runs past the bottom edge of the canvas; a panel can
+  // override `frameH` to close the frame inside it instead.
+  const frameH = panel.frameH ?? 932 - frameTop + 90
 
   return `<!doctype html>
 <html><head><meta charset="utf-8">
@@ -143,7 +155,10 @@ function html({ panel, screenUri }) {
     width: ${frameW + 14}px; height: ${frameH + 14}px;
     background: ${t.bezel};
     border-radius: 46px; padding: 7px;
-    box-shadow: 0 30px 60px ${t.glow}, 0 10px 24px rgba(0,0,0,0.22);
+    box-shadow:
+      inset 0 0 0 1px ${t.bezelRim},
+      0 30px 60px ${t.glow},
+      0 12px 28px rgba(0,0,0,0.45);
   }
   .screen {
     width: ${frameW}px; height: ${frameH}px;
@@ -151,7 +166,7 @@ function html({ panel, screenUri }) {
     background: #fff;
   }
   .screen img {
-    position: absolute; top: ${offset}px; left: 0;
+    position: absolute; top: 0; left: 0;
     width: ${frameW}px; height: ${imgH}px; display: block;
   }
 </style></head>

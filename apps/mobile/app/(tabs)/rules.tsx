@@ -61,10 +61,11 @@ export default function RulesScreen() {
         ) : null}
 
         <Pressable onPress={() => void Linking.openURL(rulesUrl)} style={{ paddingVertical: 8 }}>
+          {/* The link text says where it goes; printing the raw origin under it
+              added nothing and exposed whichever API base the build points at. */}
           <Text style={{ color: t.pitch, fontWeight: "700", fontSize: 15 }}>
             Full rules on the website →
           </Text>
-          <Text style={{ color: t.inkFaint, fontSize: 12, marginTop: 4 }}>{rulesUrl}</Text>
         </Pressable>
       </ScrollView>
     </Screen>

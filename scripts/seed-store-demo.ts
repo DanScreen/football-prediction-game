@@ -96,23 +96,50 @@ async function main() {
     },
   })
 
-  // Drop anyone the base seed put in this league who is not part of the demo
-  // cast — a stray zero-point member at the bottom of the table is the first
-  // thing the eye lands on in a store screenshot.
-  await prisma.leagueMembership.deleteMany({
-    where: { leagueId: league.id, userId: { notIn: users.map((u) => u.id) } },
+  // A second, smaller league on the *same* competition. Two friend groups
+  // following the same fixtures is the ordinary case, and it costs nothing to
+  // seed: predictions are competition-scoped, so this table is a different cut
+  // of picks that already exist. It makes the Leagues and Leaderboard screens
+  // show what the listing claims — that one pick counts in every league.
+  const secondLeague = await prisma.league.upsert({
+    where: { inviteCode: "FIVEASIDE" },
+    update: { name: "Five-a-side FC", competitionId: competition.id },
+    create: {
+      name: "Five-a-side FC",
+      competitionId: competition.id,
+      inviteCode: "FIVEASIDE",
+    },
   })
+  const secondCast = users.filter((u) =>
+    ["alice", "priya", "sam", "robo"].some((n) => u.email.startsWith(n)),
+  )
 
-  for (const u of users) {
-    await prisma.leagueMembership.upsert({
-      where: { userId_leagueId: { userId: u.id, leagueId: league.id } },
-      update: {},
-      create: {
-        userId: u.id,
-        leagueId: league.id,
-        role: u.id === hero.id ? "COMMISSIONER" : "MEMBER",
-      },
+  // The hero's league list is a screenshot, so it must be exactly these two.
+  // Detach them from anything an earlier local session left lying around, and
+  // drop non-cast members — a stray zero-point row at the bottom of the table is
+  // the first thing the eye lands on.
+  await prisma.leagueMembership.deleteMany({
+    where: {
+      userId: hero.id,
+      leagueId: { notIn: [league.id, secondLeague.id] },
+    },
+  })
+  for (const l of [league, secondLeague]) {
+    const cast = l.id === league.id ? users : secondCast
+    await prisma.leagueMembership.deleteMany({
+      where: { leagueId: l.id, userId: { notIn: cast.map((u) => u.id) } },
     })
+    for (const u of cast) {
+      await prisma.leagueMembership.upsert({
+        where: { userId_leagueId: { userId: u.id, leagueId: l.id } },
+        update: {},
+        create: {
+          userId: u.id,
+          leagueId: l.id,
+          role: u.id === hero.id ? "COMMISSIONER" : "MEMBER",
+        },
+      })
+    }
   }
 
   // Clear the competition's fixtures and everything hanging off them, so the
@@ -124,7 +151,9 @@ async function main() {
   await prisma.prediction.deleteMany({
     where: { fixtureId: { in: oldFixtures.map((f) => f.id) } },
   })
-  await prisma.bonusAward.deleteMany({ where: { leagueId: league.id } })
+  await prisma.bonusAward.deleteMany({
+    where: { leagueId: { in: [league.id, secondLeague.id] } },
+  })
   await prisma.fixture.deleteMany({ where: { competitionId: competition.id } })
 
   const rand = rng(20260828)
@@ -252,19 +281,24 @@ async function main() {
       const tier = [...STREAK_TIERS]
         .sort((a, b) => b.minCorrect - a.minCorrect)
         .find((t) => correctResults >= t.minCorrect)
-      if (tier) {
+      if (!tier) continue
+      // A streak bonus is per-league, so it is awarded in every league the
+      // player is in — the underlying gameweek is the same one.
+      for (const l of [league, secondLeague]) {
+        const inLeague = l.id === league.id || secondCast.some((u) => u.id === user.id)
+        if (!inLeague) continue
         await prisma.bonusAward.upsert({
           where: {
             userId_leagueId_round: {
               userId: user.id,
-              leagueId: league.id,
+              leagueId: l.id,
               round: spec.round,
             },
           },
           update: { points: tier.points },
           create: {
             userId: user.id,
-            leagueId: league.id,
+            leagueId: l.id,
             round: spec.round,
             points: tier.points,
           },
@@ -279,7 +313,7 @@ async function main() {
     _count: true,
   })
   console.log("✓ Store demo data seeded")
-  console.log(`  League: ${league.name} (${users.length} players)`)
+  console.log(`  Leagues: ${league.name} (${users.length}), ${secondLeague.name} (${secondCast.length})`)
   console.log(`  Fixtures: ${counts.map((c) => `${c.status}=${c._count}`).join(", ")}`)
   console.log(`  Sign in as ${HERO.email} / password123`)
 }
