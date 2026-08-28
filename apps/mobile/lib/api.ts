@@ -214,6 +214,11 @@ export async function fetchMe(): Promise<MeResponse> {
   return apiRequest<MeResponse>("/me")
 }
 
+/** Permanent, irreversible account deletion (App Store guideline 5.1.1(v)). */
+export async function deleteAccount(): Promise<void> {
+  await apiRequest<void>("/me", { method: "DELETE" })
+}
+
 export async function logoutRemote(): Promise<void> {
   const refreshToken = await getRefreshToken()
   try {

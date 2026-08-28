@@ -64,6 +64,9 @@ function RootNavigator() {
         <Stack.Protected guard={!user}>
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         </Stack.Protected>
+        <Stack.Protected guard={!!user}>
+          <Stack.Screen name="account" options={{ title: "Account" }} />
+        </Stack.Protected>
         <Stack.Screen
           name="join"
           options={{ title: "Join league", presentation: "modal" }}

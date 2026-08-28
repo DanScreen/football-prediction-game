@@ -10,10 +10,12 @@ export default function LoginForm({
   callbackUrl,
   registered,
   reset,
+  deleted,
 }: {
   callbackUrl?: string
   registered?: boolean
   reset?: boolean
+  deleted?: boolean
 }) {
   const [state, formAction, isPending] = useActionState(loginUser, initial)
 
@@ -27,6 +29,11 @@ export default function LoginForm({
       {reset && (
         <div className="rounded-md bg-good-tint border border-good-line text-good px-4 py-3 text-sm">
           Password reset! Sign in with your new password.
+        </div>
+      )}
+      {deleted && (
+        <div className="rounded-md border border-line bg-chip px-4 py-3 text-sm text-ink-mid">
+          Your account has been deleted. Thanks for playing.
         </div>
       )}
       {state.error && (
