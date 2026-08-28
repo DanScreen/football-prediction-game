@@ -293,3 +293,32 @@ password invalidates all the user's other outstanding tokens. Only the SHA-256 h
 the token is stored. There's a 5-minute per-user cooldown. Unlike reminders, this flow
 **requires** Resend to be configured (account recovery isn't optional) and errors if
 it isn't. See `lib/passwordReset.ts`.
+
+## Account deletion (`/profile`)
+
+The profile page carries a **Delete account** section, collapsed behind a
+disclosure and gated on the user retyping their own email address. It is
+irreversible — no deactivated state, no grace period — so it takes a deliberate
+act to reach.
+
+`lib/accountDeletion.ts` is the single implementation, shared with the mobile
+app's `DELETE /api/mobile/v1/me`. In one transaction it removes the user's
+predictions, bonus awards, league memberships, push tokens, refresh tokens and
+reset tokens, then the user. Leagues are **not** deleted with the member — a
+league belongs to everyone in it — unless the leaver was the last one, in which
+case nothing can reach it any more and it goes too. Deleting signs the session
+out and lands on `/login?deleted=1`.
+
+This exists because App Store guideline 5.1.1(v) requires an app that creates
+accounts to let people delete them from inside the app. See
+[decisions.md](decisions.md) for why leagues survive.
+
+## Privacy policy (`/privacy`)
+
+A public page (in `PUBLIC_PATHS`) stating what is collected, why, which
+processors see it, how long it is kept, and how to delete an account. It is the
+privacy-policy URL on both store listings, and the App Store privacy-nutrition
+answers in
+[`store-assets/app-store-listing.md`](../store-assets/app-store-listing.md) must
+match it. **If the app starts collecting something new, edit both in the same
+change** — Apple treats a mismatch as a rejection.

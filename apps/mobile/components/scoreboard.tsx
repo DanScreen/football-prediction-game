@@ -46,8 +46,17 @@ export function Countdown({ kickoffTime }: { kickoffTime: string }) {
   const t = useTokens()
   const [label, setLabel] = useState(() => countdownLabel(kickoffTime))
 
-  useEffect(() => {
+  // Adjust during render rather than in an effect when the fixture changes:
+  // recomputing in an effect would paint the previous fixture's countdown for a
+  // frame, and setState inside an effect cascades an extra render every time
+  // the list re-orders.
+  const [seenKickoff, setSeenKickoff] = useState(kickoffTime)
+  if (seenKickoff !== kickoffTime) {
+    setSeenKickoff(kickoffTime)
     setLabel(countdownLabel(kickoffTime))
+  }
+
+  useEffect(() => {
     const id = setInterval(() => setLabel(countdownLabel(kickoffTime)), 30_000)
     return () => clearInterval(id)
   }, [kickoffTime])

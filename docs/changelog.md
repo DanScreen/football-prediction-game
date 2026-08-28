@@ -6,6 +6,19 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-28 — Store submission readiness (Phase 5)
+Closed the two hard App Store blockers and produced the listing. **Account
+deletion** (guideline 5.1.1(v)): one `deleteUserAccount` shared by the web
+`/profile` page and `DELETE /api/mobile/v1/me`, plus a new mobile Account
+screen. **A real privacy policy** at `/privacy` — the store URL previously
+pointed at `/rules`. Brought the native app's scoreboard UI in line with the
+website (countdown chips, banker tag, outcome accents, points badges, "Nailed
+it!", and a leaderboard with the form strip, podium ramp and exact counts);
+`computeLeagueForm` is now shared by the web page and the mobile API. Added the
+screenshot pipeline (`npm run store:shots`) and
+[`store-assets/app-store-listing.md`](../store-assets/app-store-listing.md).
+See [store-release.md](store-release.md).
+
 ## 2026-08-17 — Logo system (one source, every platform)
 Picked the scoreline mark ("2–1", gold dash) from a three-concept pitch and redrew it as
 geometry in `lib/mark.ts`. `npm run brand:assets` generates all ten raster assets from

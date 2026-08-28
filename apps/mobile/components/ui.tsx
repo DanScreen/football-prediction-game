@@ -11,6 +11,13 @@ import {
 } from "react-native"
 import { useTokens } from "@/lib/theme"
 
+// Metro only bundles a static asset when it sees a literal require() call, and
+// this project's TS setup has no module declaration for `*.png`, so an ESM
+// import does not typecheck either. Hoisted to one place so the exception is
+// stated once rather than at every use.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const markImage = require("@/assets/images/mark.png")
+
 export function Screen({ children, style, ...rest }: ViewProps) {
   const t = useTokens()
   return (
@@ -30,7 +37,9 @@ export function BrandMark() {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       <Image
-        source={require("@/assets/images/mark.png")}
+        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro
+        // only bundles a static asset when it sees a literal require() call.
+      source={markImage}
         style={{ width: 40, height: 40 }}
         accessibilityLabel="Scorers logo"
       />
@@ -48,7 +57,7 @@ export function BrandMark() {
 export function HeaderMark() {
   return (
     <Image
-      source={require("@/assets/images/mark.png")}
+      source={markImage}
       style={{ width: 28, height: 28, marginLeft: 16 }}
       accessibilityLabel="Scorers"
     />

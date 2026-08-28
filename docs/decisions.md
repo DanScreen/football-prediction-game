@@ -5,6 +5,42 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## Store screenshots are captured from the real app under react-native-web
+`scripts/capture-store-shots.mjs` runs the Expo app in headless Chrome with the
+viewport forced to 430 × 932 at deviceScaleFactor 3, giving native 1290 × 2796
+PNGs; `scripts/build-store-promos.mjs` frames and captions them.
+**Why:** this Mac has Command Line Tools only, so there is no iOS Simulator to
+shoot, and EAS cloud builds cannot be screenshotted either. The alternatives were
+hand-drawn mockups (which drift from the product the moment the UI changes) or
+waiting on a full Xcode install. react-native-web renders the same components,
+tokens and API responses, so a capture is a real render rather than a drawing —
+and the whole set regenerates in one command when the UI moves. The known limit
+is that it is *web* RN: native-only chrome (the real status bar, iOS momentum
+scrolling, SF Symbols rendered by the OS) is approximated, so eyeball the set
+against a device build before uploading.
+
+## Account deletion removes the user but keeps their leagues
+`lib/accountDeletion.ts` deletes every row that references the user, then the
+user, in one transaction — but a league survives unless the leaver was its last
+member. **Why:** a league is a shared object. One player quitting must not
+destroy everyone else's standings, even when that player created it; there is no
+"owner" whose departure should be fatal. A league with nobody left is deleted
+because its invite code was the only way in and nobody holds it any more. The
+children are deleted explicitly rather than by adding `onDelete: Cascade` to the
+schema: a cascade is invisible at the call site and would silently widen the
+blast radius of any future `user.delete`, whereas this is one function that says
+what it destroys. Required by App Store guideline 5.1.1(v), which is why it
+exists now rather than later.
+
+## The privacy policy is a page in the app, not a hosted document
+`/privacy` is a React page in this repo, listed in `PUBLIC_PATHS`.
+**Why:** the store listing needs a stable URL that a reviewer can open without an
+account, and the policy has to stay true as the app changes. Keeping it in the
+codebase means it shows up in the diff when someone adds a data collection, and
+it inherits the design system rather than looking like a document from another
+company. It replaces `/rules`, which the store-release doc used to nominate and
+which is the rules of the *game* — that would not have survived review.
+
 ## Logo is drawn geometry in one shared module, not `<text>` and not per-platform files
 The mark's paths live in `lib/mark.ts`; `app/components/Logo.tsx` renders them as JSX and
 `scripts/generate-brand-assets.mjs` rasterises every PNG from the same `markSvg()`.
