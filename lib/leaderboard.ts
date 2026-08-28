@@ -161,3 +161,95 @@ export async function computeLeaderboard(leagueId: string): Promise<LeaderboardE
   })
   return ranked
 }
+
+/** How a player's last-5-rounds form cell is graded. */
+export type FormTier = "strong" | "mixed" | "poor" | "none"
+
+export type FormCell = {
+  round: string
+  tier: FormTier
+  /** Confirmed points scored in that round. 0 when `tier` is "none". */
+  scored: number
+}
+
+/**
+ * Each member's form over the league competition's last five completed rounds,
+ * oldest → newest, keyed by user id. Members with no scored picks still get a
+ * full-length array of `"none"` cells, so every row's strip lines up.
+ *
+ * Extracted from the leaderboard page so `/api/mobile/v1/leaderboards` can send
+ * the same strip to the native apps — two implementations of "what counts as
+ * good form" would inevitably grade the same round differently.
+ */
+export async function computeLeagueForm(
+  leagueId: string,
+): Promise<{ rounds: string[]; byUser: Map<string, FormCell[]> }> {
+  const league = await prisma.league.findUnique({
+    where: { id: leagueId },
+    select: { competitionId: true, memberships: { select: { userId: true } } },
+  })
+  if (!league) return { rounds: [], byUser: new Map() }
+  const memberIds = league.memberships.map((m) => m.userId)
+
+  const [scoredPredictions, completedFixtures] = await Promise.all([
+    prisma.prediction.findMany({
+      where: {
+        userId: { in: memberIds },
+        fixture: { competitionId: league.competitionId },
+        pointsAwarded: { not: null },
+      },
+      select: { userId: true, pointsAwarded: true, fixture: { select: { round: true } } },
+    }),
+    prisma.fixture.findMany({
+      where: { competitionId: league.competitionId, status: "COMPLETED" },
+      select: { round: true, kickoffTime: true },
+    }),
+  ])
+
+  // A round's position in time is its *latest* kickoff, so a round that spans a
+  // weekend doesn't sort ahead of one that finished after it.
+  const roundMaxKickoff = new Map<string, Date>()
+  for (const f of completedFixtures) {
+    const existing = roundMaxKickoff.get(f.round)
+    if (!existing || f.kickoffTime > existing) roundMaxKickoff.set(f.round, f.kickoffTime)
+  }
+
+  const rounds = [...roundMaxKickoff.entries()]
+    .sort(([, a], [, b]) => b.getTime() - a.getTime())
+    .slice(0, 5)
+    .reverse()
+    .map(([round]) => round)
+
+  const statsByUser = new Map<string, Map<string, { scored: number; count: number }>>()
+  for (const p of scoredPredictions) {
+    let byRound = statsByUser.get(p.userId)
+    if (!byRound) {
+      byRound = new Map()
+      statsByUser.set(p.userId, byRound)
+    }
+    const s = byRound.get(p.fixture.round) ?? { scored: 0, count: 0 }
+    byRound.set(p.fixture.round, {
+      scored: s.scored + (p.pointsAwarded ?? 0),
+      count: s.count + 1,
+    })
+  }
+
+  const byUser = new Map<string, FormCell[]>()
+  for (const userId of memberIds) {
+    const stats = statsByUser.get(userId)
+    byUser.set(
+      userId,
+      rounds.map((round) => {
+        const s = stats?.get(round)
+        if (!s || s.count === 0) return { round, tier: "none" as const, scored: 0 }
+        // Share of the maximum available (3 per pick), not a raw total, so a
+        // round with more fixtures doesn't look like better form on its own.
+        const pct = s.scored / (s.count * 3)
+        const tier: FormTier = pct > 0.4 ? "strong" : pct > 0.2 ? "mixed" : "poor"
+        return { round, tier, scored: s.scored }
+      }),
+    )
+  }
+
+  return { rounds, byUser }
+}

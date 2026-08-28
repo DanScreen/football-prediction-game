@@ -9,6 +9,10 @@ import { useTokens } from "@/lib/theme"
 
 export { ErrorBoundary } from "expo-router"
 
+export const unstable_settings = {
+  initialRouteName: "index",
+}
+
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
@@ -33,7 +37,7 @@ function RootNavigator() {
   useEffect(() => {
     if (user) {
       void registerForPushReminders().catch(() => {
-        /* permission denied or Expo Go project id — non-fatal */
+        /* permission denied or missing EAS project id — non-fatal */
       })
     }
   }, [user])
@@ -53,13 +57,17 @@ function RootNavigator() {
           contentStyle: { backgroundColor: t.ground },
         }}
       >
-        <Stack.Screen name="join" options={{ title: "Join league", presentation: "modal" }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Protected guard={!!user}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack.Protected>
         <Stack.Protected guard={!user}>
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         </Stack.Protected>
+        <Stack.Screen
+          name="join"
+          options={{ title: "Join league", presentation: "modal" }}
+        />
       </Stack>
     </>
   )

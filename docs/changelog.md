@@ -6,6 +6,13 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-17 — Logo system (one source, every platform)
+Picked the scoreline mark ("2–1", gold dash) from a three-concept pitch and redrew it as
+geometry in `lib/mark.ts`. `npm run brand:assets` generates all ten raster assets from
+it: favicon, apple-icon, OG image, iOS icon, the three Android adaptive layers, splash,
+and the in-app lockup. The mobile app had been shipping the **stock Expo icon** on every
+platform. See [design-system.md](design-system.md#logo).
+
 ## 2026-08-16 — Mobile Phases 3–4 (player app + push)
 Expo app: predictions with banker, stacked leaderboards, create/join/share leagues,
 forgot-password, invite deep link `scorers://join?code=`. Server: `MobileDeviceToken`,

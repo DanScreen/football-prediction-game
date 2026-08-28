@@ -7,8 +7,8 @@ import { useAuth } from "@/lib/auth"
 import { useTokens } from "@/lib/theme"
 
 /**
- * Deep link target: scorers://join?code=ABCDEF
- * Logged-in users join immediately; others are sent to register with the code.
+ * Deep link only: scorers://join?code=ABCDEF
+ * Not the app's home screen — cold start goes to index → login/tabs.
  */
 export default function JoinScreen() {
   const { code } = useLocalSearchParams<{ code?: string }>()
@@ -21,10 +21,13 @@ export default function JoinScreen() {
 
   useEffect(() => {
     if (isLoading) return
+
+    // Opened without a code (e.g. stale route) — bail to the normal app.
     if (!invite) {
-      setError("Missing invite code.")
+      router.replace(user ? "/(tabs)" : "/(auth)/login")
       return
     }
+
     if (!user) {
       router.replace({ pathname: "/(auth)/register", params: { inviteCode: invite } })
     }
@@ -45,11 +48,11 @@ export default function JoinScreen() {
     }
   }
 
-  if (!user) {
+  if (isLoading || !invite || !user) {
     return (
       <Screen>
         <View style={screenPadding.pad}>
-          <Text style={{ color: t.inkMuted }}>Opening registration…</Text>
+          <Text style={{ color: t.inkMuted }}>Taking you to the right place…</Text>
         </View>
       </Screen>
     )
@@ -64,7 +67,7 @@ export default function JoinScreen() {
         </Text>
         <ErrorBanner message={error} />
         <PrimaryButton label="Join" onPress={() => void confirmJoin()} loading={busy} />
-        <PrimaryButton label="Cancel" onPress={() => router.back()} />
+        <PrimaryButton label="Cancel" onPress={() => router.replace("/(tabs)")} />
       </View>
     </Screen>
   )

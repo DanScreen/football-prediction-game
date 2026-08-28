@@ -86,7 +86,9 @@ export default function LeaguesScreen() {
   return (
     <Screen>
       <ScrollView
-        contentContainerStyle={screenPadding.pad}
+        style={{ flex: 1 }}
+        contentContainerStyle={screenPadding.scrollContent}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             refreshing={leagues.refreshing}
@@ -94,7 +96,6 @@ export default function LeaguesScreen() {
             tintColor={t.pitch}
           />
         }
-        keyboardShouldPersistTaps="handled"
       >
         <ErrorBanner message={leagues.error ?? formError} />
         {leagues.loading && !leagues.data ? <ActivityIndicator color={t.pitch} /> : null}

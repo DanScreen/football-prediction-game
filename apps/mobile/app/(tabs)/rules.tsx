@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
-import { ActivityIndicator, Text, View } from "react-native"
+import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from "react-native"
 import { ApiError, fetchRules } from "@/lib/api"
+import { API_BASE_URL } from "@/lib/config"
 import { useTokens } from "@/lib/theme"
 import { ErrorBanner, Screen, screenPadding } from "@/components/ui"
 
@@ -8,6 +9,7 @@ export default function RulesScreen() {
   const t = useTokens()
   const [error, setError] = useState<string | null>(null)
   const [rules, setRules] = useState<Awaited<ReturnType<typeof fetchRules>> | null>(null)
+  const rulesUrl = `${API_BASE_URL}/rules`
 
   useEffect(() => {
     let cancelled = false
@@ -28,7 +30,7 @@ export default function RulesScreen() {
 
   return (
     <Screen>
-      <View style={screenPadding.pad}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={screenPadding.scrollContent}>
         <ErrorBanner message={error} />
         {!rules && !error ? <ActivityIndicator color={t.pitch} /> : null}
         {rules ? (
@@ -57,7 +59,14 @@ export default function RulesScreen() {
             ))}
           </View>
         ) : null}
-      </View>
+
+        <Pressable onPress={() => void Linking.openURL(rulesUrl)} style={{ paddingVertical: 8 }}>
+          <Text style={{ color: t.pitch, fontWeight: "700", fontSize: 15 }}>
+            Full rules on the website →
+          </Text>
+          <Text style={{ color: t.inkFaint, fontSize: 12, marginTop: 4 }}>{rulesUrl}</Text>
+        </Pressable>
+      </ScrollView>
     </Screen>
   )
 }

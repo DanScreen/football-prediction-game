@@ -5,6 +5,18 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## Logo is drawn geometry in one shared module, not `<text>` and not per-platform files
+The mark's paths live in `lib/mark.ts`; `app/components/Logo.tsx` renders them as JSX and
+`scripts/generate-brand-assets.mjs` rasterises every PNG from the same `markSvg()`.
+**Why:** the mark was previously set in SVG `<text>` with `var(--font-mono)`, so the
+digits reflowed depending on whether the font had loaded and disappeared entirely when
+rasterised — a font-dependent logo can't become an app icon. Keeping one module also
+fixes the drift that let the site show the scoreline mark while the Expo app shipped the
+stock template icon; the assets are committed, not built on demand, so regenerating is a
+deliberate `npm run brand:assets` step. Chosen over concept B (an S monogram, safer at
+16px) and concept C (a pitch/kick-off mark, a stronger long-term graphic system but a
+bigger change than a pre-store-release app needed).
+
 ## Platform-owned competitions (hub-and-spoke)
 Fixtures/results moved from per-league to a shared `Competition` that leagues subscribe
 to (`League.competitionId`, `Fixture.competitionId`). **Why:** every league was

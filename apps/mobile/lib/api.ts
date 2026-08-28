@@ -56,6 +56,15 @@ export type MobileFixture = {
   prediction: FixturePrediction | null
 }
 
+export type FormTier = "strong" | "mixed" | "poor" | "none"
+
+/** One cell of the last-5-rounds form strip, oldest → newest. */
+export type FormCell = {
+  round: string
+  tier: FormTier
+  scored: number
+}
+
 export type LeaderboardEntry = {
   rank: number
   id: string
@@ -73,12 +82,16 @@ export type LeaderboardEntry = {
     banker: number
     streak: number
   }
+  /** One cell per `LeaderboardBlock.formRounds` entry, in the same order. */
+  form: FormCell[]
 }
 
 export type LeaderboardBlock = {
   leagueId: string
   leagueName: string
   competitionName: string
+  /** Round names behind the form strip, oldest → newest. */
+  formRounds: string[]
   standings: LeaderboardEntry[]
 }
 
