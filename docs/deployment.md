@@ -39,9 +39,15 @@ sets `deletion_protection` (blocks `terraform destroy`) plus
 Artifact Registry keeps the 5 most recent image versions plus anything under 30 days
 (`cleanup_policies` in `terraform/main.tf`); older images are collected automatically.
 
-> **Terraform state is local** (`terraform/terraform.tfstate`, committed) and no workflow
-> runs Terraform — infra changes are applied by hand with `terraform apply` from
-> `terraform/`. Only `deploy.yml` runs automatically, and it never touches Terraform.
+> **Terraform state is local and gitignored** (`terraform/.gitignore` excludes `*.tfstate`
+> and `*.tfvars`), and no workflow runs Terraform — infra changes are applied by hand with
+> `terraform apply` from `terraform/`. Only `deploy.yml` runs automatically, and it never
+> touches Terraform.
+>
+> This means the only copy of the state, and of `terraform.tfvars` (which holds
+> `cron_secret` and `db_password`), lives on one developer machine. Losing it means
+> re-importing every resource by hand. Moving state to a GCS backend — as Tiki Acca
+> already does — is the fix; tracked in [roadmap.md](roadmap.md).
 
 Provision from scratch: `cd terraform && terraform init && terraform apply`.
 
