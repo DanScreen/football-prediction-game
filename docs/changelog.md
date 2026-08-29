@@ -6,6 +6,19 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-29 — Enable database backups; prune Artifact Registry
+
+- **Cloud SQL backups enabled.** Prod had run with `backup_configuration.enabled = false`
+  and no deletion protection — a live database with no recovery path. Now daily backups
+  at 03:00, 7 retained backups, 7-day transaction log retention (PITR), and deletion
+  protection at both the Terraform and API layers (~£0.50/month).
+- **Artifact Registry cleanup policy.** Keeps the 5 most recent versions plus anything
+  under 30 days; collects the rest.
+- Documented that Cloud SQL `disk_type` is fixed at creation — changing it forces
+  destroy-and-recreate of the instance.
+
+Requires a manual `terraform apply` from `terraform/` (state is local; no Terraform CI).
+
 ## 2026-08-28 — League admins can see pick status on upcoming fixtures
 Commissioners get `/admin/picks`: per-fixture and per-member views of who has predicted
 on upcoming matches in their league. Scores stay hidden until kickoff — only picked vs
