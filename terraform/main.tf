@@ -40,6 +40,27 @@ resource "google_artifact_registry_repository" "docker" {
   repository_id = "football-prediction-app"
   format        = "DOCKER"
   depends_on    = [google_project_service.apis]
+
+  # Every push to main publishes a new image and nothing removed the old ones.
+  # KEEP wins over DELETE, so the 5 most recent versions always survive
+  # regardless of age — the deployed image is never collected.
+  cleanup_policies {
+    id     = "keep-recent-versions"
+    action = "KEEP"
+    most_recent_versions {
+      keep_count = 5
+    }
+  }
+
+  cleanup_policies {
+    id     = "delete-stale"
+    action = "DELETE"
+    condition {
+      older_than = "2592000s" # 30 days
+    }
+  }
+
+  cleanup_policy_dry_run = false
 }
 
 # ── Cloud SQL ─────────────────────────────────────────────────────────────────
@@ -54,10 +75,23 @@ resource "google_sql_database_instance" "main" {
     tier      = "db-f1-micro"
     edition   = "ENTERPRISE"
     disk_size = 10
-    disk_type = "PD_HDD"
+    disk_type = "PD_HDD" # Fixed at creation — changing this recreates the instance.
 
+    deletion_protection_enabled = true
+
+    # This instance ran with NO backups at all. Daily backup + 7 days of
+    # transaction logs gives point-in-time recovery, matching Tiki Acca's prod
+    # posture. Costs roughly £0.50/month on a 10 GB instance.
     backup_configuration {
-      enabled = false
+      enabled                        = true
+      start_time                     = "03:00"
+      point_in_time_recovery_enabled = true
+      transaction_log_retention_days = 7
+
+      backup_retention_settings {
+        retained_backups = 7
+        retention_unit   = "COUNT"
+      }
     }
 
     ip_configuration {
@@ -65,7 +99,11 @@ resource "google_sql_database_instance" "main" {
     }
   }
 
-  deletion_protection = false
+  # Guard the live database at both layers: `deletion_protection` blocks
+  # `terraform destroy`, `deletion_protection_enabled` blocks deletion via the
+  # API/console. Storage type is deliberately absent from any change here — it
+  # is fixed at creation, so editing `disk_type` would force destroy-and-recreate.
+  deletion_protection = true
   depends_on          = [google_project_service.apis]
 }
 
