@@ -14,13 +14,34 @@ then builds and deploys to Cloud Run. Infra is provisioned with Terraform in
 | Resource | Details |
 |----------|---------|
 | Cloud Run | `football-prediction-app`, europe-west2 |
-| Cloud SQL | PostgreSQL 16, **ENTERPRISE** edition, `db-f1-micro` |
+| Cloud SQL | PostgreSQL 16, **ENTERPRISE** edition, `db-f1-micro`, `PD_HDD`, daily backups + 7-day PITR |
 | Artifact Registry | Docker image repository |
 | Cloud Scheduler | `football-prediction-resolve` — `POST /api/cron/resolve` every **10 min** |
 | Service accounts | Separate deploy SA and Cloud Run SA (minimal IAM) |
 
 > Cloud SQL must be `edition = "ENTERPRISE"` — the default ENTERPRISE_PLUS doesn't
 > support `db-f1-micro`.
+
+### Backups and destructive-change traps
+
+Prod ran with **`backup_configuration { enabled = false }` and no deletion protection**
+until Aug 2026 — a live database with no recovery path. It now takes a daily backup at
+03:00, retains 7 backups and 7 days of transaction logs (point-in-time recovery), and
+sets `deletion_protection` (blocks `terraform destroy`) plus
+`deletion_protection_enabled` (blocks deletion via API/console). Cost is ~£0.50/month.
+
+> **Never change `disk_type` on an existing instance.** Storage type is fixed at creation
+> — the [instance settings docs](https://cloud.google.com/sql/docs/postgres/instance-settings)
+> mark it non-modifiable and `gcloud sql instances patch` has no `--storage-type` flag.
+> Editing it in Terraform forces **destroy-and-recreate**, i.e. total data loss. The same
+> applies to `tier` downgrades below what the edition supports.
+
+Artifact Registry keeps the 5 most recent image versions plus anything under 30 days
+(`cleanup_policies` in `terraform/main.tf`); older images are collected automatically.
+
+> **Terraform state is local** (`terraform/terraform.tfstate`, committed) and no workflow
+> runs Terraform — infra changes are applied by hand with `terraform apply` from
+> `terraform/`. Only `deploy.yml` runs automatically, and it never touches Terraform.
 
 Provision from scratch: `cd terraform && terraform init && terraform apply`.
 

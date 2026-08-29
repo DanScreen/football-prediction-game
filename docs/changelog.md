@@ -6,6 +6,19 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-29 — Enable database backups; prune Artifact Registry
+
+- **Cloud SQL backups enabled.** Prod had run with `backup_configuration.enabled = false`
+  and no deletion protection — a live database with no recovery path. Now daily backups
+  at 03:00, 7 retained backups, 7-day transaction log retention (PITR), and deletion
+  protection at both the Terraform and API layers (~£0.50/month).
+- **Artifact Registry cleanup policy.** Keeps the 5 most recent versions plus anything
+  under 30 days; collects the rest.
+- Documented that Cloud SQL `disk_type` is fixed at creation — changing it forces
+  destroy-and-recreate of the instance.
+
+Requires a manual `terraform apply` from `terraform/` (state is local; no Terraform CI).
+
 ## 2026-08-28 — Store submission readiness (Phase 5)
 Closed the two hard App Store blockers and produced the listing. **Account
 deletion** (guideline 5.1.1(v)): one `deleteUserAccount` shared by the web
