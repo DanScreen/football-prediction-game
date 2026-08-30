@@ -32,3 +32,9 @@ variable "cron_secret" {
   sensitive   = true
   default     = ""
 }
+
+variable "alert_email" {
+  description = "Address that Cloud Monitoring alerts are emailed to"
+  type        = string
+  default     = "danieljamesscreen@gmail.com"
+}
