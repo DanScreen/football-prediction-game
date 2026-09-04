@@ -101,7 +101,12 @@ Open fixtures to pick on and kicked-off fixtures still in play, scoped by **comp
 (see League scoping above). Two sections, top to bottom:
 
 - **Open** — upcoming fixtures with a countdown and a score input each, **grouped into
-  gameweeks** (`FixtureRoundGroup.tsx`). Cards carry an amber left edge when unpredicted,
+  gameweeks** (`FixtureRoundGroup.tsx`) and capped at the **current gameweek and the next
+  one** per competition (`VISIBLE_OPEN_ROUNDS`). Later rounds can exist in the database —
+  hosts add fixtures by hand, and the auto-import window moves on — but picks four
+  gameweeks out aren't the game, and they buried the round with a live deadline. The cap
+  is applied to the grouped rounds, so the banker header and the nudge below only ever
+  describe fixtures the player can act on. Cards carry an amber left edge when unpredicted,
   green when predicted. Scores **auto-save** once both boxes have a valid integer
   (debounced ~450ms, also on blur) — there is no Save button. A brief ✓ Saved / Saving
   status appears beside the inputs. Only the nearest round that still needs picks is

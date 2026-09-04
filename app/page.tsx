@@ -7,7 +7,11 @@ import BankerTag from "@/app/components/BankerTag"
 import RequestResultButton from "@/app/components/RequestResultButton"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
 import { resolvePeerContext } from "@/lib/peers"
-import FixtureRoundGroup, { groupByRound } from "@/app/FixtureRoundGroup"
+import FixtureRoundGroup, {
+  groupByRound,
+  takeNearestRounds,
+  VISIBLE_OPEN_ROUNDS,
+} from "@/app/FixtureRoundGroup"
 
 /**
  * Predictions — open fixtures to pick on and kicked-off fixtures still in play.
@@ -81,7 +85,10 @@ export default async function PredictionsPage() {
   }
   const bankerOf = (group: { key: string }) => bankerByRound.get(group.key) ?? null
 
-  const openRounds = groupByRound(open)
+  // Only the current gameweek and the next one are pickable here; anything
+  // further out is hidden rather than filtered from the query, so bankers and
+  // the deadline nudge below still see the same set the player can act on.
+  const openRounds = takeNearestRounds(groupByRound(open), VISIBLE_OPEN_ROUNDS)
   const lockedRounds = groupByRound(locked)
 
   const nudgeRounds: typeof openRounds = []

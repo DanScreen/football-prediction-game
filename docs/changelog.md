@@ -6,6 +6,15 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-04 — Predict tab shows only the current and next gameweek
+
+The Open section rendered every scheduled fixture in the database, so gameweeks months
+out (Matchweek 8, 9) sat on the predict tab alongside the round with a live deadline.
+The auto-import only tops up two rounds, but nothing pruned or hid rounds that arrived
+another way. Now capped at two rounds per competition at render time
+(`takeNearestRounds`), applied before the banker header and deadline nudge derive from
+it. See [features.md](features.md#predictions-).
+
 ## 2026-08-30 — Alerting on cron failures and 5xx
 
 Neither GCP project had any notification channel or alert policy. `/api/cron/resolve`
