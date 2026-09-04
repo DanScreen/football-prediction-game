@@ -66,9 +66,8 @@ export default async function ApiDocsPage() {
           completed fixtures. Optional <code className="bg-chip px-1 rounded">?leagueId=</code>{" "}
           scopes to a league you belong to (defaults to your first league) — fixtures come from
           that league&apos;s competition. Completed fixtures carry{" "}
-          <code className="bg-chip px-1 rounded">actualHomeScore/actualAwayScore</code>; a fixture
-          awaiting host confirmation carries provisional scores in{" "}
-          <code className="bg-chip px-1 rounded">provisionalHomeScore/provisionalAwayScore</code>.
+          <code className="bg-chip px-1 rounded">actualHomeScore/actualAwayScore</code>. Results
+          are confirmed automatically once football-data.org has them.
         </Endpoint>
 
         <Endpoint method="POST" path="/api/v1/predictions">
@@ -89,18 +88,17 @@ export default async function ApiDocsPage() {
           <code className="bg-chip px-1 rounded">isBanker</code> flags your double-points pick for
           that round; the doubling is already included in the points below. Confirmed points are
           in{" "}
-          <code className="bg-chip px-1 rounded">pointsAwarded</code>; before the host confirms a
-          result, <code className="bg-chip px-1 rounded">provisionalPoints</code> and the{" "}
-          <code className="bg-chip px-1 rounded">provisional*</code> score fields show the
-          projected outcome.
+          <code className="bg-chip px-1 rounded">pointsAwarded</code> once the fixture is
+          completed. Legacy <code className="bg-chip px-1 rounded">provisional*</code> fields
+          remain for compatibility but are always null under auto-confirm.
         </Endpoint>
 
         <Endpoint method="GET" path="/api/v1/leaderboard">
           Current standings ranked by confirmed points.{" "}
           <code className="bg-chip px-1 rounded">totalPoints</code> is confirmed points (including
-          streak bonuses); <code className="bg-chip px-1 rounded">provisionalPoints</code> and{" "}
-          <code className="bg-chip px-1 rounded">projectedPoints</code> add points from
-          unconfirmed results. Also returns exact-score count and streak bonus points per player.
+          streak bonuses). Legacy <code className="bg-chip px-1 rounded">provisionalPoints</code>{" "}
+          and <code className="bg-chip px-1 rounded">projectedPoints</code> remain for bot
+          compatibility but match confirmed totals under auto-confirm.
         </Endpoint>
       </section>
 

@@ -36,12 +36,38 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="results"
+        options={{
+          title: "Results",
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{ ios: "list.bullet.clipboard", android: "assignment", web: "assignment" }}
+              tintColor={color}
+              size={26}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="leaderboard"
         options={{
           title: "Leaderboard",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "list.number", android: "format_list_numbered", web: "format_list_numbered" }}
+              tintColor={color}
+              size={26}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="results"
+        options={{
+          title: "Results",
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{ ios: "checkmark.seal", android: "task_alt", web: "task_alt" }}
               tintColor={color}
               size={26}
             />

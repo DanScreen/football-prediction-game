@@ -123,3 +123,32 @@ export function groupByRound<T extends Groupable>(fixtures: T[]): FixtureRound<T
 
   return groups
 }
+
+/**
+ * How many upcoming gameweeks the predict tab shows per competition: the one
+ * you're in and the one after it.
+ */
+export const VISIBLE_OPEN_ROUNDS = 2
+
+/**
+ * Keep only the nearest `perCompetition` rounds for each competition.
+ *
+ * Later rounds can sit in the database — hosts add fixtures by hand, and the
+ * auto-import's window (`AUTO_IMPORT_ROUNDS`) moves forward as rounds finish —
+ * but offering picks four gameweeks out isn't the game, and it buries the round
+ * that actually has a deadline. Relies on `groupByRound` preserving the caller's
+ * ordering, which is kickoff ascending.
+ */
+export function takeNearestRounds<T extends Groupable>(
+  rounds: FixtureRound<T>[],
+  perCompetition: number,
+): FixtureRound<T>[] {
+  const taken = new Map<string, number>()
+  return rounds.filter((group) => {
+    const { competitionId } = group.fixtures[0]
+    const soFar = taken.get(competitionId) ?? 0
+    if (soFar >= perCompetition) return false
+    taken.set(competitionId, soFar + 1)
+    return true
+  })
+}

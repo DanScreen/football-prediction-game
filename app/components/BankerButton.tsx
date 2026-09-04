@@ -23,8 +23,8 @@ export default function BankerButton({ fixtureId, isBanker, hasPrediction }: Pro
 
   if (!hasPrediction) {
     return (
-      <span className="text-xs text-ink-faint" title="Save a prediction to use your banker here">
-        ×2 after saving
+      <span className="text-xs text-ink-faint" title="Enter both scores to use your banker here">
+        ×2 once both scores are in
       </span>
     )
   }

@@ -62,7 +62,8 @@ streak bonus fans out per subscribing league. Full schema in
 
 | Path | Purpose |
 |------|---------|
-| `app/page.tsx` | **Predictions** — open fixtures (with inputs), kicked-off picks, settled results |
+| `app/page.tsx` | **Predictions** — open fixtures (with inputs) and kicked-off picks |
+| `app/results/page.tsx` | **Results** — settled fixtures with every league-mate's pick |
 | `app/PredictionHistory.tsx` | Settled picks grouped by competition + round |
 | `app/FixtureRoundGroup.tsx` | Collapsible gameweek section + `groupByRound()`, shared by Open and Kicked Off |
 | `app/predictions/` | `actions.ts` (the prediction server action) + a permanent redirect to `/` |

@@ -5,18 +5,19 @@ when behaviour changes.** For the public bot API see [api.md](api.md).
 
 ## Navigation & shell
 
-**Four destinations, one job each:** Predictions (`/`), Leaderboard, My Leagues, Rules —
-plus Admin/Host chips when the user holds those roles. Dashboard and My Predictions merged on
-2026-08-16; they duplicated the same picks and results either side of kickoff.
-`/predictions` is a permanent redirect to `/` so old links still land.
+**Five destinations, one job each:** Predictions (`/`), Results (`/results`), Leaderboard,
+My Leagues, Rules — plus Admin/Host chips when the user holds those roles. Predictions
+holds **Open** and **Kicked Off** only; settled history moved to **Results** on
+2026-08-22 so the pick flow stays short. `/predictions` is a permanent redirect to `/`
+so old links still land.
 
 - **Desktop (≥640px):** top-bar links.
 - **Mobile (<640px):** a fixed **bottom tab bar** (`app/components/MobileNav.tsx`) with
   the same destinations. The top-bar nav is hidden at this width, so before this existed
   there was no way to reach any page but the dashboard. Both share their link list and
   active-state logic from `NavLinks.tsx`. Profile stays reachable via the header name.
-- **Loading states:** `loading.tsx` skeletons for the predictions and leaderboard
-  pages — these matter because Cloud Run runs at `--min-instances 0`, so a
+- **Loading states:** `loading.tsx` skeletons for the predictions, results, and
+  leaderboard pages — these matter because Cloud Run runs at `--min-instances 0`, so a
   cold start is a visible wait.
 - **Errors:** `app/error.tsx` (retry + dashboard link; the error text is logged, not
   rendered, since it can carry connection strings) and `app/not-found.tsx`.
@@ -35,6 +36,7 @@ picks appear beside yours and who you're ranked against:
 | Surface | Scoped by | Why |
 |---|---|---|
 | Predictions (`/`) | **Competition** | Per-league would render the same fixtures and the same inputs once per league |
+| Results (`/results`) | **Competition** | Same fixtures/peers as predictions, but settled only |
 | Leaderboard | **League** — all of them, stacked | Standings are genuinely per-league; stacking removes the need to switch |
 | `/admin` | **League**, explicitly chosen | Managing settings is a deliberate act on one league |
 
@@ -55,7 +57,7 @@ still written by the explicit "Manage" action on `/leagues`.
 | Role | Flag/check | Can do |
 |------|-----------|--------|
 | Player | any member | Predict, view leaderboard, use the API |
-| League commissioner | `LeagueMembership.role = COMMISSIONER` | Manage league settings at `/admin` |
+| League commissioner | `LeagueMembership.role = COMMISSIONER` | Manage league settings and view pick status at `/admin` |
 | Site host | `User.isSiteAdmin` | Own competitions/fixtures/results at `/host` |
 
 Site hosts are bootstrapped from the `SITE_ADMIN_EMAILS` env var (comma-separated,
@@ -95,27 +97,30 @@ populated by the link. Consequences that are deliberate:
 
 ## Predictions (`/`)
 
-The single home for a player's picks, scoped by **competition** (see League scoping
-above). Three sections, top to bottom:
+Open fixtures to pick on and kicked-off fixtures still in play, scoped by **competition**
+(see League scoping above). Two sections, top to bottom:
 
 - **Open** — upcoming fixtures with a countdown and a score input each, **grouped into
-  gameweeks** (`FixtureRoundGroup.tsx`). Cards carry an amber left edge when unpredicted,
-  green when predicted.
-  Only the nearest round that still needs picks is expanded; later rounds collapse to a
-  one-line summary with a "N to predict" badge. A full Premier League round is 10
-  fixtures and several rounds import at once, so a flat list ran past 20 cards.
-  Built on native `<details>` — no client JS, keyboard accessible. Each card carries a
-  **☆ Banker** toggle (double points, one per gameweek — see Scoring), and the gameweek
-  header names the banker or says "no banker yet", since it's a per-round decision you'd
-  otherwise have to expand and scan for.
+  gameweeks** (`FixtureRoundGroup.tsx`) and capped at the **current gameweek and the next
+  one** per competition (`VISIBLE_OPEN_ROUNDS`). Later rounds can exist in the database —
+  hosts add fixtures by hand, and the auto-import window moves on — but picks four
+  gameweeks out aren't the game, and they buried the round with a live deadline. The cap
+  is applied to the grouped rounds, so the banker header and the nudge below only ever
+  describe fixtures the player can act on. Cards carry an amber left edge when unpredicted,
+  green when predicted. Scores **auto-save** once both boxes have a valid integer
+  (debounced ~450ms, also on blur) — there is no Save button. A brief ✓ Saved / Saving
+  status appears beside the inputs. Only the nearest round that still needs picks is
+  expanded; later rounds collapse to a one-line summary with a "N to predict" badge. A
+  full Premier League round is 10 fixtures and several rounds import at once, so a flat
+  list ran past 20 cards. Built on native `<details>` — no client JS for the grouping,
+  keyboard accessible. Each card carries a **☆ Banker** toggle (double points, one per
+  gameweek — see Scoring), enabled once both scores are saved; the gameweek header names
+  the banker or says "no banker yet".
 - **Kicked Off** — grouped into gameweeks the same way (most recent expanded).
-  Predictions lock at kickoff and everyone's picks reveal. If a
-  proposed score exists the fixture shows the **provisional** scoreline and each pick's
-  provisional points (amber `+X prov.`), plus an "awaiting confirmation" note. A
-  bankered pick is tagged ★ ×2 and its points already include the double. A member
-  can press **Request result** to trigger the lookup early.
-- **Results** — settled picks grouped by competition and round, newest first, with the
-  round subtotal and any streak bonus.
+  Predictions lock at kickoff and everyone's picks reveal. Until the API confirms a
+  score the fixture shows "awaiting result"; once confirmed it moves to Results with
+  points. A bankered pick is tagged ★ ×2. A member can press **Request result** to
+  trigger the lookup early.
 
 Above them, when picks are outstanding: an amber nudge with the count and the next
 deadline. It counts only the **next gameweek needing picks in each competition**, not
@@ -127,6 +132,15 @@ belong to the Leaderboard, where they can be read per league and against other p
 Whose picks show under Kicked Off: everyone who shares a league with you **on that
 competition**. A league-mate on the World Cup doesn't surface on your Premier League
 fixtures.
+
+## Results (`/results`)
+
+Settled fixtures grouped by competition and round, newest first (`PredictionHistory.tsx`).
+Each fixture shows the confirmed scoreline and **every league-mate's pick** with points
+(same visibility as Kicked Off). The round header still shows **your** subtotal and any
+streak bonus. Left-edge colour reflects your outcome on that fixture. Split from
+Predictions on 2026-08-22 — the combined page grew unbounded once every league-mate's
+pick appeared on each settled fixture.
 
 ## How it works (`/rules`)
 
@@ -169,15 +183,38 @@ Each form cell is **dual-encoded**## Host area (`/host`) — site hosts only
 |------|---------|
 | `/host/competitions` | Create/edit competitions (name, football-data code, flag, active). No delete. |
 | `/host/fixtures` | Add/edit/delete canonical fixtures for a competition. |
+| `/host/fixtures/editor` | **Gameweek editor** — one competition at a time, every fixture in the database grouped by gameweek. Tick any number and move them to another gameweek or delete them in bulk. For re-cutting rounds that don't divide evenly (TV splits, postponements, cup ties landing mid-round). Guards below. |
 | `/host/import` | Manually import upcoming fixtures from football-data.org (1–3 rounds). Override for the auto-import. |
-| `/host/results` | **Platform-wide** queue of fixtures awaiting a result, with pre-fetched scores. Accept, edit, retry, or **Accept All**. |
+| `/host/results` | **Platform-wide** queue of fixtures awaiting a result, with manual entry. Edit confirmed scores from here or `/host/fixtures`. |
+
+### Gameweek editor guards
+
+Both bulk operations refuse rather than repair, because the damage is invisible after
+the fact:
+
+- **Settled fixtures can't be moved or deleted.** `RoundBonus` is keyed by
+  (user, league, round) and points are already awarded against the old label, so moving
+  one silently rewrites a finished gameweek's scoring.
+- **Fixtures carrying predictions can't be deleted.** Those are picks players made, and
+  `Prediction.fixture` has no cascade, so the delete would fail at the foreign key
+  anyway — the tool says how many picks are in the way instead of surfacing a
+  constraint error. Moving is still allowed; the count shows on each row.
+- **Duplicate bankers are resolved on move.** One banker per (user, competition, round)
+  has no database constraint to lean on — the round lives on `Fixture`, not
+  `Prediction` — so a move can carry a second banker into a round a player has already
+  bankered. The *arriving* banker is cleared, not the incumbent, and the result line
+  reports how many; see [decisions.md](decisions.md).
 
 ## League admin (`/admin`) — commissioners only
 
-Slimmed to `/admin/settings` only: rename the league and manage its invite code, plus a
-read-only summary of the streak tiers (kept because commissioners used to configure the
-Grand Slam here and will look for it). Fixtures and results are handled by hosts, so
-there's nothing else.
+Two destinations, scoped to the league chosen via **Manage** on `/leagues`:
+
+| Page | Purpose |
+|---|---|
+| `/admin/picks` | **Pick status** — for each upcoming fixture, see which league members have submitted a prediction and which haven't. Actual scores stay hidden until kickoff; commissioners only see picked vs not yet. Includes a per-member summary across all open fixtures. |
+| `/admin/settings` | Rename the league, manage its invite code, plus a read-only summary of the streak tiers (kept because commissioners used to configure the Grand Slam here and will look for it). |
+
+Fixtures and results are handled by site hosts, not league commissioners.
 
 ## Fixture import (automatic + manual)
 
@@ -193,24 +230,24 @@ there's nothing else.
 
 ## Result resolution
 
-Results flow through a **confirm-before-save** pipeline, with provisional scores shown
-in the meantime:
+Results are applied automatically once football-data.org has them:
 
 1. **Sweep** (`POST /api/cron/resolve`, every 10 min) moves fixtures ≥1h45m past
-   kickoff to `AWAITING_RESULT` and pre-fetches the final score from football-data.org
+   kickoff to `AWAITING_RESULT`, then looks up the final score from football-data.org
    (one API call per competition/date window, fuzzy-matched by team name).
-2. **Provisional everywhere** — once `proposed*` scores exist, the projected scoreline
-   and points show (amber) across the predictions page, leaderboard, and API,
-   until a host confirms. Computed at read time (`lib/provisional.ts`); never stored;
-   standings still rank by confirmed points.
-3. **Host confirms** at `/host/results` — a platform-wide queue with **Accept All**.
-   `confirmFixtureResult()` (`lib/results.ts`) saves the scores + `COMPLETED`, scores
-   every prediction on the fixture once, then fans out streak bonuses per subscribing
-   league. Nothing scores without host sign-off — the
-   human check keeps bad data (postponements, ambiguous names) off the leaderboard.
-4. **Fallbacks** — members can Request result from the dashboard; hosts have a "Check
-   for Updates" button (runs the sweep on demand); manual entry and per-fixture API
-   lookup always work.
+2. **Auto-confirm** — when a score is found, `confirmFixtureResult()` (`lib/results.ts`)
+   saves it immediately, marks the fixture `COMPLETED`, scores every prediction once,
+   and fans out streak bonuses per subscribing league. No host sign-off step.
+3. **Host correction** — site hosts can enter a missing result or **edit a confirmed
+   score** from `/host/results` or `/host/fixtures` (re-scores every prediction and
+   updates streak bonuses for the round). API lookup on the enter-result page also
+   confirms immediately.
+4. **Fallbacks** — members can **Request result** from Predictions once the fixture is
+   due; hosts have a **Check for Updates** button (runs the sweep on demand); manual
+   entry always works when the API has nothing yet.
+
+Fixtures still in **Kicked Off** with no result yet show everyone's picks but no
+scoreline — there is no provisional/pre-confirm state any more.
 
 ## Scoring
 

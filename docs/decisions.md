@@ -310,6 +310,49 @@ Host/commissioner flows remain web-only for v1.
 
 ---
 
+## 2026-08-22 — Auto-save score inputs (no Save button)
+
+Predictions save as soon as both home and away are valid integers (debounced typing +
+blur). **Why:** an explicit Save button was friction for a two-number pick; once both
+scores are in, the intent is clear. Banker stays gated on a saved prediction so you
+can't banker an empty card. Mobile matches the web.
+
+---
+
+## 2026-08-22 — Auto-confirm API results; hosts edit after the fact
+
+Results from football-data.org are confirmed automatically as soon as the sweep finds
+them — no provisional/pre-confirm step, no **Accept All**. Site hosts can still enter a
+missing result or **edit a confirmed score** from `/host/results` or `/host/fixtures`;
+saving re-scores every prediction and updates streak bonuses. **Why:** the manual
+confirm step added friction once results were reliable enough; correction after the
+fact is enough when the API is wrong. Supersedes the 2026-08-16 provisional/confirm-queue
+decisions below (those entries are kept for history).
+
+---
+
+## 2026-08-22 — Split Predictions and Results tabs
+
+**Predictions** (`/`) = Open + Kicked Off (active pick flow). **Results** (`/results`) =
+settled fixtures with every league-mate's pick. Mobile gets a fifth tab bar item.
+**Why:** the single combined page grew without bound as settled rounds accumulated and
+each fixture now lists every league-mate; splitting active vs archive matches how
+people use the app. Open fixtures stay private until kickoff.
+
+---
+
+## 2026-08-22 — Results section shows all league-mate picks
+
+The Predictions **Results** section lists every league-mate's settled pick per fixture,
+not just the viewer's. Same peer filter as Kicked Off (everyone sharing any league on
+that competition). Round headers still show **your** subtotal and streak bonus only.
+The mobile app mirrors this: `peerPredictions` on `/api/mobile/v1/fixtures` after
+kickoff, shown on Kicked off and Results cards. **Why:** comparing picks after a round
+settles is part of the social loop; hiding others' picks in Results while showing them
+in Kicked Off was inconsistent. Open fixtures stay private until kickoff.
+
+---
+
 ## Foundational stack decisions (earlier)
 
 - **Prisma 7 + `@prisma/adapter-pg`** — Prisma 7 dropped no-adapter mode; the runtime
@@ -332,3 +375,12 @@ Host/commissioner flows remain web-only for v1.
   constants; shared constants live in plain `.ts` files.
 - **Route middleware is `proxy.ts`** (Next.js 16 convention), with `PUBLIC_PATHS` for
   unauthenticated routes.
+- **Gameweek moves clear the *arriving* banker, not the incumbent** — moving a fixture
+  between rounds can put two of a player's bankers in one round, which no database
+  constraint prevents. `reassignRound()` keeps the banker already in the destination
+  round and clears the one that arrived with the move: the player chose the incumbent
+  against the round as they saw it, and the moved fixture is what changed underneath
+  them. The host sees a count of what was cleared so affected players can be told.
+- **Host bulk edits refuse settled fixtures outright** rather than trying to re-score.
+  Reversing points and streak bonuses across leagues is more machinery than the problem
+  warrants, and a wrong gameweek label on finished history is cosmetic.

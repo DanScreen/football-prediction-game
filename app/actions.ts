@@ -3,16 +3,14 @@
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { RESULT_DELAY_MS, fetchProposals } from "@/lib/resolution"
+import { RESULT_DELAY_MS, confirmResultsFromApi } from "@/lib/resolution"
 import { FixtureStatus } from "@/app/generated/prisma/client"
 
 export type RequestResultState = { error?: string; found?: boolean; pending?: boolean }
 
 /**
- * Any league member can ask for a fixture's result if the cron sweep hasn't
- * fetched one yet. Transitions the fixture (once due) and runs a proposal
- * fetch — the result still needs host confirmation before scoring, but shows
- * as provisional immediately.
+ * Any league member can nudge the result lookup if the cron sweep hasn't confirmed
+ * this fixture yet. Transitions the fixture once due and runs the API confirm pass.
  */
 export async function requestResult(fixtureId: string): Promise<RequestResultState> {
   const session = await auth()
@@ -40,16 +38,14 @@ export async function requestResult(fixtureId: string): Promise<RequestResultSta
     })
   }
 
-  if (fixture.proposedHomeScore === null) {
-    const { errors } = await fetchProposals()
-    if (errors.length > 0) return { error: errors[0] }
-  }
+  const { errors } = await confirmResultsFromApi()
+  if (errors.length > 0) return { error: errors[0] }
 
   const updated = await prisma.fixture.findUnique({ where: { id: fixtureId } })
   revalidatePath("/")
+  revalidatePath("/results")
+  revalidatePath("/leaderboard")
 
-  if (updated?.proposedHomeScore !== null && updated?.proposedHomeScore !== undefined) {
-    return { found: true }
-  }
+  if (updated?.status === FixtureStatus.COMPLETED) return { found: true }
   return { pending: true }
 }

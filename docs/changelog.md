@@ -6,6 +6,41 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-04 — Mobile app reconciled for store submission
+
+The store-prep work and `main` had diverged: one had account deletion, the privacy page
+and the scoreboard UI, the other had league-mate picks, autosave and the
+Predictions/Results tab split. Merged them — `FixtureCard` keeps `main`'s behaviour in
+the branch's visual language — and fixed `results.tsx`, whose `onSave` prop had not been
+updated when autosave landed, leaving the mobile app failing `tsc` on `main`. Privacy
+policy is now linked from the Account screen and the sign-up form. Store screenshots are
+stale and need recapturing; see [store-release.md](store-release.md).
+
+## 2026-09-04 — Host gameweek editor
+
+New `/host/fixtures/editor`: every fixture for one competition, grouped by gameweek,
+with bulk move-to-gameweek and bulk delete. Built for rounds that don't divide evenly
+later in a season. Refuses to touch settled fixtures or delete fixtures carrying
+predictions, and resolves the duplicate-banker case a move can create. See
+[features.md](features.md#gameweek-editor-guards).
+
+## 2026-09-04 — Predict tab shows only the current and next gameweek
+
+The Open section rendered every scheduled fixture in the database, so gameweeks months
+out (Matchweek 8, 9) sat on the predict tab alongside the round with a live deadline.
+The auto-import only tops up two rounds, but nothing pruned or hid rounds that arrived
+another way. Now capped at two rounds per competition at render time
+(`takeNearestRounds`), applied before the banker header and deadline nudge derive from
+it. See [features.md](features.md#predictions-).
+
+## 2026-08-30 — Alerting on cron failures and 5xx
+
+Neither GCP project had any notification channel or alert policy. `/api/cron/resolve`
+runs every 10 minutes and nothing watched it, so a silent failure would have stopped
+scores updating indefinitely. Added two log-based Cloud Monitoring policies emailing the
+site owner — scheduler job failures and Cloud Run 5xx — rate-limited to one email per
+30 minutes. See [deployment.md](deployment.md#alerting).
+
 ## 2026-08-29 — Enable database backups; prune Artifact Registry
 
 - **Cloud SQL backups enabled.** Prod had run with `backup_configuration.enabled = false`
@@ -31,7 +66,32 @@ it!", and a leaderboard with the form strip, podium ramp and exact counts);
 screenshot pipeline (`npm run store:shots`) and
 [`store-assets/app-store-listing.md`](../store-assets/app-store-listing.md).
 See [store-release.md](store-release.md).
+## 2026-08-28 — League admins can see pick status on upcoming fixtures
+Commissioners get `/admin/picks`: per-fixture and per-member views of who has predicted
+on upcoming matches in their league. Scores stay hidden until kickoff — only picked vs
+not yet. See [features.md](features.md#league-admin-admin--commissioners-only).
+## 2026-08-22 — Auto-save predictions (web + mobile)
+Open fixture score inputs save automatically once both sides are valid integers
+(debounced ~450ms, also on blur). No Save button. Brief Saving / ✓ Saved feedback;
+Banker enables after the first successful save. Same behaviour on the Expo Predictions
+tab. See [features.md](features.md#predictions-).
+## 2026-08-22 — Auto-confirm results from API; hosts can edit after
+Results from football-data.org are applied automatically when the sweep finds them —
+no provisional state or host **Accept All** step. Site hosts can enter missing results
+or edit confirmed scores from `/host/results` and `/host/fixtures`; saving re-scores
+predictions and streak bonuses. See [features.md](features.md#result-resolution).
+## 2026-08-22 — Split Predictions and Results into separate tabs
 
+Predictions (`/`) now holds **Open** and **Kicked Off** only; settled history moved to
+**Results** (`/results`). The combined page had grown unbounded once every league-mate's
+pick appeared on each settled fixture. Mobile mirrors the split with a fifth tab bar
+destination. See [features.md](features.md#navigation--shell).
+## 2026-08-22 — Results show every league-mate's picks (web + mobile)
+The Predictions **Results** section now lists all league-mates' settled picks per
+fixture (same peer visibility as Kicked Off), not just your own. Round headers still
+show your subtotal and streak bonus. The mobile app matches: **Kicked off** and
+**Results** fixture cards list every league-mate's pick once the fixture has kicked off.
+See [features.md](features.md#predictions-) and [mobile.md](mobile.md).
 ## 2026-08-17 — Logo system (one source, every platform)
 Picked the scoreline mark ("2–1", gold dash) from a three-concept pitch and redrew it as
 geometry in `lib/mark.ts`. `npm run brand:assets` generates all ten raster assets from

@@ -4,16 +4,13 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 /**
- * One job each: make your picks, see the standings, manage membership, look up
- * the rules. The old Dashboard/My Predictions split duplicated the same picks
- * and results either side of kickoff, so they merged into `/`.
- *
- * Rules is the odd one out — read once rather than returned to — but it earns
- * its place: new players need it, and the `?` icon it replaced was too easy to
- * miss. It's last so the three you use every week keep their positions.
+ * One job each: make your picks, browse settled results, see the standings,
+ * manage membership, look up the rules. Predictions holds Open + Kicked Off;
+ * settled history moved to `/results` so the pick flow stays short.
  */
 export const LINKS = [
   { href: "/", label: "Predictions", short: "Predict", icon: "⚽" },
+  { href: "/results", label: "Results", short: "Results", icon: "📋" },
   { href: "/leaderboard", label: "Leaderboard", short: "Table", icon: "🏆" },
   { href: "/leagues", label: "My Leagues", short: "Leagues", icon: "👥" },
   { href: "/rules", label: "Rules", short: "Rules", icon: "📖" },

@@ -95,6 +95,12 @@ Then TestFlight → App Store review.
 
 ---
 
+> ⚠️ **The committed screenshots are stale as of 2026-09-04.** They were captured on
+> 2026-08-28, before the App Store branch was reconciled with `main`. Since then the
+> prediction card has gained league-mate picks and autosave status, Results moved to
+> its own tab, and the account and sign-up screens gained privacy-policy links — so
+> what ships no longer matches the images. Re-run the capture below before submitting.
+
 ## Regenerating the store screenshots
 
 There is no iOS Simulator on this machine (Command Line Tools only), so the

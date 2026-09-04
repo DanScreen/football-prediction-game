@@ -1,10 +1,10 @@
 import { scoreOnePrediction, awardedPoints } from "@/lib/scoring"
-import { provisionalScore, provisionalPoints } from "@/lib/provisional"
 import { FixtureStatus } from "@/app/generated/prisma/client"
 import BankerTag from "@/app/components/BankerTag"
 
 type Fixture = {
   id: string
+  competitionId: string
   round: string
   homeTeam: string
   awayTeam: string
@@ -12,80 +12,107 @@ type Fixture = {
   status: FixtureStatus
   actualHomeScore: number | null
   actualAwayScore: number | null
-  proposedHomeScore: number | null
-  proposedAwayScore: number | null
   competition: { name: string }
 }
 
-export type HistoryPrediction = {
+export type HistoryPredictionRow = {
   id: string
+  userId: string
   predictedHomeScore: number
   predictedAwayScore: number
   isBanker: boolean
-  fixture: Fixture
+  pointsAwarded: number | null
+  user: { id: string; displayName: string; isBot: boolean }
 }
 
-function baseScoreOf(p: HistoryPrediction): number | null {
-  const f = p.fixture
-  return f.status === FixtureStatus.COMPLETED && f.actualHomeScore !== null && f.actualAwayScore !== null
-    ? scoreOnePrediction(p.predictedHomeScore, p.predictedAwayScore, f.actualHomeScore, f.actualAwayScore)
+export type HistoryFixture = Fixture & {
+  predictions: HistoryPredictionRow[]
+}
+
+function baseScoreOf(
+  p: Pick<HistoryPredictionRow, "predictedHomeScore" | "predictedAwayScore">,
+  f: Pick<Fixture, "actualHomeScore" | "actualAwayScore">,
+): number | null {
+  return f.actualHomeScore !== null && f.actualAwayScore !== null
+    ? scoreOnePrediction(
+        p.predictedHomeScore,
+        p.predictedAwayScore,
+        f.actualHomeScore,
+        f.actualAwayScore,
+      )
     : null
 }
 
-/**
- * What the pick actually scored — base, doubled if it was the round's banker.
- * The base figure is still needed alongside it: the badge colour and the
- * "Nailed it!" flag key off *which* outcome it was (exact / diff / result),
- * and a doubled 3 would otherwise read as an ordinary 6.
- */
-function awardedScoreOf(p: HistoryPrediction): number | null {
-  const base = baseScoreOf(p)
+function awardedScoreOf(p: HistoryPredictionRow, f: Fixture): number | null {
+  if (p.pointsAwarded !== null) return p.pointsAwarded
+  const base = baseScoreOf(p, f)
   return base === null ? null : awardedPoints(base, p.isBanker)
 }
 
+function sortPredictions(predictions: HistoryPredictionRow[], userId: string) {
+  return [...predictions].sort((a, b) => {
+    if (a.userId === userId) return -1
+    if (b.userId === userId) return 1
+    return a.user.displayName.localeCompare(b.user.displayName, "en")
+  })
+}
+
 /**
- * Settled picks grouped by round, newest first.
+ * Settled fixtures grouped by round, newest first.
  *
- * Rounds are keyed by competition *and* round name, because a user in leagues on
- * two competitions can have same-named rounds (e.g. "Matchweek 1") in both, which
- * would otherwise collapse into one section.
+ * Each fixture lists every league-mate's pick on that competition (same visibility
+ * as Kicked Off). Rounds are keyed by competition *and* round name.
  */
 export default function PredictionHistory({
-  predictions,
+  fixtures,
+  userId,
   bonusByRound,
 }: {
-  predictions: HistoryPrediction[]
+  fixtures: HistoryFixture[]
+  userId: string
   /** Streak-bonus points keyed by `${competitionName}·${round}`. */
   bonusByRound: Map<string, number>
 }) {
-  type Round = { key: string; round: string; competitionName: string; predictions: HistoryPrediction[] }
+  type Round = {
+    key: string
+    round: string
+    competitionName: string
+    fixtures: HistoryFixture[]
+    latestKickoff: Date
+  }
   const rounds: Round[] = []
   const byKey = new Map<string, Round>()
 
-  for (const p of predictions) {
-    const key = `${p.fixture.competition.name}·${p.fixture.round}`
+  for (const f of fixtures) {
+    const key = `${f.competition.name}·${f.round}`
     let r = byKey.get(key)
     if (!r) {
-      r = { key, round: p.fixture.round, competitionName: p.fixture.competition.name, predictions: [] }
+      r = {
+        key,
+        round: f.round,
+        competitionName: f.competition.name,
+        fixtures: [],
+        latestKickoff: f.kickoffTime,
+      }
       byKey.set(key, r)
       rounds.push(r)
     }
-    r.predictions.push(p)
+    r.fixtures.push(f)
+    if (f.kickoffTime > r.latestKickoff) r.latestKickoff = f.kickoffTime
   }
 
+  rounds.sort((a, b) => b.latestKickoff.getTime() - a.latestKickoff.getTime())
+
   const roundStats = rounds.map((r) => {
-    const scored = r.predictions.map(awardedScoreOf).filter((s): s is number => s !== null)
-    const provisional = r.predictions
-      .map((p) => provisionalPoints(p, p.fixture))
-      .filter((s): s is number => s !== null)
+    const myPredictions = r.fixtures.flatMap((f) =>
+      f.predictions.filter((p) => p.userId === userId).map((p) => ({ p, f })),
+    )
+    const subtotal = myPredictions.reduce((sum, { p, f }) => {
+      const awarded = awardedScoreOf(p, f)
+      return awarded === null ? sum : sum + awarded
+    }, 0)
     const bonus = bonusByRound.get(r.key) ?? 0
-    return {
-      ...r,
-      scoredCount: scored.length,
-      subtotal: scored.reduce((a, b) => a + b, 0) + bonus,
-      provisionalSubtotal: provisional.reduce((a, b) => a + b, 0),
-      bonus,
-    }
+    return { ...r, subtotal: subtotal + bonus, bonus, myPickCount: myPredictions.length }
   })
 
   return (
@@ -96,119 +123,104 @@ export default function PredictionHistory({
             <h3 className="text-sm font-bold text-ink-mid uppercase tracking-wide">
               {r.competitionName} · {r.round}
             </h3>
-            {r.scoredCount > 0 ? (
+            {r.myPickCount > 0 ? (
               <p className="text-sm text-ink-muted">
                 {r.bonus > 0 && (
                   <span className="text-clock font-semibold mr-2">🔥 Streak bonus +{r.bonus}</span>
                 )}
                 <span className="font-bold text-ink tabular-nums">{r.subtotal}</span> pts
+                <span className="text-ink-faint font-normal"> · you</span>
               </p>
-            ) : (
-              r.provisionalSubtotal > 0 && (
-                <p className="text-sm text-clock font-semibold tabular-nums">
-                  {r.provisionalSubtotal} pts prov.
-                </p>
-              )
-            )}
+            ) : null}
           </div>
 
           <div className="space-y-2">
-            {r.predictions.map((p) => {
-              const f = p.fixture
-              const isCompleted = f.status === FixtureStatus.COMPLETED
-              const baseScore = baseScoreOf(p)
-              const awarded = awardedScoreOf(p)
-              const provScore = provisionalScore(f)
-              const provPts = provisionalPoints(p, f)
+            {r.fixtures
+              .sort((a, b) => b.kickoffTime.getTime() - a.kickoffTime.getTime())
+              .map((f) => {
+                const myPick = f.predictions.find((p) => p.userId === userId)
+                const baseScore = myPick ? baseScoreOf(myPick, f) : null
+                const visible = sortPredictions(f.predictions, userId)
 
-              const accentBorder =
-                baseScore === 3
-                  ? "border-l-good"
-                  : baseScore === 0
-                    ? "border-l-bad"
-                    : baseScore !== null
-                      ? "border-l-info"
-                      : provScore !== null
-                        ? "border-l-clock"
+                const accentBorder =
+                  baseScore === 3
+                    ? "border-l-good"
+                    : baseScore === 0
+                      ? "border-l-bad"
+                      : baseScore !== null
+                        ? "border-l-info"
                         : "border-l-line-strong"
 
-              return (
-                <div
-                  key={p.id}
-                  className={`bg-surface rounded-xl shadow-card border border-line border-l-4 ${accentBorder} px-5 py-4`}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-bold text-ink truncate">
-                        {f.homeTeam} <span className="text-ink-faint font-normal">vs</span>{" "}
-                        {f.awayTeam}
-                      </p>
-                      <p className="text-xs text-ink-muted mt-0.5">
-                        {new Date(f.kickoffTime).toLocaleString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </p>
+                return (
+                  <div
+                    key={f.id}
+                    className={`bg-surface rounded-xl shadow-card border border-line border-l-4 ${accentBorder} overflow-hidden`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-b border-line-soft">
+                      <div className="min-w-0">
+                        <p className="font-bold text-ink truncate">
+                          {f.homeTeam}{" "}
+                          <span className="text-ink-faint font-normal">vs</span> {f.awayTeam}
+                        </p>
+                        <p className="text-xs text-ink-muted mt-0.5">
+                          {new Date(f.kickoffTime).toLocaleString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+
+                      <div className="shrink-0">
+                        <p className="text-xs text-ink-faint mb-0.5">Result</p>
+                        <p className="score-digits text-lg">
+                          {f.actualHomeScore} – {f.actualAwayScore}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-5 shrink-0">
-                      <div>
-                        <p className="text-xs text-ink-faint mb-0.5">My pick</p>
-                        <p className="score-digits text-lg">
-                          {p.predictedHomeScore} – {p.predictedAwayScore}
-                        </p>
-                        {p.isBanker && (
-                          <span className="mt-0.5 block">
-                            <BankerTag />
-                          </span>
-                        )}
-                      </div>
+                    <div className="px-5 py-3 space-y-2">
+                      {visible.map((p) => {
+                        const base = baseScoreOf(p, f)
+                        const awarded = awardedScoreOf(p, f)
+                        const isYou = p.userId === userId
 
-                      <div>
-                        <p className="text-xs text-ink-faint mb-0.5">Result</p>
-                        {isCompleted ? (
-                          <p className="score-digits text-lg">
-                            {f.actualHomeScore} – {f.actualAwayScore}
-                          </p>
-                        ) : provScore !== null ? (
-                          <div>
-                            <p className="score-digits text-lg text-clock">
-                              {provScore.home} – {provScore.away}
-                            </p>
-                            <p className="text-[10px] font-semibold text-clock uppercase tracking-wide -mt-0.5">
-                              Provisional
-                            </p>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-ink-faint italic">Pending</p>
-                        )}
-                      </div>
-
-                      <div className="min-w-[3rem]">
-                        <p className="text-xs text-ink-faint mb-0.5">Pts</p>
-                        {isCompleted && baseScore !== null && awarded !== null ? (
-                          <div className="flex flex-col items-start gap-1">
-                            <PointsBadge points={awarded} tone={baseScore} />
-                            {baseScore === 3 && (
+                        return (
+                          <div
+                            key={p.id}
+                            className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-sm ${
+                              isYou ? "text-ink" : "text-ink-muted"
+                            }`}
+                          >
+                            <span
+                              className={`w-28 truncate ${isYou ? "font-semibold text-pitch" : ""}`}
+                            >
+                              {isYou ? "You" : `${p.user.isBot ? "🤖 " : ""}${p.user.displayName}`}
+                            </span>
+                            <span className="font-bold tabular-nums score-digits">
+                              {p.predictedHomeScore} – {p.predictedAwayScore}
+                            </span>
+                            {p.isBanker && <BankerTag />}
+                            {awarded !== null ? (
+                              <PointsBadge points={awarded} tone={base ?? 0} />
+                            ) : (
+                              <span className="text-xs text-ink-faint">–</span>
+                            )}
+                            {isYou && base === 3 && (
                               <span className="text-xs font-bold text-good bg-good-tint border border-good-line rounded-full px-2 py-0.5 animate-pop whitespace-nowrap">
                                 Nailed it! ⚽
                               </span>
                             )}
                           </div>
-                        ) : provPts !== null ? (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-sm font-bold bg-clock-tint text-clock border border-clock/25">
-                            {provPts}
-                          </span>
-                        ) : (
-                          <p className="text-sm text-ink-faint">–</p>
-                        )}
-                      </div>
+                        )
+                      })}
+                      {visible.length === 0 && (
+                        <p className="text-xs text-ink-faint italic">No predictions submitted.</p>
+                      )}
                     </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
           </div>
         </section>
       ))}

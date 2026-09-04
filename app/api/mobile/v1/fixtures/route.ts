@@ -24,22 +24,76 @@ function fixtureStatusFilter(status: string | null) {
   return {}
 }
 
+type RawPrediction = {
+  userId: string
+  predictedHomeScore: number
+  predictedAwayScore: number
+  isBanker: boolean
+  pointsAwarded: number | null
+  user: { id: string; displayName: string; isBot: boolean }
+}
+
+function mapPrediction(
+  pred: RawPrediction,
+  fixture: Parameters<typeof provisionalPoints>[1],
+) {
+  return {
+    userId: pred.userId,
+    displayName: pred.user.displayName,
+    isBot: pred.user.isBot,
+    homeScore: pred.predictedHomeScore,
+    awayScore: pred.predictedAwayScore,
+    isBanker: pred.isBanker,
+    pointsAwarded: pred.pointsAwarded,
+    provisionalPoints: provisionalPoints(pred, fixture),
+  }
+}
+
+function sortPeerPredictions<T extends { userId: string; displayName: string }>(
+  predictions: T[],
+  viewerUserId: string,
+) {
+  return [...predictions].sort((a, b) => {
+    if (a.userId === viewerUserId) return -1
+    if (b.userId === viewerUserId) return 1
+    return a.displayName.localeCompare(b.displayName, "en")
+  })
+}
+
 export async function GET(request: NextRequest) {
   const user = await authenticateMobileAccess(request)
   if (!user) return jsonError("Unauthorized", 401)
 
   const memberships = await prisma.leagueMembership.findMany({
     where: { userId: user.id },
-    select: { league: { select: { competitionId: true } } },
+    select: {
+      leagueId: true,
+      league: { select: { competitionId: true } },
+    },
   })
-  const competitionIds = [
-    ...new Set(memberships.map((m) => m.league.competitionId)),
-  ]
+  const competitionIds = [...new Set(memberships.map((m) => m.league.competitionId))]
   if (competitionIds.length === 0) {
     return Response.json([])
   }
 
+  const myLeagueIds = memberships.map((m) => m.leagueId)
+  const leagueToCompetition = new Map(memberships.map((m) => [m.leagueId, m.league.competitionId]))
+  const coMemberships = await prisma.leagueMembership.findMany({
+    where: { leagueId: { in: myLeagueIds } },
+    select: { leagueId: true, userId: true },
+  })
+  const peersByCompetition = new Map<string, Set<string>>()
+  for (const m of coMemberships) {
+    const competitionId = leagueToCompetition.get(m.leagueId)
+    if (!competitionId) continue
+    const set = peersByCompetition.get(competitionId) ?? new Set<string>()
+    set.add(m.userId)
+    peersByCompetition.set(competitionId, set)
+  }
+  const allPeerIds = [...new Set(coMemberships.map((m) => m.userId))]
+
   const status = request.nextUrl.searchParams.get("status")
+  const now = new Date()
   const fixtures = await prisma.fixture.findMany({
     where: {
       competitionId: { in: competitionIds },
@@ -60,13 +114,14 @@ export async function GET(request: NextRequest) {
       proposedAwayScore: true,
       competition: { select: { name: true } },
       predictions: {
-        where: { userId: user.id },
-        take: 1,
+        where: { userId: { in: allPeerIds } },
         select: {
+          userId: true,
           predictedHomeScore: true,
           predictedAwayScore: true,
           isBanker: true,
           pointsAwarded: true,
+          user: { select: { id: true, displayName: true, isBot: true } },
         },
       },
     },
@@ -75,7 +130,16 @@ export async function GET(request: NextRequest) {
   return Response.json(
     fixtures.map((f) => {
       const prov = provisionalScore(f)
-      const pred = f.predictions[0]
+      const myPred = f.predictions.find((p) => p.userId === user.id)
+      const kickedOff = f.kickoffTime <= now
+      const peers = peersByCompetition.get(f.competitionId) ?? new Set<string>()
+      const peerPredictions = kickedOff
+        ? sortPeerPredictions(
+            f.predictions.filter((p) => peers.has(p.userId)).map((p) => mapPrediction(p, f)),
+            user.id,
+          )
+        : []
+
       return {
         id: f.id,
         competitionId: f.competitionId,
@@ -89,15 +153,8 @@ export async function GET(request: NextRequest) {
         actualAwayScore: f.actualAwayScore,
         provisionalHomeScore: prov?.home ?? null,
         provisionalAwayScore: prov?.away ?? null,
-        prediction: pred
-          ? {
-              homeScore: pred.predictedHomeScore,
-              awayScore: pred.predictedAwayScore,
-              isBanker: pred.isBanker,
-              pointsAwarded: pred.pointsAwarded,
-              provisionalPoints: provisionalPoints(pred, f),
-            }
-          : null,
+        prediction: myPred ? mapPrediction(myPred, f) : null,
+        peerPredictions,
       }
     }),
   )

@@ -33,6 +33,9 @@ export type AuthTokensResponse = {
 }
 
 export type FixturePrediction = {
+  userId: string
+  displayName: string
+  isBot: boolean
   homeScore: number
   awayScore: number
   isBanker: boolean
@@ -54,6 +57,8 @@ export type MobileFixture = {
   provisionalHomeScore: number | null
   provisionalAwayScore: number | null
   prediction: FixturePrediction | null
+  /** League-mate picks — only populated once the fixture has kicked off. */
+  peerPredictions: FixturePrediction[]
 }
 
 export type FormTier = "strong" | "mixed" | "poor" | "none"

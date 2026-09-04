@@ -115,7 +115,7 @@ export default async function RulesPage() {
             becomes {3 * BANKER_MULTIPLIER} points.
           </Bullet>
           <Bullet>
-            Save a prediction on the fixture first, then press <em>Banker</em>. Choosing another
+            Enter both scores first (they save automatically), then press <em>Banker</em>. Choosing another
             fixture in the same gameweek moves it — you never have to clear the old one.
           </Bullet>
           <Bullet>
@@ -176,24 +176,19 @@ export default async function RulesPage() {
         </p>
       </Section>
 
-      <Section title="Results and provisional points" emoji="⏱">
+      <Section title="Results after full time" emoji="⏱">
         <ul className="space-y-2">
           <Bullet>
-            Final scores are fetched automatically after full time. While they&apos;re waiting to
-            be checked, your projected points show{" "}
-            <span className="rounded-md border border-clock-line bg-clock-tint px-1.5 py-0.5 text-xs font-semibold text-clock">
-              in amber
-            </span>{" "}
-            and are marked <em>provisional</em>.
+            Final scores are fetched automatically after full time and applied as soon as
+            football-data.org has them — points and the leaderboard update straight away.
           </Bullet>
           <Bullet>
-            <strong className="text-ink">Provisional points never move the table.</strong>{" "}
-            Standings only count results a site host has confirmed — a quick human check keeps
-            postponements and mismatched team names off the leaderboard.
+            Site hosts can correct a result from the host area if the API got it wrong.
+            Saving a new score re-scores every prediction on that fixture.
           </Bullet>
           <Bullet>
             If a result hasn&apos;t appeared {resultDelay} after kickoff, any member can press{" "}
-            <em>Request result</em>{" "}on the fixture to trigger the lookup.
+            <em>Request result</em> on the fixture to trigger the lookup.
           </Bullet>
         </ul>
       </Section>

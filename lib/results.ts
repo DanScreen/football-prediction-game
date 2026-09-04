@@ -3,10 +3,9 @@ import { scoreOnePrediction, streakPoints, awardedPoints } from "@/lib/scoring"
 import { FixtureStatus, ResultSource } from "@/app/generated/prisma/client"
 
 /**
- * Confirm a canonical fixture's result: save scores, mark COMPLETED, score all
- * predictions once (predictions are global), then fan streak bonuses out to
- * every subscribing league once the round is complete. The bonus itself is the
- * same everywhere, but it's stored per league because membership is.
+ * Apply a fixture result: save scores, mark COMPLETED, score all predictions once,
+ * then fan streak bonuses out to every subscribing league once the round is complete.
+ * Safe to call on AWAITING_RESULT (first confirm) or COMPLETED (host edit).
  */
 export async function confirmFixtureResult(
   fixtureId: string,
@@ -127,11 +126,7 @@ export async function confirmFixtureResult(
   })
 }
 
-/**
- * Confirm every AWAITING_RESULT fixture that has a proposed score — the host's
- * "Accept All" button. Failures are isolated per fixture so one bad row
- * doesn't abort the batch.
- */
+/** @deprecated Results auto-confirm from the API; kept to flush any legacy proposals. */
 export async function acceptAllProposed(): Promise<{ confirmed: number; failed: number }> {
   const fixtures = await prisma.fixture.findMany({
     where: {

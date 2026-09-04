@@ -3,7 +3,7 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-08-28
+**Last updated:** 2026-09-04
 
 ## Status: live in production
 
@@ -37,12 +37,11 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   results. Scoped by competition, not league: a pick counts in every league you're in.
 - **Banker** — one fixture per gameweek scores double. Always on (it can't be a
   per-league toggle; see [decisions.md](decisions.md)), locked at kickoff.
-- **Result resolution** — cron pre-fetches proposed scores; hosts confirm from a
-  platform-wide queue (with **Accept All**); scoring runs once per fixture, then
-  streak bonuses fan out per subscribing league.
-- **Provisional scores/points everywhere** — predictions page, leaderboard,
-  and API show projected scores/points (badged amber) once a proposed score exists,
-  until a host confirms. Standings rank by **confirmed** points only.
+- **Result resolution** — cron confirms scores from football-data.org as soon as
+  they’re available; hosts can enter missing results or edit confirmed scores from
+  `/host/results` and `/host/fixtures`.
+- **Standings** — leaderboard ranks by confirmed points (including streak bonuses).
+  No provisional/pre-confirm step — results score immediately once confirmed.
 - **Leaderboard** — every league you're in, stacked: standings, exact-score count,
   a points breakdown (result / close / exact / banker / streak), per-player "form" strip
   over the last 5 rounds.

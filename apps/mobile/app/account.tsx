@@ -63,6 +63,17 @@ export default function AccountScreen() {
           </Text>
         </Pressable>
 
+        {/* Reachable from inside the app, not just the store listing: this screen
+            is where someone decides whether to delete their account, and the
+            policy is what tells them what that removes. */}
+        <Pressable
+          onPress={() => void Linking.openURL(`${API_BASE_URL}/privacy`)}
+          style={{ paddingVertical: 4 }}
+          accessibilityRole="link"
+        >
+          <Text style={{ color: t.pitch, fontWeight: "700" }}>Privacy policy →</Text>
+        </Pressable>
+
         <PrimaryButton label="Sign out" onPress={() => void logout()} />
 
         <View

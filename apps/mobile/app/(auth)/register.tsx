@@ -1,8 +1,9 @@
 import { Link, useLocalSearchParams } from "expo-router"
 import { useEffect, useState } from "react"
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native"
+import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Text, View } from "react-native"
 import { ApiError } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
+import { API_BASE_URL } from "@/lib/config"
 import { useTokens } from "@/lib/theme"
 import {
   BrandMark,
@@ -112,6 +113,19 @@ export default function RegisterScreen() {
               Already have an account? Sign in
             </Text>
           </Link>
+
+          {/* App Store review looks for the policy at the point of sign-up, not
+              only in the listing metadata. */}
+          <Pressable
+            onPress={() => void Linking.openURL(`${API_BASE_URL}/privacy`)}
+            accessibilityRole="link"
+            style={{ paddingVertical: 6, alignItems: "center" }}
+          >
+            <Text style={{ color: t.inkMuted, fontSize: 13 }}>
+              By creating an account you agree to our{" "}
+              <Text style={{ color: t.pitch, fontWeight: "600" }}>privacy policy</Text>.
+            </Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>

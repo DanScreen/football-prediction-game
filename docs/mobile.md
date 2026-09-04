@@ -229,7 +229,8 @@ Each fixture:
 | `status` | Same enum as DB / web |
 | `actualHomeScore`, `actualAwayScore` | When completed |
 | `provisionalHomeScore`, `provisionalAwayScore` | When awaiting host confirm |
-| `prediction` | Optional nested current pick: `{ homeScore, awayScore, isBanker, pointsAwarded, provisionalPoints }` |
+| `prediction` | Optional nested current pick: `{ userId, displayName, isBot, homeScore, awayScore, isBanker, pointsAwarded, provisionalPoints }` |
+| `peerPredictions` | League-mate picks on this fixture — **empty before kickoff**, populated once the fixture has kicked off (same peer filter as the web). Sorted with the viewer first, then alphabetical. |
 
 #### `POST /api/mobile/v1/predictions`
 
@@ -337,7 +338,8 @@ Still out of native scope: host/commissioner endpoints; API-key management in-ap
 |------|------|
 | `app/(auth)/login\|register` | Auth (+ forgot password via API) |
 | `app/join` | Deep-link join (`scorers://join?code=`) |
-| `app/(tabs)/index` | Predictions + banker |
+| `app/(tabs)/index` | Predictions — Open + Kicked off; scores auto-save |
+| `app/(tabs)/results` | Settled fixtures with every league-mate's pick |
 | `app/(tabs)/leaderboard` | Stacked standings |
 | `app/(tabs)/leagues` | List / create / join / share |
 | `app/(tabs)/rules` | Scoring constants from API |
@@ -370,6 +372,17 @@ See `apps/mobile/README.md`.
 - Universal links / App Links for `https://scorersonline.uk/register?invite=` (optional; scheme works)
 
 ### Resolved earlier
+
+- **Reconciled with `main`** (2026-09-04): the store-prep branch had forked before
+  league-mate picks, autosave and the Predictions/Results tab split landed, so neither
+  line was submittable alone. `FixtureCard` now carries `main`'s behaviour (autosave
+  status slot, peer picks, banker gated on a saved prediction) inside the branch's
+  scoreboard styling (accent edge, countdown, points badges, `★ ×2`). `results.tsx`
+  regained its tab and now groups by round. Its `onSave` prop had not been updated when
+  autosave landed, so the app did not typecheck on `main`.
+- **Privacy policy reachable in-app** — linked from the Account screen and beneath the
+  sign-up form, not only from the store listing.
+
 
 - Access TTL **30m**, refresh TTL **30d**, DB-backed `MobileRefreshToken` with rotation.
 - `forgot-password` on mobile API (website reset link).

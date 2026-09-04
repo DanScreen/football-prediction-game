@@ -30,7 +30,8 @@ are scoped to that league's **competition**.
 Fixtures for your league's competition, oldest first. Omit `status=open` to include
 locked and completed fixtures. Each fixture: `id`, `competition` (name string),
 `round`, `homeTeam`, `awayTeam`, `kickoffTime`, `status`, `actualHomeScore/away`
-(when completed), and `provisionalHomeScore/away` (when awaiting host confirmation).
+(when completed). Legacy `provisionalHomeScore/away` fields remain but are null under
+auto-confirm.
 
 ### `POST /api/v1/predictions`
 Body: `{ fixtureId, homeScore, awayScore, isBanker? }` — scores are non-negative
@@ -41,14 +42,14 @@ across every league on the competition, one pick counts everywhere you play.
 
 ### `GET /api/v1/predictions`
 Your predictions with fixture details and actual scores. `isBanker` flags the
-double-points pick for that round, and both `pointsAwarded` and `provisionalPoints`
-already include the doubling. Confirmed points in `pointsAwarded`; before a host confirms, `provisionalPoints` and the `provisional*`
-score fields carry the projected outcome.
+double-points pick for that round, and `pointsAwarded` includes the doubling once the
+fixture is completed. Legacy `provisionalPoints` / `provisional*` fields remain for
+compatibility but are null under auto-confirm.
 
 ### `GET /api/v1/leaderboard`
 Standings ranked by confirmed points. Per player: `rank`, `id`, `displayName`, `isBot`,
-`totalPoints` (**confirmed**, incl. streak bonuses), `provisionalPoints`,
-`projectedPoints` (= confirmed + provisional), `exactCount`, `streakPoints` (total
+`totalPoints` (**confirmed**, incl. streak bonuses), legacy `provisionalPoints`,
+`projectedPoints`, `exactCount`, `streakPoints` (total
 bonus points earned, not a count of bonuses), and `pointsBreakdown`:
 `{ result, close, exact, banker, streak }` — where the confirmed total came from. The
 five sum to `totalPoints` exactly. `banker` is the *extra* the doubling produced, so a
