@@ -6,6 +6,14 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-08-30 — Alerting on cron failures and 5xx
+
+Neither GCP project had any notification channel or alert policy. `/api/cron/resolve`
+runs every 10 minutes and nothing watched it, so a silent failure would have stopped
+scores updating indefinitely. Added two log-based Cloud Monitoring policies emailing the
+site owner — scheduler job failures and Cloud Run 5xx — rate-limited to one email per
+30 minutes. See [deployment.md](deployment.md#alerting).
+
 ## 2026-08-29 — Enable database backups; prune Artifact Registry
 
 - **Cloud SQL backups enabled.** Prod had run with `backup_configuration.enabled = false`

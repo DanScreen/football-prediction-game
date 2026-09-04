@@ -26,6 +26,7 @@ resource "google_project_service" "apis" {
     "sqladmin.googleapis.com",
     "artifactregistry.googleapis.com",
     "cloudscheduler.googleapis.com",
+    "monitoring.googleapis.com",
   ])
   project            = google_project.main.project_id
   service            = each.value

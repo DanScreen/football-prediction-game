@@ -102,6 +102,30 @@ the domain via `APP_URL` in `deploy.yml`, and `next.config.ts` allowlists the do
 Server Actions (Cloud Run still sees a `*.run.app` Host header behind the proxy). The
 domain is verified in Resend for outbound email.
 
+## Alerting
+
+Cloud Monitoring emails **danieljamesscreen@gmail.com** (`alert_email` in
+`terraform/variables.tf`) on two conditions, both defined in `terraform/monitoring.tf`:
+
+| Policy | Fires when | Why |
+|--------|-----------|-----|
+| `Cloud Scheduler job failed` | `resource.type="cloud_scheduler_job" AND severity>=ERROR` | `football-prediction-resolve` runs every 10 min. If it fails silently, scores stop updating for everyone and nothing else would tell us. |
+| `Cloud Run 5xx responses` | `httpRequest.status>=500` on `football-prediction-app` | Catches user-facing regressions the scheduler alert would miss. |
+
+Both are rate-limited to **one email per 30 minutes** so a 10-minutely cron can't
+flood the inbox during an outage. Both carry `documentation` with the triage commands,
+which is included in the alert email.
+
+**Why log-match conditions, not metric conditions:** log matches return no data points,
+so they avoid the per-point alerting charge, and Cloud Scheduler publishes no metrics to
+Cloud Monitoring in this project — only logs. Cost is currently **£0** (alerting is not
+yet billed; log volume is ~0.06 GB/month against a 50 GiB free allotment) and would be
+pennies per month if per-condition charging begins.
+
+> Added Aug 2026 after a sister incident on Tiki Acca where a 5-minutely cron returned
+> 503 for ~28 hours unnoticed. Before this, neither project had a single notification
+> channel or alert policy.
+
 ## Deploy pipeline
 
 1. **Tests gate the deploy** — `npx prisma generate` then `npx vitest run`. A red suite
