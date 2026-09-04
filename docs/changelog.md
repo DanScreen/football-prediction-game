@@ -13,8 +13,8 @@ and the scoreboard UI, the other had league-mate picks, autosave and the
 Predictions/Results tab split. Merged them — `FixtureCard` keeps `main`'s behaviour in
 the branch's visual language — and fixed `results.tsx`, whose `onSave` prop had not been
 updated when autosave landed, leaving the mobile app failing `tsc` on `main`. Privacy
-policy is now linked from the Account screen and the sign-up form. Store screenshots are
-stale and need recapturing; see [store-release.md](store-release.md).
+policy is now linked from the Account screen and the sign-up form. Store screenshots
+recaptured against the merged app. See [store-release.md](store-release.md).
 
 ## 2026-09-04 — Host gameweek editor
 

@@ -41,11 +41,11 @@ const DEVICE = { width: 430, height: 932, deviceScaleFactor: 3, mobile: true }
  */
 const SHOTS = [
   { name: "01-predictions", route: "/", theme: "dark", settle: 2500 },
-  // The kicked-off and settled rounds sit below the open ones, so scroll to
-  // reach them: the amber provisional state, and the points badges and
-  // "Nailed it!" moment, are the best things the app has to show.
+  // Kicked-off rounds sit below the open ones on Predictions, so scroll to reach
+  // them: the amber provisional state is one of the best things the app has to
+  // show. Settled rounds have their own tab, so that one is a plain route.
   { name: "02-provisional", route: "/", theme: "dark", settle: 2500, scrollToText: "KICKED OFF" },
-  { name: "03-results", route: "/", theme: "dark", settle: 2500, scrollToText: "RESULTS" },
+  { name: "03-results", route: "/results", theme: "dark", settle: 2500 },
   { name: "04-leaderboard", route: "/leaderboard", theme: "dark", settle: 2500 },
   { name: "05-leagues", route: "/leagues", theme: "dark", settle: 2000 },
   { name: "06-rules", route: "/rules", theme: "dark", settle: 2000 },
