@@ -101,7 +101,12 @@ Open fixtures to pick on and kicked-off fixtures still in play, scoped by **comp
 (see League scoping above). Two sections, top to bottom:
 
 - **Open** — upcoming fixtures with a countdown and a score input each, **grouped into
-  gameweeks** (`FixtureRoundGroup.tsx`). Cards carry an amber left edge when unpredicted,
+  gameweeks** (`FixtureRoundGroup.tsx`) and capped at the **current gameweek and the next
+  one** per competition (`VISIBLE_OPEN_ROUNDS`). Later rounds can exist in the database —
+  hosts add fixtures by hand, and the auto-import window moves on — but picks four
+  gameweeks out aren't the game, and they buried the round with a live deadline. The cap
+  is applied to the grouped rounds, so the banker header and the nudge below only ever
+  describe fixtures the player can act on. Cards carry an amber left edge when unpredicted,
   green when predicted. Scores **auto-save** once both boxes have a valid integer
   (debounced ~450ms, also on blur) — there is no Save button. A brief ✓ Saved / Saving
   status appears beside the inputs. Only the nearest round that still needs picks is
@@ -178,8 +183,27 @@ Each form cell is **dual-encoded**## Host area (`/host`) — site hosts only
 |------|---------|
 | `/host/competitions` | Create/edit competitions (name, football-data code, flag, active). No delete. |
 | `/host/fixtures` | Add/edit/delete canonical fixtures for a competition. |
+| `/host/fixtures/editor` | **Gameweek editor** — one competition at a time, every fixture in the database grouped by gameweek. Tick any number and move them to another gameweek or delete them in bulk. For re-cutting rounds that don't divide evenly (TV splits, postponements, cup ties landing mid-round). Guards below. |
 | `/host/import` | Manually import upcoming fixtures from football-data.org (1–3 rounds). Override for the auto-import. |
 | `/host/results` | **Platform-wide** queue of fixtures awaiting a result, with manual entry. Edit confirmed scores from here or `/host/fixtures`. |
+
+### Gameweek editor guards
+
+Both bulk operations refuse rather than repair, because the damage is invisible after
+the fact:
+
+- **Settled fixtures can't be moved or deleted.** `RoundBonus` is keyed by
+  (user, league, round) and points are already awarded against the old label, so moving
+  one silently rewrites a finished gameweek's scoring.
+- **Fixtures carrying predictions can't be deleted.** Those are picks players made, and
+  `Prediction.fixture` has no cascade, so the delete would fail at the foreign key
+  anyway — the tool says how many picks are in the way instead of surfacing a
+  constraint error. Moving is still allowed; the count shows on each row.
+- **Duplicate bankers are resolved on move.** One banker per (user, competition, round)
+  has no database constraint to lean on — the round lives on `Fixture`, not
+  `Prediction` — so a move can carry a second banker into a round a player has already
+  bankered. The *arriving* banker is cleared, not the incumbent, and the result line
+  reports how many; see [decisions.md](decisions.md).
 
 ## League admin (`/admin`) — commissioners only
 

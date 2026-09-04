@@ -327,3 +327,12 @@ in Kicked Off was inconsistent. Open fixtures stay private until kickoff.
   constants; shared constants live in plain `.ts` files.
 - **Route middleware is `proxy.ts`** (Next.js 16 convention), with `PUBLIC_PATHS` for
   unauthenticated routes.
+- **Gameweek moves clear the *arriving* banker, not the incumbent** — moving a fixture
+  between rounds can put two of a player's bankers in one round, which no database
+  constraint prevents. `reassignRound()` keeps the banker already in the destination
+  round and clears the one that arrived with the move: the player chose the incumbent
+  against the round as they saw it, and the moved fixture is what changed underneath
+  them. The host sees a count of what was cleared so affected players can be told.
+- **Host bulk edits refuse settled fixtures outright** rather than trying to re-score.
+  Reversing points and streak bonuses across leagues is more machinery than the problem
+  warrants, and a wrong gameweek label on finished history is cosmetic.
