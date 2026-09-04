@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { authenticateMobileAccess } from "@/lib/mobileAuth"
 import { jsonError } from "@/lib/mobileHttp"
-import { computeLeaderboard } from "@/lib/leaderboard"
+import { computeLeaderboard, computeLeagueForm } from "@/lib/leaderboard"
 
 export async function GET(request: Request) {
   const user = await authenticateMobileAccess(request)
@@ -23,11 +23,16 @@ export async function GET(request: Request) {
 
   const blocks = await Promise.all(
     memberships.map(async (m) => {
-      const ranked = await computeLeaderboard(m.league.id)
+      const [ranked, form] = await Promise.all([
+        computeLeaderboard(m.league.id),
+        computeLeagueForm(m.league.id),
+      ])
       return {
         leagueId: m.league.id,
         leagueName: m.league.name,
         competitionName: m.league.competition.name,
+        /** Round names behind the form strip, oldest → newest. */
+        formRounds: form.rounds,
         standings: ranked.map((e) => ({
           rank: e.rank,
           id: e.id,
@@ -39,6 +44,8 @@ export async function GET(request: Request) {
           exactCount: e.exactCount,
           streakPoints: e.streakPoints,
           pointsBreakdown: e.breakdown,
+          /** One cell per `formRounds` entry, same order. */
+          form: form.byUser.get(e.id) ?? [],
         })),
       }
     }),

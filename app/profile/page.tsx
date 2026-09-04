@@ -3,6 +3,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import RegenerateKeyButton from "./RegenerateKeyButton"
+import DeleteAccountSection from "./DeleteAccountSection"
 
 export const metadata = { title: "Profile" }
 
@@ -46,6 +47,8 @@ export default async function ProfilePage() {
           Regenerating invalidates the old key immediately.
         </p>
       </div>
+
+      <DeleteAccountSection email={user.email} />
     </div>
   )
 }

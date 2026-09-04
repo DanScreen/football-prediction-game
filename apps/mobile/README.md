@@ -29,8 +29,13 @@ EXPO_PUBLIC_API_URL=http://10.0.2.2:3000 npm start         # Android emu
 | Stacked leaderboards | ✅ |
 | Create / join / share leagues | ✅ |
 | Rules from API | ✅ |
-| Push deadline reminders | ✅ (needs EAS project id + physical device build) |
+| Push deadline reminders | ✅ (needs device build + EAS project id) |
 | Invite deep link `scorers://join?code=` | ✅ |
+| On-device testing (dev client) | Use EAS — see [store-release.md](../../docs/store-release.md) |
+
+**Note:** App Store Expo Go does not support SDK 57 yet. Use an EAS development
+build on a physical iPhone (Apple Developer membership required).
+
 
 ## Scripts
 

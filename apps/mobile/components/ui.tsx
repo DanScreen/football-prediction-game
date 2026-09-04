@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -10,6 +11,13 @@ import {
 } from "react-native"
 import { useTokens } from "@/lib/theme"
 
+// Metro only bundles a static asset when it sees a literal require() call, and
+// this project's TS setup has no module declaration for `*.png`, so an ESM
+// import does not typecheck either. Hoisted to one place so the exception is
+// stated once rather than at every use.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const markImage = require("@/assets/images/mark.png")
+
 export function Screen({ children, style, ...rest }: ViewProps) {
   const t = useTokens()
   return (
@@ -19,12 +27,40 @@ export function Screen({ children, style, ...rest }: ViewProps) {
   )
 }
 
+/**
+ * The scoreline mark plus the wordmark. The mark is a PNG generated from
+ * `lib/mark.ts` (`npm run brand:assets`) — the app has no SVG renderer, so it
+ * can't share the web component's geometry directly.
+ */
 export function BrandMark() {
   const t = useTokens()
   return (
-    <Text style={{ fontSize: 32, fontWeight: "700", color: t.pitch, letterSpacing: -0.5 }}>
-      Scorers
-    </Text>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <Image
+        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro
+        // only bundles a static asset when it sees a literal require() call.
+      source={markImage}
+        style={{ width: 40, height: 40 }}
+        accessibilityLabel="Scorers logo"
+      />
+      <Text style={{ fontSize: 32, fontWeight: "700", color: t.ink, letterSpacing: -0.5 }}>
+        Scorers
+      </Text>
+    </View>
+  )
+}
+
+/**
+ * Just the mark, sized for a navigation bar. The web keeps the logo in the
+ * header on every page; this is the tab-bar equivalent.
+ */
+export function HeaderMark() {
+  return (
+    <Image
+      source={markImage}
+      style={{ width: 28, height: 28, marginLeft: 16 }}
+      accessibilityLabel="Scorers"
+    />
   )
 }
 
@@ -134,5 +170,17 @@ export function PlaceholderCard({
 }
 
 export const screenPadding = StyleSheet.create({
+  /** Fill the screen (non-scrolling layouts). */
   pad: { flex: 1, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24, gap: 16 },
+  /**
+   * ScrollView contentContainerStyle — do NOT use flex:1 here or the list
+   * cannot grow past the viewport and scrolling breaks.
+   */
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 48,
+    gap: 16,
+    flexGrow: 1,
+  },
 })

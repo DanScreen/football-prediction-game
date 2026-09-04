@@ -23,7 +23,14 @@ export type Tokens = {
   clockLine: string
   clockOn: string
   good: string
+  goodTint: string
+  goodLine: string
   bad: string
+  badTint: string
+  badLine: string
+  info: string
+  infoTint: string
+  infoLine: string
   board: string
   boardPanel: string
   boardFore: string
@@ -51,7 +58,14 @@ export const lightTokens: Tokens = {
   clockLine: "#f0d3a8",
   clockOn: "#ffffff",
   good: "#15803d",
+  goodTint: "#dcfce7",
+  goodLine: "#bbf7d0",
   bad: "#b91c1c",
+  badTint: "#fee2e2",
+  badLine: "#fecaca",
+  info: "#1d4ed8",
+  infoTint: "#dbeafe",
+  infoLine: "#bfdbfe",
   board: "#0f4527",
   boardPanel: "#175c36",
   boardFore: "#eef7f1",
@@ -79,7 +93,14 @@ export const darkTokens: Tokens = {
   clockLine: "#4a3418",
   clockOn: "#1a1206",
   good: "#4ade80",
+  goodTint: "#10281a",
+  goodLine: "#1e462f",
   bad: "#f87171",
+  badTint: "#2b1414",
+  badLine: "#4a2020",
+  info: "#60a5fa",
+  infoTint: "#131f37",
+  infoLine: "#1f3358",
   board: "#061a0f",
   boardPanel: "#0c2d19",
   boardFore: "#eef7f1",

@@ -179,6 +179,13 @@ Response: `{ id, email, displayName, isBot }` plus membership summary if cheap:
 }
 ```
 
+#### `DELETE /api/mobile/v1/me`
+
+Permanently deletes the caller's account and everything belonging to it, then
+returns `204`. Required in-app by App Store guideline 5.1.1(v). Shares
+`lib/accountDeletion.ts` with the web profile page; leagues survive unless the
+leaver was the last member — see [decisions.md](decisions.md).
+
 ### Scoring constants (so the Rules screen stays accurate)
 
 #### `GET /api/mobile/v1/rules`
@@ -268,6 +275,7 @@ Each league block:
   "leagueId": "...",
   "leagueName": "...",
   "competitionName": "...",
+  "formRounds": ["Matchweek 34", "Matchweek 35"],
   "standings": [
     {
       "rank": 1,
@@ -285,13 +293,18 @@ Each league block:
         "exact": 0,
         "banker": 0,
         "streak": 0
-      }
+      },
+      "form": [{ "round": "Matchweek 34", "tier": "strong", "scored": 12 }]
     }
   ]
 }
 ```
 
-Delegate to `computeLeaderboard()` — same numbers as web and `/api/v1/leaderboard`.
+Delegates to `computeLeaderboard()` — same numbers as web and `/api/v1/leaderboard` —
+and to `computeLeagueForm()` for the last-five-rounds form strip. `form` has one
+cell per `formRounds` entry, in the same order (oldest → newest); `tier` is
+`strong | mixed | poor | none`. Both the web leaderboard page and this route read
+that one function, so a round cannot be graded differently on the two platforms.
 
 Also: `GET /api/mobile/v1/leagues/:leagueId/leaderboard` for a single league (must be a member).
 
@@ -353,12 +366,31 @@ See `apps/mobile/README.md`.
 
 ## Open items (Phase 5)
 
-- Apple/Google developer accounts + EAS `projectId` — [store-release.md](store-release.md)
+- Apple/Google developer accounts and the actual `eas build` / submit — [store-release.md](store-release.md)
+- A production demo account for the App Store reviewer
+- Decide iPad: produce a 13" screenshot set, or set `supportsTablet: false`
 - Universal links / App Links for `https://scorersonline.uk/register?invite=` (optional; scheme works)
 
 ### Resolved earlier
+
+- **Reconciled with `main`** (2026-09-04): the store-prep branch had forked before
+  league-mate picks, autosave and the Predictions/Results tab split landed, so neither
+  line was submittable alone. `FixtureCard` now carries `main`'s behaviour (autosave
+  status slot, peer picks, banker gated on a saved prediction) inside the branch's
+  scoreboard styling (accent edge, countdown, points badges, `★ ×2`). `results.tsx`
+  regained its tab and now groups by round. Its `onSave` prop had not been updated when
+  autosave landed, so the app did not typecheck on `main`.
+- **Privacy policy reachable in-app** — linked from the Account screen and beneath the
+  sign-up form, not only from the store listing.
+
 
 - Access TTL **30m**, refresh TTL **30d**, DB-backed `MobileRefreshToken` with rotation.
 - `forgot-password` on mobile API (website reset link).
 - Fixtures returned **flat**; client groups in UI.
 - Push device tokens + Expo reminders; invite deep link.
+- **Account screen** (`app/account.tsx`, pushed from Leagues) carrying sign-out and
+  in-app account deletion. API-key management stays on the website.
+- **Visual parity with the web** (2026-08-28): kickoff countdown, `★ ×2` banker tag,
+  outcome accent borders, points badges, the "Nailed it!" moment, and a leaderboard
+  with the board-panel header, podium ramp, breakdown chips, exact counts and the
+  form strip.

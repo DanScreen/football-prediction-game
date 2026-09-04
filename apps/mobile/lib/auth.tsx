@@ -12,6 +12,7 @@ import {
   fetchMe,
   login as apiLogin,
   logoutRemote,
+  deleteAccount as apiDeleteAccount,
   register as apiRegister,
   type MeResponse,
   type MobileUser,
@@ -30,6 +31,8 @@ type AuthContextValue = {
     inviteCode?: string
   }) => Promise<void>
   logout: () => Promise<void>
+  /** Permanent account deletion. Signs out locally once the server confirms. */
+  deleteAccount: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
 
@@ -115,6 +118,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMe(null)
   }, [])
 
+  const deleteAccount = useCallback(async () => {
+    // No local sign-out first: if the request fails the user still has an
+    // account, and dropping their tokens would strand them signed out of it.
+    await apiDeleteAccount()
+    await clearTokens()
+    setUser(null)
+    setMe(null)
+  }, [])
+
   const refreshProfile = useCallback(async () => {
     const profile = await fetchMe()
     setMe(profile)
@@ -127,8 +139,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, me, isLoading, login, register, logout, refreshProfile }),
-    [user, me, isLoading, login, register, logout, refreshProfile],
+    () => ({ user, me, isLoading, login, register, logout, deleteAccount, refreshProfile }),
+    [user, me, isLoading, login, register, logout, deleteAccount, refreshProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

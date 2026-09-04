@@ -3,16 +3,19 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-08-22
+**Last updated:** 2026-09-04
 
 ## Status: live in production
 
 Scorers is deployed and running at **https://scorersonline.uk**. The
 platform-owned competitions model (the big refactor) is complete and live.
 
-**Native apps:** Phases 1–4 complete on `feature/mobile-apps` (`apps/mobile` +
-`/api/mobile/v1`). Phase 5 is store submission (needs Apple/Google + EAS) —
-[store-release.md](store-release.md).
+**Native apps:** Phases 1–4 complete (`apps/mobile` + `/api/mobile/v1`). Phase 5
+is **prepared**: the app now matches the website visually, in-app account
+deletion and a real privacy policy are shipped, and the listing copy and
+screenshots are generated (`store-assets/`, `npm run store:shots`). What remains
+needs your Apple account — membership, `eas build`, a production reviewer
+account, and the iPad decision. See [store-release.md](store-release.md).
 
 ## What's built and working
 
@@ -54,6 +57,12 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   [design-system.md](design-system.md)), fully tokenised with a **dark theme** that
   follows the OS setting.
 - **Mobile** — bottom tab bar; skeleton loading states, an error boundary and a 404 page.
+- **Account deletion** — irreversible, in-app on both platforms, one shared
+  implementation (`lib/accountDeletion.ts`). Leagues outlive the member who leaves.
+- **Privacy policy** (`/privacy`) — public, and the URL both store listings use.
+- **Store assets** — `store-assets/app-store-listing.md` (every App Store Connect
+  field) and `store-assets/promo/` (six framed 1290×2796 panels, captured from the
+  real app; regenerate with `npm run store:shots`).
 
 ## Deployment state
 
@@ -67,7 +76,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **206 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **209 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the suite **before** deploying, so a red test blocks production.
 

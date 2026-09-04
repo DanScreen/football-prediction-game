@@ -1,3 +1,4 @@
+import Link from "next/link"
 import LoginForm from "./LoginForm"
 
 export const metadata = {
@@ -9,9 +10,14 @@ export const metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string; registered?: string; reset?: string }>
+  searchParams: Promise<{
+    callbackUrl?: string
+    registered?: string
+    reset?: string
+    deleted?: string
+  }>
 }) {
-  const { callbackUrl, registered, reset } = await searchParams
+  const { callbackUrl, registered, reset, deleted } = await searchParams
 
   return (
     <div className="flex min-h-[calc(100vh-60px)] items-center justify-center px-4 py-12">
@@ -25,12 +31,21 @@ export default async function LoginPage({
           </p>
         </div>
         <div className="bg-surface rounded-xl shadow-card border border-line px-8 py-8">
-          <LoginForm callbackUrl={callbackUrl} registered={registered === "1"} reset={reset === "1"} />
+          <LoginForm callbackUrl={callbackUrl} registered={registered === "1"} reset={reset === "1"} deleted={deleted === "1"} />
         </div>
         <p className="mt-6 text-center text-xs text-ink-faint">
           Scorers is a friendly game where you predict football scorelines and compete with
           friends on a leaderboard. Leagues are private — you join one with an invite link or
           code. We only ask for your email and a password to sign you in.
+        </p>
+        <p className="mt-3 text-center text-xs text-ink-faint">
+          <Link href="/privacy" className="hover:underline">
+            Privacy policy
+          </Link>
+          {" · "}
+          <Link href="/rules" className="hover:underline">
+            How it works
+          </Link>
         </p>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { SymbolView } from "expo-symbols"
 import { Tabs } from "expo-router"
+import { HeaderMark } from "@/components/ui"
 import { useTokens } from "@/lib/theme"
 
 export default function TabLayout() {
@@ -18,6 +19,7 @@ export default function TabLayout() {
         headerTintColor: t.ink,
         headerShadowVisible: false,
         headerTitleStyle: { fontWeight: "700" },
+        headerLeft: () => <HeaderMark />,
       }}
     >
       <Tabs.Screen

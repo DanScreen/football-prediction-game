@@ -8,7 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "mobile:typecheck": "npm --prefix apps/mobile run typecheck"
+    "mobile:typecheck": "npm --prefix apps/mobile run typecheck",
+    "brand:assets": "node scripts/generate-brand-assets.mjs",
+    "store:seed": "tsx scripts/seed-store-demo.ts",
+    "store:proxy": "node scripts/serve-store-proxy.mjs",
+    "store:capture": "node scripts/capture-store-shots.mjs",
+    "store:promos": "node scripts/build-store-promos.mjs",
+    "store:shots": "npm run store:capture && npm run store:promos"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -1,8 +1,10 @@
-import { prisma } from "@/lib/prisma"
-import { computeLeaderboard, type PointsBreakdown } from "@/lib/leaderboard"
+import {
+  computeLeaderboard,
+  computeLeagueForm,
+  type FormTier,
+  type PointsBreakdown,
+} from "@/lib/leaderboard"
 import { AnimatedPoints } from "./AnimatedPoints"
-
-type FormTier = "strong" | "mixed" | "poor" | "none"
 
 /**
  * Form cells are dual-encoded: a glyph as well as a colour. Colour alone left
@@ -96,77 +98,13 @@ export default async function LeagueBoard({
   currentUserId,
   showHeading,
 }: Props) {
-  const league = await prisma.league.findUnique({
-    where: { id: leagueId },
-    select: { competitionId: true },
-  })
-  if (!league) return null
-
-  const memberIds = (
-    await prisma.leagueMembership.findMany({
-      where: { leagueId },
-      select: { userId: true },
-    })
-  ).map((m) => m.userId)
-
-  const [ranked, scoredPredictions, completedFixtures] = await Promise.all([
+  const [ranked, form] = await Promise.all([
     computeLeaderboard(leagueId),
-    prisma.prediction.findMany({
-      where: {
-        userId: { in: memberIds },
-        fixture: { competitionId: league.competitionId },
-        pointsAwarded: { not: null },
-      },
-      select: {
-        userId: true,
-        pointsAwarded: true,
-        fixture: { select: { round: true } },
-      },
-    }),
-    prisma.fixture.findMany({
-      where: { competitionId: league.competitionId, status: "COMPLETED" },
-      select: { round: true, kickoffTime: true },
-    }),
+    computeLeagueForm(leagueId),
   ])
 
-  // Build last 5 completed rounds (oldest → newest for form strip)
-  const roundMaxKickoff = new Map<string, Date>()
-  for (const f of completedFixtures) {
-    const existing = roundMaxKickoff.get(f.round)
-    if (!existing || f.kickoffTime > existing) roundMaxKickoff.set(f.round, f.kickoffTime)
-  }
-
-  const last5Rounds = [...roundMaxKickoff.entries()]
-    .sort(([, a], [, b]) => b.getTime() - a.getTime())
-    .slice(0, 5)
-    .reverse()
-    .map(([round]) => round)
-
-  // Per-user, per-round scored totals for the form strip
-  const roundStatsByUser = new Map<string, Map<string, { scored: number; count: number }>>()
-  for (const p of scoredPredictions) {
-    let byRound = roundStatsByUser.get(p.userId)
-    if (!byRound) {
-      byRound = new Map()
-      roundStatsByUser.set(p.userId, byRound)
-    }
-    const s = byRound.get(p.fixture.round) ?? { scored: 0, count: 0 }
-    byRound.set(p.fixture.round, {
-      scored: s.scored + (p.pointsAwarded ?? 0),
-      count: s.count + 1,
-    })
-  }
-
-  const formForUser = (userId: string): { round: string; tier: FormTier; scored: number }[] => {
-    const byRound = roundStatsByUser.get(userId)
-    return last5Rounds.map((round) => {
-      const s = byRound?.get(round)
-      if (!s || s.count === 0) return { round, tier: "none", scored: 0 }
-      const pct = s.scored / (s.count * 3)
-      const tier: FormTier = pct > 0.4 ? "strong" : pct > 0.2 ? "mixed" : "poor"
-      return { round, tier, scored: s.scored }
-    })
-  }
+  const last5Rounds = form.rounds
+  const formForUser = (userId: string) => form.byUser.get(userId) ?? []
 
   const rankDisplay = (i: number) =>
     i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : ranked[i].rank

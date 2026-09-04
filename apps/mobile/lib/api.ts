@@ -61,6 +61,15 @@ export type MobileFixture = {
   peerPredictions: FixturePrediction[]
 }
 
+export type FormTier = "strong" | "mixed" | "poor" | "none"
+
+/** One cell of the last-5-rounds form strip, oldest → newest. */
+export type FormCell = {
+  round: string
+  tier: FormTier
+  scored: number
+}
+
 export type LeaderboardEntry = {
   rank: number
   id: string
@@ -78,12 +87,16 @@ export type LeaderboardEntry = {
     banker: number
     streak: number
   }
+  /** One cell per `LeaderboardBlock.formRounds` entry, in the same order. */
+  form: FormCell[]
 }
 
 export type LeaderboardBlock = {
   leagueId: string
   leagueName: string
   competitionName: string
+  /** Round names behind the form strip, oldest → newest. */
+  formRounds: string[]
   standings: LeaderboardEntry[]
 }
 
@@ -204,6 +217,11 @@ export async function register(input: {
 
 export async function fetchMe(): Promise<MeResponse> {
   return apiRequest<MeResponse>("/me")
+}
+
+/** Permanent, irreversible account deletion (App Store guideline 5.1.1(v)). */
+export async function deleteAccount(): Promise<void> {
+  await apiRequest<void>("/me", { method: "DELETE" })
 }
 
 export async function logoutRemote(): Promise<void> {

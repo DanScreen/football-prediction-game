@@ -7,6 +7,7 @@ import {
   View,
 } from "react-native"
 import { FixtureCard } from "@/components/FixtureCard"
+import { RoundGroup } from "@/components/RoundGroup"
 import { ErrorBanner, Screen, screenPadding } from "@/components/ui"
 import {
   ApiError,
@@ -15,6 +16,7 @@ import {
   type MobileFixture,
 } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
+import { groupByRound } from "@/lib/groupByRound"
 import { useTokens } from "@/lib/theme"
 import { useAsyncData } from "@/lib/useAsyncData"
 
@@ -63,7 +65,10 @@ export default function PredictionsScreen() {
   )
 
   const open = useMemo(
-    () => (data ?? []).filter((f) => f.status === "SCHEDULED" && new Date(f.kickoffTime) > new Date()),
+    () =>
+      (data ?? []).filter(
+        (f) => f.status === "SCHEDULED" && new Date(f.kickoffTime) > new Date(),
+      ),
     [data],
   )
   const locked = useMemo(
@@ -75,6 +80,9 @@ export default function PredictionsScreen() {
       ),
     [data],
   )
+
+  const openRounds = useMemo(() => groupByRound(open), [open])
+  const lockedRounds = useMemo(() => groupByRound(locked), [locked])
 
   useEffect(() => {
     return () => {
@@ -198,12 +206,63 @@ export default function PredictionsScreen() {
     await persist(f, { ...d, isBanker: nextBanker })
   }
 
+  function renderEditable(f: MobileFixture) {
+    const d = getDraft(f)
+    return (
+      <FixtureCard
+        key={f.id}
+        fixture={f}
+        viewerUserId={user?.id}
+        editable
+        hideRoundMeta
+        home={d.home}
+        away={d.away}
+        isBanker={d.isBanker}
+        saving={Boolean(savingIds[f.id])}
+        justSaved={Boolean(justSavedIds[f.id])}
+        saveError={saveErrors[f.id] ?? null}
+        onChangeHome={(home) => patchDraft(f, { home })}
+        onChangeAway={(away) => patchDraft(f, { away })}
+        onToggleBanker={() => void toggleBanker(f)}
+        onBlurScores={() => flushSave(f)}
+      />
+    )
+  }
+
+  function renderReadOnly(f: MobileFixture) {
+    return (
+      <FixtureCard
+        key={f.id}
+        fixture={f}
+        viewerUserId={user?.id}
+        editable={false}
+        hideRoundMeta
+        home=""
+        away=""
+        isBanker={false}
+        saving={false}
+        justSaved={false}
+        saveError={null}
+        onChangeHome={() => {}}
+        onChangeAway={() => {}}
+        onToggleBanker={() => {}}
+        onBlurScores={() => {}}
+      />
+    )
+  }
+
   return (
     <Screen>
       <ScrollView
-        contentContainerStyle={screenPadding.pad}
+        style={{ flex: 1 }}
+        contentContainerStyle={screenPadding.scrollContent}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => void reload(true)} tintColor={t.pitch} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void reload(true)}
+            tintColor={t.pitch}
+          />
         }
       >
         <Text style={{ fontSize: 15, color: t.inkMuted }}>Hi {user?.displayName}</Text>
@@ -219,54 +278,31 @@ export default function PredictionsScreen() {
         ) : null}
 
         <Section title="Open">
-          {open.map((f) => {
-            const d = getDraft(f)
-            return (
-              <FixtureCard
-                key={f.id}
-                fixture={f}
-                viewerUserId={user?.id}
-                editable
-                home={d.home}
-                away={d.away}
-                isBanker={d.isBanker}
-                saving={Boolean(savingIds[f.id])}
-                justSaved={Boolean(justSavedIds[f.id])}
-                saveError={saveErrors[f.id] ?? null}
-                onChangeHome={(home) => patchDraft(f, { home })}
-                onChangeAway={(away) => patchDraft(f, { away })}
-                onToggleBanker={() => void toggleBanker(f)}
-                onBlurScores={() => flushSave(f)}
-              />
-            )
-          })}
+          {openRounds.map((group, i) => (
+            <RoundGroup
+              key={group.key}
+              group={group}
+              defaultOpen={i === 0}
+              showBankerStatus
+            >
+              {group.fixtures.map(renderEditable)}
+            </RoundGroup>
+          ))}
           {open.length === 0 && data ? (
             <Text style={{ color: t.inkFaint }}>Nothing open right now.</Text>
           ) : null}
         </Section>
 
-        {locked.length > 0 ? (
+        {lockedRounds.length > 0 ? (
           <Section title="Kicked off">
-            {locked.map((f) => (
-              <FixtureCard
-                key={f.id}
-                fixture={f}
-                viewerUserId={user?.id}
-                editable={false}
-                home=""
-                away=""
-                isBanker={false}
-                saving={false}
-                justSaved={false}
-                saveError={null}
-                onChangeHome={() => {}}
-                onChangeAway={() => {}}
-                onToggleBanker={() => {}}
-                onBlurScores={() => {}}
-              />
+            {lockedRounds.map((group, i) => (
+              <RoundGroup key={group.key} group={group} defaultOpen={i === 0}>
+                {group.fixtures.map(renderReadOnly)}
+              </RoundGroup>
             ))}
           </Section>
         ) : null}
+
       </ScrollView>
     </Screen>
   )

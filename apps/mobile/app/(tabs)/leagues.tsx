@@ -1,3 +1,4 @@
+import { router } from "expo-router"
 import { useState } from "react"
 import {
   ActivityIndicator,
@@ -30,7 +31,7 @@ import { useTokens } from "@/lib/theme"
 import { useAsyncData } from "@/lib/useAsyncData"
 
 export default function LeaguesScreen() {
-  const { logout, refreshProfile } = useAuth()
+  const { refreshProfile } = useAuth()
   const t = useTokens()
   const leagues = useAsyncData(() => fetchLeagues(), [])
   const comps = useAsyncData(() => fetchCompetitions(), [])
@@ -86,7 +87,9 @@ export default function LeaguesScreen() {
   return (
     <Screen>
       <ScrollView
-        contentContainerStyle={screenPadding.pad}
+        style={{ flex: 1 }}
+        contentContainerStyle={screenPadding.scrollContent}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             refreshing={leagues.refreshing}
@@ -94,7 +97,6 @@ export default function LeaguesScreen() {
             tintColor={t.pitch}
           />
         }
-        keyboardShouldPersistTaps="handled"
       >
         <ErrorBanner message={leagues.error ?? formError} />
         {leagues.loading && !leagues.data ? <ActivityIndicator color={t.pitch} /> : null}
@@ -156,7 +158,7 @@ export default function LeaguesScreen() {
           disabled={!createName || !competitionId}
         />
 
-        <PrimaryButton label="Sign out" onPress={() => void logout()} />
+        <PrimaryButton label="Account & sign out" onPress={() => router.push("/account")} />
       </ScrollView>
     </Screen>
   )

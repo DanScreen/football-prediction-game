@@ -6,6 +6,16 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-04 — Mobile app reconciled for store submission
+
+The store-prep work and `main` had diverged: one had account deletion, the privacy page
+and the scoreboard UI, the other had league-mate picks, autosave and the
+Predictions/Results tab split. Merged them — `FixtureCard` keeps `main`'s behaviour in
+the branch's visual language — and fixed `results.tsx`, whose `onSave` prop had not been
+updated when autosave landed, leaving the mobile app failing `tsc` on `main`. Privacy
+policy is now linked from the Account screen and the sign-up form. Store screenshots
+recaptured against the merged app. See [store-release.md](store-release.md).
+
 ## 2026-09-04 — Host gameweek editor
 
 New `/host/fixtures/editor`: every fixture for one competition, grouped by gameweek,
@@ -44,36 +54,50 @@ site owner — scheduler job failures and Cloud Run 5xx — rate-limited to one 
 
 Requires a manual `terraform apply` from `terraform/` (state is local; no Terraform CI).
 
+## 2026-08-28 — Store submission readiness (Phase 5)
+Closed the two hard App Store blockers and produced the listing. **Account
+deletion** (guideline 5.1.1(v)): one `deleteUserAccount` shared by the web
+`/profile` page and `DELETE /api/mobile/v1/me`, plus a new mobile Account
+screen. **A real privacy policy** at `/privacy` — the store URL previously
+pointed at `/rules`. Brought the native app's scoreboard UI in line with the
+website (countdown chips, banker tag, outcome accents, points badges, "Nailed
+it!", and a leaderboard with the form strip, podium ramp and exact counts);
+`computeLeagueForm` is now shared by the web page and the mobile API. Added the
+screenshot pipeline (`npm run store:shots`) and
+[`store-assets/app-store-listing.md`](../store-assets/app-store-listing.md).
+See [store-release.md](store-release.md).
 ## 2026-08-28 — League admins can see pick status on upcoming fixtures
 Commissioners get `/admin/picks`: per-fixture and per-member views of who has predicted
 on upcoming matches in their league. Scores stay hidden until kickoff — only picked vs
 not yet. See [features.md](features.md#league-admin-admin--commissioners-only).
-
 ## 2026-08-22 — Auto-save predictions (web + mobile)
 Open fixture score inputs save automatically once both sides are valid integers
 (debounced ~450ms, also on blur). No Save button. Brief Saving / ✓ Saved feedback;
 Banker enables after the first successful save. Same behaviour on the Expo Predictions
 tab. See [features.md](features.md#predictions-).
-
 ## 2026-08-22 — Auto-confirm results from API; hosts can edit after
 Results from football-data.org are applied automatically when the sweep finds them —
 no provisional state or host **Accept All** step. Site hosts can enter missing results
 or edit confirmed scores from `/host/results` and `/host/fixtures`; saving re-scores
 predictions and streak bonuses. See [features.md](features.md#result-resolution).
-
 ## 2026-08-22 — Split Predictions and Results into separate tabs
 
 Predictions (`/`) now holds **Open** and **Kicked Off** only; settled history moved to
 **Results** (`/results`). The combined page had grown unbounded once every league-mate's
 pick appeared on each settled fixture. Mobile mirrors the split with a fifth tab bar
 destination. See [features.md](features.md#navigation--shell).
-
 ## 2026-08-22 — Results show every league-mate's picks (web + mobile)
 The Predictions **Results** section now lists all league-mates' settled picks per
 fixture (same peer visibility as Kicked Off), not just your own. Round headers still
 show your subtotal and streak bonus. The mobile app matches: **Kicked off** and
 **Results** fixture cards list every league-mate's pick once the fixture has kicked off.
 See [features.md](features.md#predictions-) and [mobile.md](mobile.md).
+## 2026-08-17 — Logo system (one source, every platform)
+Picked the scoreline mark ("2–1", gold dash) from a three-concept pitch and redrew it as
+geometry in `lib/mark.ts`. `npm run brand:assets` generates all ten raster assets from
+it: favicon, apple-icon, OG image, iOS icon, the three Android adaptive layers, splash,
+and the in-app lockup. The mobile app had been shipping the **stock Expo icon** on every
+platform. See [design-system.md](design-system.md#logo).
 
 ## 2026-08-16 — Mobile Phases 3–4 (player app + push)
 Expo app: predictions with banker, stacked leaderboards, create/join/share leagues,

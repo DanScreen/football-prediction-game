@@ -73,6 +73,39 @@ than the OS when one has been made.
 When adding UI: use tokens and it is dark-ready for free. If you must hardcode a colour,
 you own styling both themes.
 
+## Logo
+
+The mark is a **scoreline**: a pitch-green tile with a white "2", a gold dash, and a
+white "1" — the thing every prediction actually is. Chosen from a three-concept pitch on
+2026-08-17 (see [decisions.md](decisions.md)).
+
+**The geometry lives in one place: [`lib/mark.ts`](../lib/mark.ts).** Two renderers read
+from it — `app/components/Logo.tsx` (JSX, for the header) and
+`scripts/generate-brand-assets.mjs` (SVG → PNG, for everything else). It is drawn as
+stroked paths, never `<text>`: a font-dependent mark shifts between devices and vanishes
+when rasterised into an icon.
+
+Colours in the mark are **literal hexes, not tokens** — the only place in the app that's
+true. The mark keeps its pitch green in both themes, the way an app icon does.
+
+### Regenerating the assets
+
+```bash
+npm run brand:assets   # rewrites all ten PNGs from lib/mark.ts
+```
+
+| Asset | Notes |
+|-------|-------|
+| `app/icon.png`, `app/apple-icon.png` | Favicon + touch icon. Apple's is squared (iOS masks it itself) |
+| `app/opengraph-image.png` | Link previews. Its wordmark is set in a **system font at generation time** — regenerate on macOS and eyeball the result |
+| `apps/mobile/…/icon.png` | iOS. Square and opaque; a rounded or transparent iOS icon is rejected |
+| `android-icon-{foreground,background,monochrome}.png` | Three adaptive layers. Foreground and monochrome are inset to the safe area (`MARK_SAFE_AREA_SCALE`) because launchers crop to the device's shape; monochrome collapses the gold dash into one colour so the launcher can tint it |
+| `splash-icon.png` | Padded, because Expo's `contain` scales the image to fill |
+| `apps/mobile/…/mark.png` | The in-app `BrandMark` lockup — a PNG because the Expo app has no SVG renderer |
+
+Change the mark, run the script, commit the PNGs together. They're committed rather than
+built on demand, so nothing regenerates them behind your back.
+
 ## Type
 
 All-Inter (Nunito was dropped in the redesign). Headings get `text-wrap: balance`;
