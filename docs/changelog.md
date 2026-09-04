@@ -6,6 +6,14 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-04 — Host gameweek editor
+
+New `/host/fixtures/editor`: every fixture for one competition, grouped by gameweek,
+with bulk move-to-gameweek and bulk delete. Built for rounds that don't divide evenly
+later in a season. Refuses to touch settled fixtures or delete fixtures carrying
+predictions, and resolves the duplicate-banker case a move can create. See
+[features.md](features.md#gameweek-editor-guards).
+
 ## 2026-09-04 — Predict tab shows only the current and next gameweek
 
 The Open section rendered every scheduled fixture in the database, so gameweeks months

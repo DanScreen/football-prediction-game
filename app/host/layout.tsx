@@ -31,6 +31,12 @@ export default async function HostLayout({ children }: { children: React.ReactNo
             Fixtures
           </Link>
           <Link
+            href="/host/fixtures/editor"
+            className="text-sm text-board-muted hover:text-board-fore transition-colors"
+          >
+            Gameweeks
+          </Link>
+          <Link
             href="/host/import"
             className="text-sm text-board-muted hover:text-board-fore transition-colors"
           >
