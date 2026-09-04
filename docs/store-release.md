@@ -23,14 +23,15 @@ The images it refers to are in `store-assets/promo/` (upload these) and
 | Export compliance | ✅ `ITSAppUsesNonExemptEncryption: false` in `app.json` |
 | Apple Developer Program membership | ⛔ needs your account |
 | `eas login` / `eas build` / submission | ⛔ needs your account |
-| Production demo account for the reviewer | ⛔ create `review@scorersonline.uk` on prod |
-| iPad screenshots **or** `supportsTablet: false` | ⛔ decide before submitting |
+| Production demo account for the reviewer | ✅ done (2026-09-04) — see `app-store-listing.md` |
+| iPad screenshots **or** `supportsTablet: false` | ✅ `supportsTablet: false` (2026-09-04) — iPhone only, no iPad set needed |
 
 The last four are out of agent scope — they need Apple credentials or a decision.
 
-> **iPad:** `app.json` sets `supportsTablet: true`, so App Store Connect will
-> demand a 13" iPad screenshot set (2064 × 2752) as well. If you do not want to
-> produce those, set it to `false` and ship iPhone-only for 1.0.
+> **iPad:** decided 2026-09-04 — `app.json` sets `supportsTablet: false`, so 1.0
+> ships iPhone-only and App Store Connect asks for no iPad set. Turning tablet
+> support back on later means producing 13" screenshots (2064 × 2752) at that
+> point.
 
 ---
 
