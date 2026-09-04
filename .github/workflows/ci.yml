@@ -1,0 +1,56 @@
+# Checks that run before a merge. Until 2026-09-04 the only workflow was
+# `deploy.yml`, which runs on push to `main` — so nothing at all gated a pull
+# request, and `main` once carried a mobile app that did not compile
+# (`results.tsx` passed an `onSave` prop removed when autosave landed).
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  web:
+    name: Web — tests and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Tests and the build import types from the generated client.
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - run: npx vitest run
+
+      # No env needed: every page touching the database is server-rendered on
+      # demand, which is why the Dockerfile builds without any either.
+      #
+      # `npx eslint app lib` is deliberately absent — it currently exits 1 on two
+      # pre-existing errors (lib/mobileAuth.test.ts:76, and an unused import in
+      # app/host/results/actions.ts). Add the step once those are cleared.
+      - run: npm run build
+
+  mobile:
+    name: Mobile — typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      # apps/mobile has its own lockfile — the repo is not an npm workspace.
+      - name: Install mobile dependencies
+        run: npm --prefix apps/mobile ci
+
+      - name: Typecheck
+        run: npm run mobile:typecheck

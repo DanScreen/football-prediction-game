@@ -37,6 +37,15 @@ jobs:
       - name: Run tests
         run: npx vitest run
 
+      # The mobile app ships from this repo but has its own lockfile, so it is
+      # invisible to `npm ci` above. Gate the deploy on it compiling: `main`
+      # once carried a mobile app that did not typecheck for two weeks.
+      - name: Install mobile dependencies
+        run: npm --prefix apps/mobile ci
+
+      - name: Typecheck mobile app
+        run: npm run mobile:typecheck
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:

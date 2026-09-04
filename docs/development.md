@@ -68,6 +68,25 @@ Test users from the seed (password `password123`): `host@football.test` (site ad
   tested too.
 - **When you change behaviour, add/adjust a test.** Run `npx vitest run` before
   considering a change done; run `npm run build` to catch type errors across pages.
+- **If you touched `apps/mobile`, run `npm run mobile:typecheck` too.** It has its own
+  lockfile and its own `tsc`, so neither the root build nor the test suite sees it.
+
+## Continuous integration
+
+Two workflows:
+
+| Workflow | Runs on | Does |
+|---|---|---|
+| `.github/workflows/ci.yml` | pull requests | `vitest run` + `npm run build`; mobile `tsc --noEmit` in a parallel job |
+| `.github/workflows/deploy.yml` | push to `main` | the same checks as a gate, then migrations and the Cloud Run deploy |
+
+Before 2026-09-04 only `deploy.yml` existed, so **nothing gated a pull request** — which
+is how `main` came to carry a mobile app that did not compile for two weeks
+(`results.tsx` passed an `onSave` prop that autosave had removed).
+
+`npx eslint app lib` is **not** in CI yet: it exits 1 on two pre-existing errors
+(`lib/mobileAuth.test.ts:76` uses `require()`, and `app/host/results/actions.ts:7`
+imports `FixtureStatus` unused). Clear those and add the step.
 
 ## Migrations
 
