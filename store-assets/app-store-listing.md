@@ -140,7 +140,7 @@ Turn on notifications and we will remind you before a fixture you have not predi
 |---|---|
 | **Sign-in required** | Yes |
 | **Demo account** | `review@scorersonline.uk` |
-| **Password** | *(create this account on production before submitting — see below)* |
+| **Password** | *(account created on production 2026-09-04; password held outside this repo — paste it straight into App Store Connect)* |
 | **Contact** | Your name, phone and `danieljamesscreen@gmail.com` |
 
 ### Notes to the reviewer
@@ -148,7 +148,7 @@ Turn on notifications and we will remind you before a fixture you have not predi
 ```
 Scorers is a free football score-prediction game. There is no gambling: no stake, no odds, no virtual currency, no prizes and no in-app purchases. Players predict match scorelines for points on a private leaderboard.
 
-LEAGUES ARE PRIVATE. There is no league discovery — you join with an invite code. The demo account is already a member of a league with several other players and a season of past gameweeks, so the Leaderboard and Results screens are populated. To join another league from a clean account, use invite code GOAAALLL on the Leagues tab.
+LEAGUES ARE PRIVATE. There is no league discovery and no public content — you either create a league or join one with an invite code from a friend. The demo account already has a league ("App Review XI") with predictions on the current gameweek, so Predictions, Results and Leaderboard are all populated when you sign in. You are welcome to create your own league too: Leagues tab -> name it -> pick Premier League. A league you create starts with one member (you), so its leaderboard shows a single row until other people join with your invite code — that is the product working as intended, not an empty state.
 
 ACCOUNT DELETION is on the Leagues tab → "Account & sign out" → Delete account. It is immediate and permanent (guideline 5.1.1(v)). Please do not use it on the demo account.
 
@@ -157,15 +157,25 @@ NOTIFICATIONS are optional. If you allow them, the app registers a push token so
 Fixtures and results come from football-data.org and are confirmed by us centrally; the app itself is read-only in that respect.
 ```
 
-### Before you submit — create the review account
+### The review account — done (2026-09-04)
 
-The demo account must exist on **production**, not the local database:
+Created on **production**, not the local database:
 
-1. Register `review@scorersonline.uk` at `https://scorersonline.uk/register`.
-2. Join it to a league that has real history, so the leaderboard is not empty.
-3. Make a few predictions from it on the open gameweek.
+1. `review@scorersonline.uk` registered, display name "App Review". Password is held
+   outside this repo — paste it straight into App Store Connect.
+2. Its own league, **App Review XI** (Premier League, invite code `N6ZTG5`), created
+   from the account rather than joining a real one — a reviewer should not be dropped
+   into a live competition where they can see real players' picks.
+3. Eight predictions on the open gameweek (Matchweek 3), one of them a banker.
 
-A reviewer landing on an empty Predictions screen is a common rejection.
+With the league attached the account sees 20 open fixtures, 40 kicked off and 20
+settled, so no screen is empty — the usual cause of rejection here.
+
+**Known thinness:** the account is alone in its league, so every fixture card shows no
+league-mate picks and the leaderboard is a single row of zeros. The reviewer therefore
+never sees the head-to-head comparison that is the point of the game. If that matters,
+the fix is a production demo league seeded with a few extra players and some settled
+history, and pointing the demo account at that instead.
 
 ---
 

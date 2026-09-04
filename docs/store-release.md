@@ -165,9 +165,13 @@ review notes, and the exact privacy-nutrition answers.
 
 Two things it flags that you must do by hand:
 
-1. **Create the reviewer's demo account on production** and join it to a league
-   with history. A reviewer landing on an empty Predictions screen is a common
-   rejection.
+1. ~~**Create the reviewer's demo account on production.**~~ Done 2026-09-04:
+   `review@scorersonline.uk` with its own league, **App Review XI** (invite
+   `N6ZTG5`), and eight predictions on the open gameweek. It creates its own
+   league rather than joining a live one, so no reviewer sees real players'
+   picks — at the cost of an empty peer list and a one-row leaderboard. Details
+   and the remaining thinness are in
+   [`app-store-listing.md`](../store-assets/app-store-listing.md).
 2. **Age rating:** answer *No* to Simulated Gambling and to Contests. Scorers has
    no stake, odds, virtual currency, prizes or in-app purchases; answering yes
    pushes it to 17+ for no reason.
@@ -178,5 +182,6 @@ Two things it flags that you must do by hand:
 
 ## Out of agent scope
 
-Apple/Google payments, `eas login`, installing on the phone, and creating the
-production reviewer account all need your accounts.
+Apple/Google payments, `eas login`, and installing on the phone all need your
+accounts. (The production reviewer account was created on 2026-09-04 through the
+public registration API, which needs no credentials of yours.)
