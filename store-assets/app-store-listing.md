@@ -140,7 +140,7 @@ Turn on notifications and we will remind you before a fixture you have not predi
 |---|---|
 | **Sign-in required** | Yes |
 | **Demo account** | `review@scorersonline.uk` |
-| **Password** | *(account created on production 2026-09-04; password held outside this repo — paste it straight into App Store Connect)* |
+| **Password** | `VUZNFJNkyYBngot6BWVl` |
 | **Contact** | Your name, phone and `danieljamesscreen@gmail.com` |
 
 ### Notes to the reviewer
@@ -161,8 +161,8 @@ Fixtures and results come from football-data.org and are confirmed by us central
 
 Created on **production**, not the local database:
 
-1. `review@scorersonline.uk` registered, display name "App Review". Password is held
-   outside this repo — paste it straight into App Store Connect.
+1. `review@scorersonline.uk` / `VUZNFJNkyYBngot6BWVl`, display name "App Review".
+   Paste both into App Store Connect's demo-account fields.
 2. Its own league, **App Review XI** (Premier League, invite code `N6ZTG5`), created
    from the account rather than joining a real one — a reviewer should not be dropped
    into a live competition where they can see real players' picks.
