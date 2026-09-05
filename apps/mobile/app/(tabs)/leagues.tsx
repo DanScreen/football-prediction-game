@@ -1,5 +1,4 @@
-import { router } from "expo-router"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import {
   ActivityIndicator,
   Pressable,
@@ -40,6 +39,16 @@ export default function LeaguesScreen() {
   const [competitionId, setCompetitionId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+
+  // Leagues on a competition a host has declared finished stay reachable, but
+  // sit under their own heading so they stop crowding the live ones.
+  const { live, finished } = useMemo(() => {
+    const all = leagues.data ?? []
+    return {
+      live: all.filter((l) => !l.competitionArchived),
+      finished: all.filter((l) => l.competitionArchived),
+    }
+  }, [leagues.data])
 
   async function onJoin() {
     setFormError(null)
@@ -107,34 +116,25 @@ export default function LeaguesScreen() {
         {leagues.data?.length === 0 ? (
           <Text style={{ color: t.inkMuted }}>You are not in a league yet — create or join one below.</Text>
         ) : null}
-        {leagues.data?.map((l) => (
-          <View
-            key={l.id}
-            style={{
-              backgroundColor: t.surface,
-              borderColor: t.line,
-              borderWidth: 1,
-              borderRadius: 12,
-              padding: 14,
-              gap: 6,
-            }}
-          >
-            <Text style={{ fontWeight: "700", fontSize: 16, color: t.ink }}>{l.name}</Text>
-            <Text style={{ color: t.inkMuted }}>
-              {l.competitionName} · {l.role}
-            </Text>
-            {l.inviteCode ? (
-              <Text style={{ color: t.inkFaint, fontSize: 13 }}>
-                Code: {l.inviteCode}
-              </Text>
-            ) : null}
-            {l.inviteCode ? (
-              <Pressable onPress={() => void shareInvite(l)} style={{ marginTop: 4 }}>
-                <Text style={{ color: t.pitch, fontWeight: "700" }}>Share invite</Text>
-              </Pressable>
-            ) : null}
-          </View>
+        {live.length === 0 && finished.length > 0 ? (
+          <Text style={{ color: t.inkMuted }}>
+            Every league you are in is on a competition that has finished.
+          </Text>
+        ) : null}
+        {live.map((l) => (
+          <LeagueCard key={l.id} league={l} onShare={() => void shareInvite(l)} />
         ))}
+
+        {finished.length > 0 ? (
+          <>
+            <Text style={{ fontSize: 13, fontWeight: "700", color: t.inkMuted, letterSpacing: 0.6 }}>
+              FINISHED ({finished.length})
+            </Text>
+            {finished.map((l) => (
+              <LeagueCard key={l.id} league={l} onShare={() => void shareInvite(l)} />
+            ))}
+          </>
+        ) : null}
 
         <Text style={{ fontSize: 13, fontWeight: "700", color: t.inkMuted, letterSpacing: 0.6 }}>
           JOIN WITH CODE
@@ -157,8 +157,6 @@ export default function LeaguesScreen() {
           loading={busy}
           disabled={!createName || !competitionId}
         />
-
-        <PrimaryButton label="Account & sign out" onPress={() => router.push("/account")} />
       </ScrollView>
     </Screen>
   )
@@ -198,6 +196,57 @@ function CompetitionPicker({
           </Pressable>
         )
       })}
+    </View>
+  )
+}
+
+function LeagueCard({ league, onShare }: { league: LeagueSummary; onShare: () => void }) {
+  const t = useTokens()
+  const archived = league.competitionArchived === true
+  return (
+    <View
+      style={{
+        backgroundColor: t.surface,
+        borderColor: t.line,
+        borderWidth: 1,
+        borderRadius: 12,
+        padding: 14,
+        gap: 6,
+        opacity: archived ? 0.75 : 1,
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Text style={{ fontWeight: "700", fontSize: 16, color: t.ink, flexShrink: 1 }}>
+          {league.name}
+        </Text>
+        {archived ? (
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: "700",
+              color: t.inkMuted,
+              backgroundColor: t.chip,
+              borderRadius: 999,
+              paddingHorizontal: 8,
+              paddingVertical: 2,
+            }}
+          >
+            Finished
+          </Text>
+        ) : null}
+      </View>
+      <Text style={{ color: t.inkMuted }}>
+        {league.competitionName} · {league.role}
+      </Text>
+      {/* A finished league is closed to new members, so the invite code is no use. */}
+      {league.inviteCode && !archived ? (
+        <>
+          <Text style={{ color: t.inkFaint, fontSize: 13 }}>Code: {league.inviteCode}</Text>
+          <Pressable onPress={onShare} style={{ marginTop: 4 }}>
+            <Text style={{ color: t.pitch, fontWeight: "700" }}>Share invite</Text>
+          </Pressable>
+        </>
+      ) : null}
     </View>
   )
 }

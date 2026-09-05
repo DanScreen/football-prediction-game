@@ -1,7 +1,32 @@
+import { Pressable } from "react-native"
 import { SymbolView } from "expo-symbols"
-import { Tabs } from "expo-router"
+import { Tabs, router } from "expo-router"
 import { HeaderMark } from "@/components/ui"
 import { useTokens } from "@/lib/theme"
+
+/**
+ * Account entry point. Lives in the header rather than at the bottom of the
+ * Leagues tab so it is reachable from every tab, which is where phone users
+ * expect their profile to be.
+ */
+function AccountButton() {
+  const t = useTokens()
+  return (
+    <Pressable
+      onPress={() => router.push("/account")}
+      hitSlop={12}
+      accessibilityRole="button"
+      accessibilityLabel="Account and sign out"
+      style={({ pressed }) => ({ marginRight: 16, opacity: pressed ? 0.5 : 1 })}
+    >
+      <SymbolView
+        name={{ ios: "person.crop.circle", android: "account_circle", web: "account_circle" }}
+        tintColor={t.inkMuted}
+        size={28}
+      />
+    </Pressable>
+  )
+}
 
 export default function TabLayout() {
   const t = useTokens()
@@ -20,6 +45,7 @@ export default function TabLayout() {
         headerShadowVisible: false,
         headerTitleStyle: { fontWeight: "700" },
         headerLeft: () => <HeaderMark />,
+        headerRight: () => <AccountButton />,
       }}
     >
       <Tabs.Screen

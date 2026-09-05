@@ -51,10 +51,17 @@ model Competition {
   code      String?
   flag      String    @default("")
   // Included in auto-import and selectable at league creation
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  leagues   League[]
-  fixtures  Fixture[]
+  isActive   Boolean   @default(true)
+  // Set when a host declares the competition finished. An archived competition
+  // keeps all its fixtures, predictions and standings, but drops out of the
+  // player-facing core pages (predict / results / leaderboard) and out of the
+  // auto-import and reminder sweeps. Distinct from `isActive`, which only says
+  // whether new leagues may subscribe — a season can be closed to new leagues
+  // while still being played.
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  leagues    League[]
+  fixtures   Fixture[]
 }
 
 // Single-use, expiring token for the forgot-password flow. Only the SHA-256

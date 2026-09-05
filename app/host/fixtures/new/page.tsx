@@ -5,7 +5,7 @@ import { createFixture } from "../actions"
 
 export default async function NewFixturePage() {
   const competitions = await prisma.competition.findMany({
-    where: { isActive: true },
+    where: { isActive: true, archivedAt: null },
     orderBy: { createdAt: "asc" },
     select: { id: true, name: true, flag: true },
   })

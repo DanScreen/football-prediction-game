@@ -6,6 +6,22 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-05 — Finished competitions, and a Results tab that reads like the web's
+
+Hosts can tick **Finished** on a competition at `/host/competitions`. It then drops out
+of Predict, Results, the leaderboard, auto-import and reminder emails — on the website
+and in the app — while keeping every fixture, prediction and standing; its leagues move
+to a "Finished leagues" section and the final table stays at `/leaderboard?archived=1`.
+New column `Competition.archivedAt`, filtered in one place (`resolvePeerContext()`).
+See [features.md](features.md#finishing-a-competition-host-only).
+
+In the app: the Results tab now mirrors the web page — flat always-open sections,
+newest round first, newest fixture first within a round, and a per-round subtotal
+including the streak bonus (new `GET /api/mobile/v1/bonuses`). It had been sorting
+oldest-first and capping at 12 rounds, so recent results could vanish entirely behind
+a collapsed accordion. The Account screen moved from a button at the bottom of Leagues
+to a person icon in the top-right header. See [mobile.md](mobile.md).
+
 ## 2026-09-05 — Expo Go does run the app (docs were wrong)
 
 `store-release.md` and `apps/mobile/README.md` both claimed App Store Expo Go could

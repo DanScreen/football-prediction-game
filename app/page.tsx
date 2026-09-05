@@ -7,6 +7,7 @@ import BankerTag from "@/app/components/BankerTag"
 import RequestResultButton from "@/app/components/RequestResultButton"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
 import { resolvePeerContext } from "@/lib/peers"
+import ArchivedOnlyNotice from "@/app/components/ArchivedOnlyNotice"
 import FixtureRoundGroup, {
   groupByRound,
   takeNearestRounds,
@@ -49,7 +50,19 @@ export default async function PredictionsPage() {
     )
   }
 
-  const { memberships, competitionIds, peersByCompetition, allPeerIds } = ctx
+  const { memberships, archivedMemberships, competitionIds, peersByCompetition, allPeerIds } = ctx
+
+  // Every league the viewer is in sits on a finished competition — there is
+  // nothing to predict, but they are not a new user either.
+  if (competitionIds.length === 0) {
+    return (
+      <ArchivedOnlyNotice
+        title="Nothing to predict"
+        leagueNames={archivedMemberships.map((m) => m.league.name)}
+      />
+    )
+  }
+
   const multipleCompetitions = competitionIds.length > 1
 
   const now = new Date()

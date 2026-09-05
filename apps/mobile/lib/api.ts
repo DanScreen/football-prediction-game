@@ -20,6 +20,8 @@ export type LeagueSummary = {
   role: string
   competitionId: string
   competitionName: string
+  /** Set when a host has declared the competition finished. */
+  competitionArchived?: boolean
 }
 
 export type MeResponse = MobileUser & {
@@ -252,6 +254,17 @@ export async function submitPrediction(input: {
   isBanker?: boolean
 }): Promise<{ prediction: { id: string; isBanker: boolean } }> {
   return apiRequest("/predictions", { method: "POST", body: input })
+}
+
+/** Viewer's streak bonuses, rolled up per competition + round. */
+export type BonusRound = {
+  competitionId: string
+  round: string
+  points: number
+}
+
+export async function fetchBonuses(): Promise<BonusRound[]> {
+  return apiRequest("/bonuses")
 }
 
 export async function fetchLeaderboards(): Promise<LeaderboardBlock[]> {

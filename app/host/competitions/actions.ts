@@ -12,7 +12,8 @@ function parseForm(formData: FormData) {
   const code = String(formData.get("code") ?? "").trim().toUpperCase()
   const flag = String(formData.get("flag") ?? "").trim()
   const isActive = formData.get("isActive") === "on"
-  return { name, code: code || null, flag, isActive }
+  const archived = formData.get("archived") === "on"
+  return { name, code: code || null, flag, isActive, archived }
 }
 
 export async function createCompetition(
@@ -27,7 +28,10 @@ export async function createCompetition(
   const existing = await prisma.competition.findUnique({ where: { name: data.name } })
   if (existing) return { error: "A competition with that name already exists." }
 
-  await prisma.competition.create({ data })
+  const { archived, ...fields } = data
+  await prisma.competition.create({
+    data: { ...fields, archivedAt: archived ? new Date() : null },
+  })
   revalidatePath("/host/competitions")
   redirect("/host/competitions")
 }
@@ -42,7 +46,22 @@ export async function updateCompetition(
   const data = parseForm(formData)
   if (!data.name) return { error: "Name is required." }
 
-  await prisma.competition.update({ where: { id }, data })
+  const current = await prisma.competition.findUnique({
+    where: { id },
+    select: { archivedAt: true },
+  })
+  if (!current) return { error: "That competition no longer exists." }
+
+  // Keep the original archive date when a competition stays finished, so
+  // re-saving the form for an unrelated edit doesn't restamp it as finished today.
+  const { archived, ...fields } = data
+  await prisma.competition.update({
+    where: { id },
+    data: { ...fields, archivedAt: archived ? (current.archivedAt ?? new Date()) : null },
+  })
+
+  // Archiving changes what every player sees, not just this host page.
+  revalidatePath("/", "layout")
   revalidatePath("/host/competitions")
   redirect("/host/competitions")
 }

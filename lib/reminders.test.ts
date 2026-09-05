@@ -103,6 +103,14 @@ describe("sendDeadlineReminders", () => {
     expect(body.html).toContain("Arsenal vs Chelsea")
   })
 
+  it("skips fixtures on a competition a host has declared finished", async () => {
+    fixtureFindMany.mockResolvedValue([])
+    await sendDeadlineReminders()
+
+    const where = fixtureFindMany.mock.calls[0][0]!.where as Record<string, unknown>
+    expect(where.competition).toEqual({ archivedAt: null })
+  })
+
   it("emails a user once even when they belong to several leagues on the competition", async () => {
     fixtureFindMany.mockResolvedValue([
       dueFixture({

@@ -5,7 +5,13 @@ import type { CompetitionFormState } from "./actions"
 
 type Props = {
   action: (prev: CompetitionFormState, formData: FormData) => Promise<CompetitionFormState>
-  defaultValues?: { name: string; code: string; flag: string; isActive: boolean }
+  defaultValues?: {
+    name: string
+    code: string
+    flag: string
+    isActive: boolean
+    archived: boolean
+  }
   submitLabel: string
 }
 
@@ -67,6 +73,26 @@ export default function CompetitionForm({ action, defaultValues, submitLabel }: 
             className="h-4 w-4 rounded border-line-strong accent-[#128749]"
           />
           Active (auto-import + selectable for new leagues)
+        </label>
+      </div>
+
+      <div className="rounded-lg border border-line bg-chip/40 px-4 py-3">
+        <label className="flex items-start gap-2 text-sm font-medium text-ink-mid">
+          <input
+            type="checkbox"
+            name="archived"
+            defaultChecked={defaultValues?.archived ?? false}
+            className="mt-0.5 h-4 w-4 rounded border-line-strong accent-[#128749]"
+          />
+          <span>
+            Finished
+            <span className="mt-0.5 block text-xs font-normal text-ink-muted">
+              Declares the competition over. It leaves Predict, Results and the leaderboard,
+              and stops auto-importing fixtures and sending deadline reminders. Nothing is
+              deleted — its leagues move to &ldquo;Finished leagues&rdquo; and the final
+              standings stay readable. Untick to bring it back.
+            </span>
+          </span>
         </label>
       </div>
 

@@ -72,6 +72,11 @@ import. A user can belong to multiple leagues — predictions and leaderboards c
 of them at once, so there is nothing to "switch" as a player. Commissioners use the
 **Manage** action here to pick which league `/admin` edits.
 
+Leagues on a competition a host has declared **finished** move into a collapsed
+"Finished leagues" section at the bottom, with a link through to
+`/leaderboard?archived=1` for the final table. They keep their history but lose the
+invite code, the share control and **Manage** — a finished league is closed.
+
 ### Invites
 
 Two ways in, for the two situations:
@@ -141,6 +146,26 @@ Each fixture shows the confirmed scoreline and **every league-mate's pick** with
 streak bonus. Left-edge colour reflects your outcome on that fixture. Split from
 Predictions on 2026-08-22 — the combined page grew unbounded once every league-mate's
 pick appeared on each settled fixture.
+
+## Finishing a competition (host-only)
+
+Old seasons used to linger on Predict, Results and the leaderboard forever. A site host
+can now tick **Finished** on a competition at `/host/competitions`, which stamps
+`Competition.archivedAt`.
+
+A finished competition:
+
+- disappears from **Predict**, **Results** and the **leaderboard** (web *and* app) —
+  the filter lives in one place, `resolvePeerContext()` in `lib/peers.ts`, which every
+  core page goes through;
+- disappears from the league-creation competition picker, and joining one of its
+  leagues by code is refused ("… has finished — that league is closed to new members.");
+- stops auto-importing fixtures (`lib/autoImport.ts`) and stops sending deadline
+  reminders (`lib/reminders.ts`);
+- keeps **everything**. Its leagues move to "Finished leagues" on `/leagues`, and
+  `/leaderboard?archived=1` still renders the final table. Untick the box to bring it
+  back — the archive date is preserved across unrelated edits, so re-saving the form
+  never restamps it.
 
 ## How it works (`/rules`)
 

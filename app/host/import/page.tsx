@@ -9,7 +9,7 @@ export default async function HostImportPage() {
   const apiEnabled = Boolean(process.env.FOOTBALL_DATA_API_KEY)
 
   const competitions = await prisma.competition.findMany({
-    where: { isActive: true, code: { not: null } },
+    where: { isActive: true, archivedAt: null, code: { not: null } },
     orderBy: { createdAt: "asc" },
     select: { id: true, name: true, flag: true },
   })

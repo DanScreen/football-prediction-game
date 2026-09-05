@@ -22,10 +22,10 @@ export function RoundGroup({
   const outstanding = group.fixtures.filter((f) => !f.prediction).length
   const bankerFix = group.fixtures.find((f) => f.prediction?.isBanker)
 
-  // The web's round header carries a running subtotal. It is deliberately
-  // labelled "picks" here: the streak bonus is per-league and the mobile
-  // fixtures payload is league-agnostic, so folding it in would show a number
-  // that matches no single leaderboard.
+  // The web's round header carries a running subtotal. The streak bonus is
+  // per-league and the fixtures payload is league-agnostic, so it isn't folded
+  // in here — on the Predict tab a round isn't finished and no bonus is awarded
+  // yet. (Results fetches `/bonuses` separately and does add it.)
   const scored = sum(group.fixtures.map((f) => f.prediction?.pointsAwarded ?? null))
   const provisional = sum(group.fixtures.map((f) => f.prediction?.provisionalPoints ?? null))
 

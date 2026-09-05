@@ -1,6 +1,8 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import { prisma } from "@/lib/prisma"
+import { NOT_ARCHIVED } from "@/lib/peers"
 import LeagueBoard, { FORM_LEGEND } from "./LeagueBoard"
 
 export const metadata = { title: "Leaderboard" }
@@ -13,22 +15,41 @@ export const metadata = { title: "Leaderboard" }
  * at once is worth the page length. It also removes the need to switch the
  * "active league" just to look at a different table.
  */
-export default async function LeaderboardPage() {
+export default async function LeaderboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ archived?: string }>
+}) {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
   const userId = session.user.id
 
+  // Finished competitions are off this page by default — the standings survive,
+  // they just stop padding it out once the season is over.
+  const showArchived = (await searchParams).archived === "1"
+
   const memberships = await prisma.leagueMembership.findMany({
-    where: { userId },
+    where: {
+      userId,
+      ...(showArchived ? {} : { league: { competition: NOT_ARCHIVED } }),
+    },
     orderBy: { joinedAt: "asc" },
     select: {
       league: {
-        select: { id: true, name: true, competition: { select: { name: true } } },
+        select: {
+          id: true,
+          name: true,
+          competition: { select: { name: true, archivedAt: true } },
+        },
       },
     },
   })
 
-  if (memberships.length === 0) redirect("/leagues")
+  const archivedCount = await prisma.leagueMembership.count({
+    where: { userId, league: { competition: { archivedAt: { not: null } } } },
+  })
+
+  if (memberships.length === 0) redirect(archivedCount > 0 ? "/leaderboard?archived=1" : "/leagues")
 
   const leagues = memberships.map((m) => m.league)
   const multiple = leagues.length > 1
@@ -43,6 +64,19 @@ export default async function LeaderboardPage() {
           ? `Standings across your ${leagues.length} leagues.`
           : leagues[0].competition.name}
       </p>
+
+      {archivedCount > 0 && (
+        <p className="mb-6 -mt-3 text-sm">
+          <Link
+            href={showArchived ? "/leaderboard" : "/leaderboard?archived=1"}
+            className="font-medium text-pitch hover:underline"
+          >
+            {showArchived
+              ? "Hide finished competitions"
+              : `Show ${archivedCount} finished league${archivedCount !== 1 ? "s" : ""} →`}
+          </Link>
+        </p>
+      )}
 
       {/* With several tables the page gets long, so offer a jump list. */}
       {multiple && (
@@ -65,7 +99,11 @@ export default async function LeaderboardPage() {
             key={l.id}
             leagueId={l.id}
             leagueName={l.name}
-            competitionName={l.competition.name}
+            competitionName={
+              l.competition.archivedAt
+                ? `${l.competition.name} · finished`
+                : l.competition.name
+            }
             currentUserId={userId}
             showHeading={multiple}
           />

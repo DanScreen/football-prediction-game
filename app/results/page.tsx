@@ -4,6 +4,7 @@ import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { resolvePeerContext } from "@/lib/peers"
 import PredictionHistory, { type HistoryFixture } from "@/app/PredictionHistory"
+import ArchivedOnlyNotice from "@/app/components/ArchivedOnlyNotice"
 
 export const metadata = { title: "Results" }
 
@@ -31,8 +32,25 @@ export default async function ResultsPage() {
     )
   }
 
-  const { memberships, myLeagueIds, leagueToCompetition, competitionIds, peersByCompetition, allPeerIds } =
-    ctx
+  const {
+    memberships,
+    archivedMemberships,
+    myLeagueIds,
+    leagueToCompetition,
+    competitionIds,
+    peersByCompetition,
+    allPeerIds,
+  } = ctx
+
+  if (competitionIds.length === 0) {
+    return (
+      <ArchivedOnlyNotice
+        title="No live results"
+        leagueNames={archivedMemberships.map((m) => m.league.name)}
+      />
+    )
+  }
+
   const multipleCompetitions = competitionIds.length > 1
 
   const [completedFixtures, bonusAwards] = await Promise.all([
