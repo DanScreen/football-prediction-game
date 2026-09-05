@@ -145,8 +145,8 @@ export default function PrivacyPage() {
         </p>
         <ul className="mt-2 space-y-2">
           <Bullet>
-            <strong className="text-ink">In the app:</strong> Leagues tab → Account → Delete
-            account.
+            <strong className="text-ink">In the app:</strong> the person icon in the
+            top-right corner → Delete account.
           </Bullet>
           <Bullet>
             <strong className="text-ink">On the website:</strong>{" "}

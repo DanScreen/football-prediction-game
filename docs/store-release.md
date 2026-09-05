@@ -15,8 +15,10 @@ The images it refers to are in `store-assets/promo/` (upload these) and
 
 | Requirement | State |
 |---|---|
-| In-app account deletion (guideline 5.1.1(v)) | ✅ Leagues → Account → Delete account, and `/profile` on the web |
+| In-app account deletion (guideline 5.1.1(v)) | ✅ Person icon (top right) → Account → Delete account, and `/profile` on the web |
 | Privacy policy URL | ✅ `https://scorersonline.uk/privacy` |
+| Support URL | ✅ `https://scorersonline.uk/support` (2026-09-05) — was pointed at `/rules`, which answers none of the "it isn't working" questions |
+| A support address that receives mail | ✅ Cloudflare Email Routing (2026-09-05) — `support@` and `privacy@` forward to the owner; before this the apex domain had no MX records, so both bounced. See [deployment.md](deployment.md#inbound-email) |
 | App icon (not the Expo template) | ✅ the scoreline mark, `npm run brand:assets` |
 | Screenshots, 6.9" iPhone | ✅ `store-assets/promo/` |
 | Listing copy, keywords, review notes | ✅ `store-assets/app-store-listing.md` |

@@ -12,7 +12,7 @@ platform-owned competitions model (the big refactor) is complete and live.
 
 **Native apps:** Phases 1–4 complete (`apps/mobile` + `/api/mobile/v1`). Phase 5
 is **prepared**: the app now matches the website visually, in-app account
-deletion and a real privacy policy are shipped, and the listing copy and
+deletion, a real privacy policy and a support page are shipped, and the listing copy and
 screenshots are generated (`store-assets/`, `npm run store:shots`). What remains
 needs your Apple account — membership and `eas build`; the reviewer account
 and the iPad decision are done. The app itself can be tried on a phone today
@@ -65,6 +65,8 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 - **Account deletion** — irreversible, in-app on both platforms, one shared
   implementation (`lib/accountDeletion.ts`). Leagues outlive the member who leaves.
 - **Privacy policy** (`/privacy`) — public, and the URL both store listings use.
+- **Support** (`/support`) — public FAQ + `support@scorersonline.uk`, the Support URL
+  both store listings use (was `/rules` until 2026-09-05).
 - **Store assets** — `store-assets/app-store-listing.md` (every App Store Connect
   field) and `store-assets/promo/` (six framed 1290×2796 panels, captured from the
   real app; regenerate with `npm run store:shots`).

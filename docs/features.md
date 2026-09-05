@@ -384,3 +384,23 @@ answers in
 [`store-assets/app-store-listing.md`](../store-assets/app-store-listing.md) must
 match it. **If the app starts collecting something new, edit both in the same
 change** — Apple treats a mismatch as a rejection.
+
+## Support page (`/support`)
+
+Public FAQ behind the **Support URL** both stores require on a listing. It answers
+the questions people actually arrive with — joining a league, invite codes that
+won't take, the per-fixture kickoff deadline, autosave, the banker, why points
+moved, where a finished competition went, notifications, forgotten passwords,
+finding the account screen, and deleting an account — and gives an email address
+(`support@scorersonline.uk`) with a stated two-working-day response.
+
+The listing pointed at `/rules` until 2026-09-05. `/rules` is the rules of the
+game: it explains the points table perfectly and answers none of the "it isn't
+working" questions a support URL exists for.
+
+**Every answer names a specific place in the UI, so it goes stale the moment a
+screen moves.** When you move something, fix `/support`, `/privacy` and the
+reviewer notes in
+[`store-assets/app-store-listing.md`](../store-assets/app-store-listing.md) in the
+same change — the account screen moving to the header icon left all three wrong
+until it was caught.

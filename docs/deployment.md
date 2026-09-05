@@ -102,6 +102,30 @@ the domain via `APP_URL` in `deploy.yml`, and `next.config.ts` allowlists the do
 Server Actions (Cloud Run still sees a `*.run.app` Host header behind the proxy). The
 domain is verified in Resend for outbound email.
 
+### Inbound email
+
+Outbound (Resend) and inbound are separate systems, and for a long time only the
+first existed — the apex domain had **no MX records at all**, so
+`privacy@scorersonline.uk`, printed on the live privacy policy, silently bounced.
+
+Inbound is now **Cloudflare Email Routing** (enabled 2026-09-05, free, same
+dashboard as the Worker). It owns the apex `MX` records (`route1/2/3.mx.cloudflare.net`)
+and adds `include:_spf.mx.cloudflare.net` to the apex SPF record. `support@` and
+`privacy@` forward to the owner's personal inbox.
+
+Two things not to trip over:
+
+- **Don't overwrite the apex SPF record.** Resend's sending records live on the
+  `send.` subdomain, but the apex TXT is shared; a change there that drops the
+  Cloudflare include breaks forwarding.
+- **Forwarding is receive-only.** Replying *as* `support@scorersonline.uk` needs
+  Gmail's "Send mail as" pointed at Resend SMTP (`smtp.resend.com:587`, user
+  `resend`, password = the Resend API key), since the domain is already verified
+  there.
+
+Any address published in the app, the privacy policy or a store listing must have
+a matching route here, or it is a dead address.
+
 ## Alerting
 
 Cloud Monitoring emails **danieljamesscreen@gmail.com** (`alert_email` in
