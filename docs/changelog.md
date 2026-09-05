@@ -15,6 +15,11 @@ two-working-day reply. Both stores require a Support URL; ours pointed at `/rule
 which is the rules of the game and answers none of the questions a support URL is
 for. Linked from the login footer and the app's Account screen.
 
+Inbound email now exists at all: the apex domain had **no MX records**, so
+`privacy@scorersonline.uk` — printed on the live privacy policy — had been bouncing
+since that page shipped. Cloudflare Email Routing now forwards `support@` and
+`privacy@`. See [deployment.md](deployment.md#inbound-email).
+
 Also corrected three places that still described the account screen as a button at
 the bottom of the Leagues tab after it moved to the header icon — the privacy page,
 the store readiness table, and the **App Review notes**, where a reviewer following
