@@ -24,12 +24,13 @@ The images it refers to are in `store-assets/promo/` (upload these) and
 | Listing copy, keywords, review notes | ✅ `store-assets/app-store-listing.md` |
 | Export compliance | ✅ `ITSAppUsesNonExemptEncryption: false` in `app.json` |
 | On-device testing before submission | ✅ Expo Go, `npm run start:go` (no Apple account needed) |
-| Apple Developer Program membership | ⛔ needs your account |
-| `eas login` / `eas build` / submission | ⛔ needs your account |
+| Apple Developer Program membership | ✅ active — team `MB86PHVDWH` (individual) |
+| `eas login` / `eas build` / submission | ✅ build **1.0.0 (4)** uploaded to App Store Connect 2026-09-05 |
 | Production demo account for the reviewer | ✅ done (2026-09-04) — see `app-store-listing.md` |
 | iPad screenshots **or** `supportsTablet: false` | ✅ `supportsTablet: false` (2026-09-04) — iPhone only, no iPad set needed |
 
-The last four are out of agent scope — they need Apple credentials or a decision.
+Everything above is done. Submitting for review is the one remaining step, and it
+is a button in App Store Connect — see [Submitting](#submitting) below.
 
 > **iPad:** decided 2026-09-04 — `app.json` sets `supportsTablet: false`, so 1.0
 > ships iPhone-only and App Store Connect asks for no iPad set. Turning tablet
@@ -126,7 +127,38 @@ eas build --platform ios --profile preview
 eas build --platform ios --profile production
 ```
 
-Then TestFlight → App Store review.
+## Submitting
+
+```bash
+cd apps/mobile
+eas build  --platform ios --profile production --non-interactive
+eas submit --platform ios --profile production --latest --non-interactive
+```
+
+Both run without an Apple password prompt: the distribution certificate and
+provisioning profile live on EAS (valid to 2027-08-17), and `eas submit` uses an
+App Store Connect API key held on EAS servers. `appVersionSource: "remote"` plus
+`autoIncrement` on the production profile means the build number comes from EAS —
+don't hand-edit it in `app.json`.
+
+`eas submit` **uploads** the binary; it does not submit for review. After the
+upload Apple processes the build for 5–10 minutes, then it becomes selectable
+under *1.0 Prepare for Submission → Build*, and **Submit for Review** is a button
+a human presses.
+
+> **The app icon comes from the build, not from a form.** App Store Connect has no
+> icon upload field for iOS — Apple reads the 1024×1024 marketing icon out of the
+> IPA. Until a build is processed the listing header shows a grey placeholder
+> wireframe, which is expected and not a missing asset. If Apple ever rejects with
+> **ITMS-90717**, the cause is an alpha channel in `assets/images/icon.png`; it is
+> fully opaque today, so there is nothing to strip.
+
+Log of uploaded builds:
+
+| Build | Commit | Uploaded | Notes |
+|---|---|---|---|
+| 1.0.0 (4) | `1b662b1` | 2026-09-05 | First build sent to App Store Connect. Support page, finished competitions, reorganised Results tab, account icon in the header. |
+| 1.0.0 (2) | `3cf457b` | — | Built 2026-08-17, never uploaded. Predates all of the above. |
 
 ---
 
