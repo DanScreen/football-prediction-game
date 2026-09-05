@@ -17,6 +17,14 @@ Platform-owned. Owns the canonical fixtures that leagues share.
 - `code` (nullable) — football-data.org code (`"PL"`, `"WC"`). **Null = manual-only**
   competition (no auto-import / result lookup).
 - `isActive` — included in auto-import and selectable at league creation.
+- `archivedAt` (nullable) — set when a host declares the competition **finished**
+  (checkbox on `/host/competitions`). Archived competitions keep every fixture,
+  prediction and standing, but drop out of the player-facing core pages (predict /
+  results / leaderboard, web and app), out of auto-import, and out of the reminder
+  sweep. Their leagues move to a "Finished leagues" section on `/leagues` and stay
+  readable via `/leaderboard?archived=1`. Distinct from `isActive`, which only says
+  whether new leagues may subscribe — a season can be closed to new leagues while
+  still being played. Migration: `20260905000000_competition_archived_at`.
 - Relations: `leagues[]`, `fixtures[]`.
 
 ### User

@@ -232,6 +232,17 @@ Each fixture:
 | `prediction` | Optional nested current pick: `{ userId, displayName, isBot, homeScore, awayScore, isBanker, pointsAwarded, provisionalPoints }` |
 | `peerPredictions` | League-mate picks on this fixture — **empty before kickoff**, populated once the fixture has kicked off (same peer filter as the web). Sorted with the viewer first, then alphabetical. |
 
+Fixtures on a competition a host has declared **finished** (`Competition.archivedAt`)
+are excluded, exactly as they are on the web.
+
+#### `GET /api/mobile/v1/bonuses`
+
+The viewer's streak bonuses rolled up per competition + round:
+`{ competitionId, round, points }[]`. A bonus is awarded per *league* while fixtures
+are league-agnostic, so it can't ride inside the fixtures payload — the Results tab
+fetches this alongside and folds it into each round subtotal, the way the web results
+page does. Finished competitions are excluded.
+
 #### `POST /api/mobile/v1/predictions`
 
 Body: `{ "fixtureId", "homeScore", "awayScore", "isBanker?" }`  
@@ -249,6 +260,10 @@ confirmed / provisional points (same semantics as the bot predictions list).
 #### `GET /api/mobile/v1/leagues`
 
 Memberships for the current user (name, invite code for sharing, competition, role).
+Each entry also carries `competitionArchived: boolean` — true when a host has declared
+the competition finished. Archived leagues stay in the list; the app files them under
+a "Finished" heading and hides their invite code. Creating or joining a league on a
+finished competition is rejected (`400` / `409`).
 
 #### `POST /api/mobile/v1/leagues`
 
@@ -267,6 +282,8 @@ Active competitions available when creating a league: `{ id, name }[]`.
 #### `GET /api/mobile/v1/leaderboards`
 
 **Stacked** standings for every league the user is in (matches web leaderboard page).
+Leagues on a finished competition are omitted unless `?archived=1` is passed, mirroring
+`/leaderboard?archived=1` on the web.
 
 Each league block:
 
@@ -275,6 +292,7 @@ Each league block:
   "leagueId": "...",
   "leagueName": "...",
   "competitionName": "...",
+  "competitionArchived": false,
   "formRounds": ["Matchweek 34", "Matchweek 35"],
   "standings": [
     {
@@ -339,9 +357,9 @@ Still out of native scope: host/commissioner endpoints; API-key management in-ap
 | `app/(auth)/login\|register` | Auth (+ forgot password via API) |
 | `app/join` | Deep-link join (`scorers://join?code=`) |
 | `app/(tabs)/index` | Predictions — Open + Kicked off; scores auto-save |
-| `app/(tabs)/results` | Settled fixtures with every league-mate's pick |
+| `app/(tabs)/results` | Settled fixtures with every league-mate's pick — flat sections, newest round first, per-round subtotal (mirrors web `/results`) |
 | `app/(tabs)/leaderboard` | Stacked standings |
-| `app/(tabs)/leagues` | List / create / join / share |
+| `app/(tabs)/leagues` | List (live + finished) / create / join / share |
 | `app/(tabs)/rules` | Scoring constants from API |
 | `lib/api.ts` | Client with refresh |
 | `lib/notifications.ts` | Expo push registration |
@@ -388,8 +406,10 @@ See `apps/mobile/README.md`.
 - `forgot-password` on mobile API (website reset link).
 - Fixtures returned **flat**; client groups in UI.
 - Push device tokens + Expo reminders; invite deep link.
-- **Account screen** (`app/account.tsx`, pushed from Leagues) carrying sign-out and
-  in-app account deletion. API-key management stays on the website.
+- **Account screen** (`app/account.tsx`) carrying sign-out and in-app account deletion.
+  API-key management stays on the website. Reached from a person icon in the **top-right
+  of the tab header** (2026-09-05) — it used to be a button at the bottom of the Leagues
+  tab, which buried it under two forms and tied it to one tab.
 - **Visual parity with the web** (2026-08-28): kickoff countdown, `★ ×2` banker tag,
   outcome accent borders, points badges, the "Nailed it!" moment, and a leaderboard
   with the board-panel header, podium ramp, breakdown chips, exact counts and the

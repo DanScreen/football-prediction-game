@@ -33,7 +33,9 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   - **League commissioners** manage only their league's settings at `/admin`.
 - **Platform-owned competitions** — `Competition` owns canonical fixtures; leagues
   subscribe via `League.competitionId`. One prediction per user per fixture counts
-  across all their leagues on that competition.
+  across all their leagues on that competition. A host can declare one **finished**
+  (`archivedAt`), which drops it off the core pages, auto-import and reminders while
+  keeping all its history.
 - **Automatic fixtures** — a 10-minute cron imports upcoming fixtures for active
   competitions that have a football-data.org code and at least one subscribed league.
 - **Predictions** (`/`) — one page for open fixtures, kicked-off picks and settled

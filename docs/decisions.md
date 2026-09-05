@@ -5,6 +5,39 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## "Finished" is its own column, not a reuse of `isActive`
+`Competition.archivedAt` (nullable timestamp) marks a competition a host has
+declared over; `isActive` stays what it always was — whether the competition is
+auto-imported and offered when creating a league.
+**Why:** the two states genuinely differ. A season is routinely closed to new
+leagues part-way through (`isActive: false`) while still being played, and the
+people in it must keep predicting it. Overloading the flag would have thrown
+them off Predict the moment a host stopped taking new leagues. A timestamp
+rather than a boolean because "when did this end" is the useful thing to show on
+the host page and in the finished-leagues section, and it costs nothing extra.
+The filter lives in exactly one function, `resolvePeerContext()` in
+`lib/peers.ts`, so a new core page inherits it instead of re-deriving it.
+
+## Finishing hides, never deletes
+An archived competition keeps every fixture, prediction, bonus award and
+standing; it just stops appearing on the core pages. Its leagues move to a
+"Finished leagues" section on `/leagues`, and `/leaderboard?archived=1` still
+renders the final table.
+**Why:** the complaint that prompted this was "I'm tired of seeing the World Cup
+in my app" — a clutter problem, not a data problem. Final standings are the
+point of having played, so destroying them to tidy a list would be a bad trade.
+Unticking the box fully reverses it.
+
+## The app's streak bonus arrives on its own endpoint
+`GET /api/mobile/v1/bonuses` returns the viewer's streak bonuses per competition
+and round; the Results tab merges them into each round subtotal.
+**Why:** the fixtures payload is league-agnostic (a fixture belongs to a
+competition, and the app shows every league-mate's pick on it), but a bonus is
+awarded per league. Folding it into a fixture would mean picking one league
+arbitrarily. Fetching it separately and summing across the viewer's leagues on
+that competition is exactly what the web results page does, so the two now show
+the same number.
+
 ## Store screenshots are captured from the real app under react-native-web
 `scripts/capture-store-shots.mjs` runs the Expo app in headless Chrome with the
 viewport forced to 430 × 932 at deviceScaleFactor 3, giving native 1290 × 2796
