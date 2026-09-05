@@ -41,7 +41,7 @@ export async function createLeague(
   if (!competitionId) return { error: "Please select a competition." }
 
   const competition = await prisma.competition.findUnique({ where: { id: competitionId } })
-  if (!competition || !competition.isActive) {
+  if (!competition || !competition.isActive || competition.archivedAt) {
     return { error: "That competition isn't available." }
   }
 
@@ -69,8 +69,14 @@ export async function joinLeague(
   const code = normaliseInviteCode(formData.get("code") as string | null)
   if (!code) return { error: "Please enter an invite code." }
 
-  const league = await prisma.league.findUnique({ where: { inviteCode: code } })
+  const league = await prisma.league.findUnique({
+    where: { inviteCode: code },
+    include: { competition: { select: { name: true, archivedAt: true } } },
+  })
   if (!league) return { error: "No league found with that invite code." }
+  if (league.competition.archivedAt) {
+    return { error: `${league.competition.name} has finished — that league is closed to new members.` }
+  }
 
   const existing = await prisma.leagueMembership.findUnique({
     where: { userId_leagueId: { userId, leagueId: league.id } },

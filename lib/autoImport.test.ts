@@ -34,11 +34,17 @@ describe("autoImportFixtures", () => {
     expect(competitionFindMany).not.toHaveBeenCalled()
   })
 
-  it("only considers active, code-mapped competitions with subscribing leagues", async () => {
+  it("only considers active, unfinished, code-mapped competitions with subscribing leagues", async () => {
     competitionFindMany.mockResolvedValue([])
     await autoImportFixtures()
     expect(competitionFindMany).toHaveBeenCalledWith({
-      where: { isActive: true, code: { not: null }, leagues: { some: {} } },
+      where: {
+        isActive: true,
+        // A competition a host has declared finished stops importing fixtures.
+        archivedAt: null,
+        code: { not: null },
+        leagues: { some: {} },
+      },
       select: { id: true, name: true, code: true },
     })
   })

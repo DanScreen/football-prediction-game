@@ -14,7 +14,7 @@ export async function autoImportFixtures(): Promise<{ imported: number; errors: 
   if (!process.env.FOOTBALL_DATA_API_KEY) return { imported: 0, errors: [] }
 
   const competitions = await prisma.competition.findMany({
-    where: { isActive: true, code: { not: null }, leagues: { some: {} } },
+    where: { isActive: true, archivedAt: null, code: { not: null }, leagues: { some: {} } },
     select: { id: true, name: true, code: true },
   })
 

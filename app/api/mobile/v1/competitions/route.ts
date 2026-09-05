@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   if (!user) return jsonError("Unauthorized", 401)
 
   const competitions = await prisma.competition.findMany({
-    where: { isActive: true },
+    where: { isActive: true, archivedAt: null },
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   })

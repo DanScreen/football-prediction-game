@@ -6,7 +6,9 @@ export const metadata = { title: "Competitions" }
 
 export default async function HostCompetitionsPage() {
   const competitions = await prisma.competition.findMany({
-    orderBy: { createdAt: "asc" },
+    // Finished competitions sink to the bottom — hosts work on live ones.
+    // Postgres sorts NULLs last on ASC, so ask for them first explicitly.
+    orderBy: [{ archivedAt: { sort: "asc", nulls: "first" } }, { createdAt: "asc" }],
     include: { _count: { select: { leagues: true, fixtures: true } } },
   })
 
@@ -42,6 +44,16 @@ export default async function HostCompetitionsPage() {
                     inactive
                   </span>
                 )}
+                {c.archivedAt && (
+                  <span className="rounded-full bg-chip px-2 py-0.5 text-xs font-medium text-ink-muted">
+                    finished{" "}
+                    {c.archivedAt.toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                )}
               </span>
               <span className="text-xs text-ink-muted">
                 {c._count.leagues} league{c._count.leagues !== 1 ? "s" : ""} ·{" "}
@@ -56,6 +68,7 @@ export default async function HostCompetitionsPage() {
                   code: c.code ?? "",
                   flag: c.flag,
                   isActive: c.isActive,
+                  archived: c.archivedAt !== null,
                 }}
                 submitLabel="Save Changes"
               />

@@ -64,8 +64,10 @@ export async function GET(request: NextRequest) {
   const user = await authenticateMobileAccess(request)
   if (!user) return jsonError("Unauthorized", 401)
 
+  // Finished competitions drop off the app's core tabs, exactly as they drop
+  // off the website's. Their fixtures and predictions are untouched.
   const memberships = await prisma.leagueMembership.findMany({
-    where: { userId: user.id },
+    where: { userId: user.id, league: { competition: { archivedAt: null } } },
     select: {
       leagueId: true,
       league: { select: { competitionId: true } },

@@ -33,6 +33,9 @@ export async function sendDeadlineReminders(): Promise<{
       status: FixtureStatus.SCHEDULED,
       kickoffTime: { gt: now, lte: windowEnd },
       reminderSentAt: null,
+      // A finished competition is off the core pages, so nobody should be
+      // nudged to go and predict on it.
+      competition: { archivedAt: null },
     },
     include: {
       predictions: { select: { userId: true } },

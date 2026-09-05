@@ -7,15 +7,23 @@ export async function GET(request: Request) {
   const user = await authenticateMobileAccess(request)
   if (!user) return jsonError("Unauthorized", 401)
 
+  // `?archived=1` includes leagues on finished competitions, mirroring
+  // `/leaderboard?archived=1` on the web. Default is live competitions only.
+  const includeArchived =
+    new URL(request.url).searchParams.get("archived") === "1"
+
   const memberships = await prisma.leagueMembership.findMany({
-    where: { userId: user.id },
+    where: {
+      userId: user.id,
+      ...(includeArchived ? {} : { league: { competition: { archivedAt: null } } }),
+    },
     orderBy: { joinedAt: "asc" },
     select: {
       league: {
         select: {
           id: true,
           name: true,
-          competition: { select: { name: true } },
+          competition: { select: { name: true, archivedAt: true } },
         },
       },
     },
@@ -31,6 +39,8 @@ export async function GET(request: Request) {
         leagueId: m.league.id,
         leagueName: m.league.name,
         competitionName: m.league.competition.name,
+        /** Set when a host has declared the competition finished. */
+        competitionArchived: m.league.competition.archivedAt !== null,
         /** Round names behind the form strip, oldest → newest. */
         formRounds: form.rounds,
         standings: ranked.map((e) => ({

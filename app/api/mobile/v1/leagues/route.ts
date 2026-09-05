@@ -18,12 +18,14 @@ export async function GET(request: Request) {
           name: true,
           inviteCode: true,
           competitionId: true,
-          competition: { select: { name: true } },
+          competition: { select: { name: true, archivedAt: true } },
         },
       },
     },
   })
 
+  // Archived leagues stay in this list — the Leagues tab is where history
+  // lives — but carry a flag so the app can file them under "Finished".
   return Response.json(
     memberships.map((m) => ({
       id: m.league.id,
@@ -32,6 +34,7 @@ export async function GET(request: Request) {
       role: m.role,
       competitionId: m.league.competitionId,
       competitionName: m.league.competition.name,
+      competitionArchived: m.league.competition.archivedAt !== null,
     })),
   )
 }
@@ -53,7 +56,7 @@ export async function POST(request: Request) {
   if (!competitionId) return jsonError("Please select a competition.", 400)
 
   const competition = await prisma.competition.findUnique({ where: { id: competitionId } })
-  if (!competition || !competition.isActive) {
+  if (!competition || !competition.isActive || competition.archivedAt) {
     return jsonError("That competition isn't available.", 400)
   }
 

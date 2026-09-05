@@ -22,10 +22,16 @@ export async function POST(request: Request) {
       name: true,
       inviteCode: true,
       competitionId: true,
-      competition: { select: { name: true } },
+      competition: { select: { name: true, archivedAt: true } },
     },
   })
   if (!league) return jsonError("No league found with that invite code.", 404)
+  if (league.competition.archivedAt) {
+    return jsonError(
+      `${league.competition.name} has finished — that league is closed to new members.`,
+      409,
+    )
+  }
 
   const existing = await prisma.leagueMembership.findUnique({
     where: { userId_leagueId: { userId: user.id, leagueId: league.id } },
