@@ -6,6 +6,17 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-05 — Expo Go does run the app (docs were wrong)
+
+`store-release.md` and `apps/mobile/README.md` both claimed App Store Expo Go could
+not run SDK 57, sending anyone who wanted to try the app on a phone through an Apple
+Developer enrolment first. It is no longer true: Expo Go ships the latest SDK, which
+is 57, and the iOS bundle builds and serves with `runtimeVersion: exposdk:57.0.0`.
+Added `npm run start:go` in `apps/mobile` and rewrote both docs — Expo Go for everyday
+on-device testing, an EAS development build only for push notifications, `scorers://`
+deep links and TestFlight. No app code changed. See
+[store-release.md](store-release.md#test-on-your-iphone).
+
 ## 2026-09-04 — Mobile app reconciled for store submission
 
 The store-prep work and `main` had diverged: one had account deletion, the privacy page
