@@ -3,7 +3,7 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-09-04
+**Last updated:** 2026-09-05
 
 ## Status: live in production
 
@@ -14,8 +14,11 @@ platform-owned competitions model (the big refactor) is complete and live.
 is **prepared**: the app now matches the website visually, in-app account
 deletion and a real privacy policy are shipped, and the listing copy and
 screenshots are generated (`store-assets/`, `npm run store:shots`). What remains
-needs your Apple account — membership, `eas build`, a production reviewer
-account, and the iPad decision. See [store-release.md](store-release.md).
+needs your Apple account — membership and `eas build`; the reviewer account
+and the iPad decision are done. The app itself can be tried on a phone today
+through **Expo Go** (`cd apps/mobile && npm run start:go`), verified 2026-09-05 —
+everything but push reminders and `scorers://` deep links works there. See
+[store-release.md](store-release.md).
 
 ## What's built and working
 
@@ -76,7 +79,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **209 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **229 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the suite **before** deploying, so a red test blocks production.
 

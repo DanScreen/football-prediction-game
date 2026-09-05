@@ -21,6 +21,7 @@ The images it refers to are in `store-assets/promo/` (upload these) and
 | Screenshots, 6.9" iPhone | ✅ `store-assets/promo/` |
 | Listing copy, keywords, review notes | ✅ `store-assets/app-store-listing.md` |
 | Export compliance | ✅ `ITSAppUsesNonExemptEncryption: false` in `app.json` |
+| On-device testing before submission | ✅ Expo Go, `npm run start:go` (no Apple account needed) |
 | Apple Developer Program membership | ⛔ needs your account |
 | `eas login` / `eas build` / submission | ⛔ needs your account |
 | Production demo account for the reviewer | ✅ done (2026-09-04) — see `app-store-listing.md` |
@@ -35,21 +36,52 @@ The last four are out of agent scope — they need Apple credentials or a decisi
 
 ---
 
-## Test on your iPhone (development build — no Expo Go)
+## Test on your iPhone
 
-App Store Expo Go cannot run this project's **SDK 57**. Install a **custom Scorers
-build** on the phone instead. This Mac has Command Line Tools only (no full Xcode),
-so use **EAS cloud builds**, not `npx expo run:ios`.
+### Quickest: Expo Go (free, no Apple account)
 
-### 1. Apple Developer Program (paid, ~£79–99/year)
+Verified 2026-09-05: App Store Expo Go **does** run this project. Expo Go ships
+the latest SDK, which is SDK 57 — the same one `apps/mobile` targets — and the
+iOS bundle builds and serves with `runtimeVersion: exposdk:57.0.0`.
+
+```bash
+cd apps/mobile
+npm run start:go     # = expo start --go; plain `npm start` is dev-client mode
+```
+
+Install **Expo Go** on the phone, join the same Wi-Fi as the Mac, then scan the
+terminal QR code or type the `exp://<lan-ip>:8081` URL into Expo Go by hand.
+The app points at production (`https://scorersonline.uk`) unless
+`EXPO_PUBLIC_API_URL` says otherwise.
+
+Two features are unavailable in Expo Go and need a development build:
+
+- **Push deadline reminders** — Expo Go dropped remote push, so
+  `registerForPushReminders()` throws; the error is swallowed and the app runs
+  normally, just without reminders.
+- **`scorers://join?code=` deep links** — Expo Go owns the URL scheme, so an
+  invite link opens the website instead.
+
+Everything else — auth, predictions, banker, leaderboards, leagues, rules,
+account deletion, theming — behaves as shipped. Expo Go is the right tool for
+day-to-day feature testing; a development build is what you want to rehearse
+push, deep links, and the real binary before submission.
+
+### Development build (needed for push, deep links, and TestFlight)
+
+This Mac has Command Line Tools only (no full Xcode), so use **EAS cloud builds**,
+not `npx expo run:ios`.
+
+#### 1. Apple Developer Program (paid, ~£79–99/year)
 
 1. Enrol at [developer.apple.com/programs/enroll](https://developer.apple.com/programs/enroll)
 2. Wait until membership is **Active** (minutes to a couple of days)
 3. Sign any pending agreements in App Store Connect
 
 A free Apple ID is **not** enough for EAS installs on a physical iPhone.
+(Expo Go needs no Apple account at all — see above.)
 
-### 2. Expo / EAS account
+#### 2. Expo / EAS account
 
 ```bash
 npm install -g eas-cli   # optional; npx eas works too
@@ -60,7 +92,7 @@ eas init                 # creates/links the EAS project
 
 The project UUID already sits in `app.json` → `extra.eas.projectId`.
 
-### 3. Register your iPhone + build
+#### 3. Register your iPhone + build
 
 ```bash
 cd apps/mobile
@@ -71,7 +103,7 @@ eas build --platform ios --profile development
 When the build finishes, open the install link on the **iPhone** (Safari), trust the
 developer under **Settings → General → VPN & Device Management**, then open **Scorers**.
 
-### 4. Start Metro and connect
+#### 4. Start Metro and connect
 
 ```bash
 cd apps/mobile
