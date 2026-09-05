@@ -46,6 +46,10 @@ export default async function LoginPage({
           <Link href="/rules" className="hover:underline">
             How it works
           </Link>
+          {" · "}
+          <Link href="/support" className="hover:underline">
+            Support
+          </Link>
         </p>
       </div>
     </div>

@@ -74,6 +74,16 @@ export default function AccountScreen() {
           <Text style={{ color: t.pitch, fontWeight: "700" }}>Privacy policy →</Text>
         </Pressable>
 
+        {/* The store listing's Support URL. Also reachable from in here, because
+            someone with a problem opens the app before they open the App Store. */}
+        <Pressable
+          onPress={() => void Linking.openURL(`${API_BASE_URL}/support`)}
+          style={{ paddingVertical: 4 }}
+          accessibilityRole="link"
+        >
+          <Text style={{ color: t.pitch, fontWeight: "700" }}>Help &amp; support →</Text>
+        </Pressable>
+
         <PrimaryButton label="Sign out" onPress={() => void logout()} />
 
         <View

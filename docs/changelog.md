@@ -6,6 +6,21 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-05 — Support page for the store listings
+
+New public `/support`: a real FAQ (leagues and invite codes, the kickoff deadline,
+autosave, the banker, why points can move, finished competitions, notifications,
+password resets, account deletion) plus `support@scorersonline.uk` with a stated
+two-working-day reply. Both stores require a Support URL; ours pointed at `/rules`,
+which is the rules of the game and answers none of the questions a support URL is
+for. Linked from the login footer and the app's Account screen.
+
+Also corrected three places that still described the account screen as a button at
+the bottom of the Leagues tab after it moved to the header icon — the privacy page,
+the store readiness table, and the **App Review notes**, where a reviewer following
+a dead path to account deletion is a rejection risk. See
+[features.md](features.md#support-page-support).
+
 ## 2026-09-05 — Finished competitions, and a Results tab that reads like the web's
 
 Hosts can tick **Finished** on a competition at `/host/competitions`. It then drops out

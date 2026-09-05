@@ -35,7 +35,7 @@ rating to 17+ unnecessarily.
 
 | Field | Value |
 |---|---|
-| **Support URL** | `https://scorersonline.uk/rules` |
+| **Support URL** | `https://scorersonline.uk/support` |
 | **Marketing URL** | `https://scorersonline.uk` |
 | **Privacy Policy URL** | `https://scorersonline.uk/privacy` |
 
@@ -150,7 +150,7 @@ Scorers is a free football score-prediction game. There is no gambling: no stake
 
 LEAGUES ARE PRIVATE. There is no league discovery and no public content — you either create a league or join one with an invite code from a friend. The demo account already has a league ("App Review XI") with predictions on the current gameweek, so Predictions, Results and Leaderboard are all populated when you sign in. You are welcome to create your own league too: Leagues tab -> name it -> pick Premier League. A league you create starts with one member (you), so its leaderboard shows a single row until other people join with your invite code — that is the product working as intended, not an empty state.
 
-ACCOUNT DELETION is on the Leagues tab → "Account & sign out" → Delete account. It is immediate and permanent (guideline 5.1.1(v)). Please do not use it on the demo account.
+ACCOUNT DELETION is behind the person icon in the top-right corner of any tab → Delete account. It is immediate and permanent (guideline 5.1.1(v)). Please do not use it on the demo account.
 
 NOTIFICATIONS are optional. If you allow them, the app registers a push token so we can remind you about a fixture you have not predicted before it kicks off. Nothing else is sent.
 
@@ -228,9 +228,9 @@ Required: the **6.9" iPhone** set (1290 × 2796). Apple scales that set down for
 every other iPhone size, so one set is enough — supply the 6.5" set too only if
 you want different crops.
 
-Because `supportsTablet: true` is set in `app.json`, App Store Connect will also
-require an **iPad 13"** set (2064 × 2752). If you would rather not produce those,
-set `supportsTablet` to `false` and ship iPhone-only for 1.0.
+`app.json` sets `supportsTablet: false` (decided 2026-09-04), so App Store Connect
+asks for **no iPad set** — the iPhone screenshots are the whole requirement. Turning
+tablet support on later means producing an iPad 13" set (2064 × 2752) at that point.
 
 Files live in `store-assets/promo/` (framed, captioned — upload these) with the
 raw app captures in `store-assets/screens/`.
