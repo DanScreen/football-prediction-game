@@ -6,6 +6,19 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-06 — Gameweek leaderboards in the app
+
+The Leaderboard tab now toggles each league between **Overall** and **Gameweek**,
+with ‹ › arrows to step back through previous rounds. It opens on the latest round
+that has kicked off. New `GET /api/mobile/v1/leaderboards/round`; `playedRounds`
+added to each `/leaderboards` block as the picker's range.
+
+A round table is `computeLeaderboard(leagueId, { round })` — the existing function
+with the predictions and the bonus awards filtered to one round, so the gameweek
+and season tables cannot disagree. Web leaderboard unchanged; the shared function
+is ready if it wants the same view. See [mobile.md](mobile.md) and
+[features.md](features.md#leaderboard-leaderboard).
+
 ## 2026-09-06 — Fix: the Results tab could not scroll
 
 The Results rewrite passed `screenPadding.pad` as the ScrollView's

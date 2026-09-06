@@ -189,6 +189,19 @@ Standings ranked by **confirmed** points (ties share a rank). Built on
 per-player **form strip** (last 5 completed rounds, oldest → newest) and
 a `+X` provisional chip per row. Provisional never changes rank.
 
+**Gameweek tables (app only, 2026-09-06).** The app's Leaderboard tab toggles each
+league between **Overall** and **Gameweek**, and the gameweek view steps back and
+forward through the rounds with ‹ › arrows. It opens on the most recent round that
+has kicked off; rounds that have not started are not offered, since every pick is
+still hidden and every score zero. The toggle is per league, so opening a gameweek
+on one board leaves the others on Overall.
+
+A round table is `computeLeaderboard(leagueId, { round })` — the same function as
+the overall table with the predictions *and* the bonus awards filtered to that
+round, rather than a second idea of what a point is worth. Form strips are hidden
+in gameweek mode: form is a trend across rounds and means nothing inside one. The
+web leaderboard has no equivalent yet; the shared function is ready for it.
+
 **Points breakdown.** Every row accounts for itself: **Result** (1-pointers), **Close**
 (1.5s — right result, scoreline within one goal), **Exact** (3s), **★** (the extra the banker
 doubling produced) and **🔥** (streak bonuses). The five always sum to the player's

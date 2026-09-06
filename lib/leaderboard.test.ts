@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { computeLeaderboard } from "./leaderboard"
+import { computeLeaderboard, listPlayedRounds } from "./leaderboard"
 import { prisma } from "@/lib/prisma"
 
 vi.mock("@/lib/prisma", () => ({
@@ -8,6 +8,7 @@ vi.mock("@/lib/prisma", () => ({
     user: { findMany: vi.fn() },
     prediction: { findMany: vi.fn() },
     bonusAward: { findMany: vi.fn() },
+    fixture: { findMany: vi.fn() },
   },
 }))
 
@@ -15,6 +16,7 @@ const leagueFindUnique = vi.mocked(prisma.league.findUnique)
 const userFindMany = vi.mocked(prisma.user.findMany)
 const predictionFindMany = vi.mocked(prisma.prediction.findMany)
 const bonusFindMany = vi.mocked(prisma.bonusAward.findMany)
+const fixtureFindMany = vi.mocked(prisma.fixture.findMany)
 
 function user(id: string) {
   return { id, displayName: id, isBot: false }
@@ -191,5 +193,99 @@ describe("points breakdown", () => {
 
     expect(alice.breakdown).toEqual({ result: 1, close: 0, exact: 0, banker: 1, streak: 0 })
     expect(alice.confirmedPoints).toBe(2)
+  })
+})
+
+describe("computeLeaderboard, scoped to one round", () => {
+  beforeEach(() => {
+    leagueFindUnique.mockResolvedValue({
+      competitionId: "comp-pl",
+      memberships: [{ userId: "alice" }],
+    } as never)
+    userFindMany.mockResolvedValue([user("alice")] as never)
+    predictionFindMany.mockResolvedValue([] as never)
+    bonusFindMany.mockResolvedValue([] as never)
+  })
+
+  it("filters predictions to that round, still inside the competition", async () => {
+    await computeLeaderboard("league-a", { round: "Matchday 5" })
+
+    expect(predictionFindMany.mock.calls[0][0]?.where?.fixture).toEqual({
+      competitionId: "comp-pl",
+      round: "Matchday 5",
+    })
+  })
+
+  it("filters the streak bonuses to the same round", async () => {
+    await computeLeaderboard("league-a", { round: "Matchday 5" })
+
+    // A round table that carried the whole season's bonuses would show points
+    // the round's fixtures cannot account for.
+    expect(bonusFindMany.mock.calls[0][0]?.where).toEqual({
+      leagueId: "league-a",
+      round: "Matchday 5",
+    })
+  })
+
+  it("is unfiltered when no round is given", async () => {
+    await computeLeaderboard("league-a")
+
+    expect(predictionFindMany.mock.calls[0][0]?.where?.fixture).toEqual({
+      competitionId: "comp-pl",
+    })
+    expect(bonusFindMany.mock.calls[0][0]?.where).toEqual({ leagueId: "league-a" })
+  })
+
+  it("ranks on the round's points alone", async () => {
+    userFindMany.mockResolvedValue([user("alice"), user("bob")] as never)
+    predictionFindMany.mockResolvedValue([
+      // Bob out-scores Alice in this round; the season total is irrelevant here
+      // because the query already excluded every other round.
+      confirmedPrediction("alice", 1),
+      confirmedPrediction("bob", 3),
+    ] as never)
+
+    const ranked = await computeLeaderboard("league-a", { round: "Matchday 5" })
+
+    expect(ranked.map((r) => [r.id, r.rank, r.confirmedPoints])).toEqual([
+      ["bob", 1, 3],
+      ["alice", 2, 1],
+    ])
+  })
+})
+
+describe("listPlayedRounds", () => {
+  beforeEach(() => {
+    leagueFindUnique.mockResolvedValue({ competitionId: "comp-pl" } as never)
+  })
+
+  it("orders newest first on each round's latest kickoff", async () => {
+    fixtureFindMany.mockResolvedValue([
+      // Matchday 1 starts before Matchday 2 but finishes after it: ordering on
+      // the earliest kickoff would put them the wrong way round.
+      { round: "Matchday 1", kickoffTime: new Date("2026-08-01T12:00:00Z") },
+      { round: "Matchday 1", kickoffTime: new Date("2026-08-05T20:00:00Z") },
+      { round: "Matchday 2", kickoffTime: new Date("2026-08-03T15:00:00Z") },
+    ] as never)
+
+    expect(await listPlayedRounds("league-a")).toEqual(["Matchday 1", "Matchday 2"])
+  })
+
+  it("asks only for fixtures that have kicked off", async () => {
+    fixtureFindMany.mockResolvedValue([] as never)
+    const now = new Date("2026-09-06T10:00:00Z")
+
+    await listPlayedRounds("league-a", now)
+
+    expect(fixtureFindMany.mock.calls[0][0]?.where).toEqual({
+      competitionId: "comp-pl",
+      kickoffTime: { lte: now },
+    })
+  })
+
+  it("is empty for a league that does not exist", async () => {
+    leagueFindUnique.mockResolvedValue(null as never)
+    expect(await listPlayedRounds("nope")).toEqual([])
+    expect(fixtureFindMany).not.toHaveBeenCalled()
   })
 })

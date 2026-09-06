@@ -1,10 +1,21 @@
-import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from "react-native"
+import { useEffect, useState } from "react"
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native"
 import { formatPoints, scoreDigits } from "@/components/scoreboard"
 import { ErrorBanner, Screen, screenPadding } from "@/components/ui"
 import {
+  ApiError,
   fetchLeaderboards,
+  fetchRoundLeaderboard,
   type FormCell,
   type FormTier,
+  type LeaderboardBlock,
   type LeaderboardEntry,
 } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
@@ -68,74 +79,270 @@ export default function LeaderboardScreen() {
         ) : null}
 
         {data?.map((block) => (
-          <View key={block.leagueId} style={{ gap: 0, marginBottom: 12 }}>
-            {/* The deep-green board panel is the web's table header, which is
-                where the scoreboard palette earns its keep. */}
-            <View
-              style={{
-                backgroundColor: t.board,
-                borderTopLeftRadius: 12,
-                borderTopRightRadius: 12,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-              }}
-            >
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={{ color: t.boardFore, fontWeight: "700", fontSize: 16 }} numberOfLines={1}>
-                  {block.leagueName}
-                </Text>
-                <Text style={{ color: t.boardMuted, marginTop: 2, fontSize: 12 }} numberOfLines={1}>
-                  {block.competitionName} · {block.standings.length} player
-                  {block.standings.length !== 1 ? "s" : ""}
-                </Text>
-              </View>
-              <Text
-                style={{
-                  color: t.boardGold,
-                  fontSize: 11,
-                  fontWeight: "700",
-                  letterSpacing: 0.8,
-                }}
-              >
-                POINTS
-              </Text>
-            </View>
-
-            <View
-              style={{
-                borderColor: t.line,
-                borderWidth: 1,
-                borderTopWidth: 0,
-                borderBottomLeftRadius: 12,
-                borderBottomRightRadius: 12,
-                overflow: "hidden",
-              }}
-            >
-              {block.standings.map((row, i) => (
-                <StandingRow
-                  key={row.id}
-                  row={row}
-                  index={i}
-                  isYou={row.id === user?.id}
-                  last={i === block.standings.length - 1}
-                />
-              ))}
-              {block.standings.length === 0 ? (
-                <View style={{ padding: 24, alignItems: "center", backgroundColor: t.surface }}>
-                  <Text style={{ fontSize: 28, marginBottom: 6 }}>🏆</Text>
-                  <Text style={{ color: t.inkMuted }}>No players yet.</Text>
-                </View>
-              ) : null}
-            </View>
-
-            {block.formRounds.length > 0 ? <FormLegend /> : null}
-          </View>
+          <LeagueBoard key={block.leagueId} block={block} youId={user?.id} />
         ))}
       </ScrollView>
     </Screen>
+  )
+}
+
+/**
+ * One league's board, with its own Overall/Gameweek state — the toggle belongs
+ * to the league, not the screen, so opening gameweek 3 of one league does not
+ * silently re-point every other board on the tab.
+ */
+function LeagueBoard({ block, youId }: { block: LeaderboardBlock; youId?: string }) {
+  const t = useTokens()
+  const [mode, setMode] = useState<"overall" | "round">("overall")
+  // Index into `playedRounds`, which is newest first — so 0 is the current
+  // gameweek and cycling back means walking up the array.
+  const [roundIndex, setRoundIndex] = useState(0)
+  const [roundCache, setRoundCache] = useState<Record<string, LeaderboardEntry[]>>({})
+  const [roundError, setRoundError] = useState<string | null>(null)
+  const [roundLoading, setRoundLoading] = useState(false)
+
+  const round: string | null = block.playedRounds[roundIndex] ?? null
+  const cached = round ? roundCache[round] : undefined
+
+  useEffect(() => {
+    if (mode !== "round" || !round || cached) return
+    let cancelled = false
+    setRoundLoading(true)
+    setRoundError(null)
+    fetchRoundLeaderboard(block.leagueId, round)
+      .then((res) => {
+        // Cached by round name so cycling back and forth costs one request per
+        // gameweek, not one per press.
+        if (!cancelled) setRoundCache((prev) => ({ ...prev, [res.round]: res.standings }))
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setRoundError(err instanceof ApiError ? err.message : "Could not load that gameweek.")
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setRoundLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [mode, round, cached, block.leagueId])
+
+  const standings = mode === "overall" ? block.standings : (cached ?? [])
+  const showForm = mode === "overall" && block.formRounds.length > 0
+
+  return (
+    <View style={{ gap: 0, marginBottom: 12 }}>
+      {/* The deep-green board panel is the web's table header, which is
+          where the scoreboard palette earns its keep. */}
+      <View
+        style={{
+          backgroundColor: t.board,
+          borderTopLeftRadius: 12,
+          borderTopRightRadius: 12,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={{ color: t.boardFore, fontWeight: "700", fontSize: 16 }} numberOfLines={1}>
+            {block.leagueName}
+          </Text>
+          <Text style={{ color: t.boardMuted, marginTop: 2, fontSize: 12 }} numberOfLines={1}>
+            {block.competitionName} · {block.standings.length} player
+            {block.standings.length !== 1 ? "s" : ""}
+          </Text>
+        </View>
+        <Text style={{ color: t.boardGold, fontSize: 11, fontWeight: "700", letterSpacing: 0.8 }}>
+          POINTS
+        </Text>
+      </View>
+
+      <View
+        style={{
+          borderColor: t.line,
+          borderWidth: 1,
+          borderTopWidth: 0,
+          borderBottomLeftRadius: 12,
+          borderBottomRightRadius: 12,
+          overflow: "hidden",
+        }}
+      >
+        {/* No picker before a competition kicks off: there is no gameweek to
+            show, and an empty one reads as a bug. */}
+        {block.playedRounds.length > 0 ? (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              paddingHorizontal: 10,
+              paddingVertical: 8,
+              backgroundColor: t.chip,
+              borderBottomWidth: 1,
+              borderBottomColor: t.lineSoft,
+            }}
+          >
+            <View style={{ flexDirection: "row", gap: 2 }}>
+              <ModeTab label="Overall" active={mode === "overall"} onPress={() => setMode("overall")} />
+              <ModeTab label="Gameweek" active={mode === "round"} onPress={() => setMode("round")} />
+            </View>
+
+            {mode === "round" && round ? (
+              <RoundStepper
+                round={round}
+                // Newest first, so "older" is a higher index.
+                onOlder={
+                  roundIndex < block.playedRounds.length - 1
+                    ? () => setRoundIndex((i) => i + 1)
+                    : null
+                }
+                onNewer={roundIndex > 0 ? () => setRoundIndex((i) => i - 1) : null}
+              />
+            ) : null}
+          </View>
+        ) : null}
+
+        {mode === "round" && roundLoading && !cached ? (
+          <View style={{ padding: 24, alignItems: "center", backgroundColor: t.surface }}>
+            <ActivityIndicator color={t.pitch} />
+          </View>
+        ) : null}
+
+        {mode === "round" && roundError ? (
+          <View style={{ padding: 16, backgroundColor: t.surface }}>
+            <Text style={{ color: t.bad, fontSize: 13 }}>{roundError}</Text>
+          </View>
+        ) : null}
+
+        {standings.map((row, i) => (
+          <StandingRow
+            key={row.id}
+            row={row}
+            index={i}
+            isYou={row.id === youId}
+            last={i === standings.length - 1}
+          />
+        ))}
+
+        {standings.length === 0 && !roundLoading && !roundError ? (
+          <View style={{ padding: 24, alignItems: "center", backgroundColor: t.surface }}>
+            <Text style={{ fontSize: 28, marginBottom: 6 }}>🏆</Text>
+            {/* A round table lists every member on zero rather than nobody, so
+                this is the empty-league case in both modes. */}
+            <Text style={{ color: t.inkMuted }}>No players yet.</Text>
+          </View>
+        ) : null}
+      </View>
+
+      {showForm ? <FormLegend /> : null}
+    </View>
+  )
+}
+
+function ModeTab({
+  label,
+  active,
+  onPress,
+}: {
+  label: string
+  active: boolean
+  onPress: () => void
+}) {
+  const t = useTokens()
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: active }}
+      style={({ pressed }) => ({
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+        backgroundColor: active ? t.surface : "transparent",
+        borderWidth: 1,
+        borderColor: active ? t.line : "transparent",
+        opacity: pressed ? 0.7 : 1,
+      })}
+    >
+      <Text
+        style={{
+          fontSize: 12,
+          fontWeight: "700",
+          color: active ? t.ink : t.inkMuted,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  )
+}
+
+/**
+ * Back/forward through the gameweeks. A null handler means the end of the
+ * range: the arrow stays in place, dimmed, rather than disappearing and
+ * shifting the round name under the player's thumb.
+ */
+function RoundStepper({
+  round,
+  onOlder,
+  onNewer,
+}: {
+  round: string
+  onOlder: (() => void) | null
+  onNewer: (() => void) | null
+}) {
+  const t = useTokens()
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      <StepArrow glyph="‹" label="Previous gameweek" onPress={onOlder} />
+      <Text
+        style={{ fontSize: 12, fontWeight: "700", color: t.ink, minWidth: 64, textAlign: "center" }}
+        numberOfLines={1}
+      >
+        {round}
+      </Text>
+      <StepArrow glyph="›" label="Next gameweek" onPress={onNewer} />
+    </View>
+  )
+}
+
+function StepArrow({
+  glyph,
+  label,
+  onPress,
+}: {
+  glyph: string
+  label: string
+  onPress: (() => void) | null
+}) {
+  const t = useTokens()
+  return (
+    <Pressable
+      onPress={onPress ?? undefined}
+      disabled={!onPress}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !onPress }}
+      style={({ pressed }) => ({
+        width: 28,
+        height: 28,
+        borderRadius: 8,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: t.surface,
+        borderWidth: 1,
+        borderColor: t.line,
+        opacity: !onPress ? 0.35 : pressed ? 0.6 : 1,
+      })}
+    >
+      <Text style={{ fontSize: 16, lineHeight: 18, color: t.ink }}>{glyph}</Text>
+    </Pressable>
   )
 }
 

@@ -294,6 +294,7 @@ Each league block:
   "competitionName": "...",
   "competitionArchived": false,
   "formRounds": ["Matchweek 34", "Matchweek 35"],
+  "playedRounds": ["Matchweek 35", "Matchweek 34"],
   "standings": [
     {
       "rank": 1,
@@ -325,6 +326,34 @@ cell per `formRounds` entry, in the same order (oldest → newest); `tier` is
 that one function, so a round cannot be graded differently on the two platforms.
 
 Also: `GET /api/mobile/v1/leagues/:leagueId/leaderboard` for a single league (must be a member).
+
+#### `GET /api/mobile/v1/leaderboards/round?leagueId=&round=`
+
+One league's standings for a **single gameweek** — the Gameweek half of the
+Leaderboard tab's Overall/Gameweek toggle. Both parameters are required (400
+without them).
+
+`playedRounds` on the block above is the picker's range: every round of the
+league's competition that has kicked off, **newest first**, ordered on each
+round's *latest* kickoff so a round spanning a weekend does not sort ahead of one
+that finished after it. Rounds that have not started are excluded — every pick is
+still hidden and every score zero, so such a table would only invite players to
+read a gameweek that has not happened.
+
+Only the round *names* travel with `/leaderboards`; a round's table is fetched
+here when the player opens it. Shipping every round's standings alongside the
+overall table would multiply that payload by the length of the season to serve
+one gameweek at a time.
+
+Entries are shaped exactly like the ones in `/leaderboards`, except `form` is
+always `[]` — form is a trend across rounds and means nothing inside one. Points
+come from `computeLeaderboard(leagueId, { round })`: the same calculation as the
+overall table with the predictions *and* the bonus awards filtered to that round,
+so the two cannot disagree about what a point is worth.
+
+Unlike `/leaderboards`, this takes a league id from the caller, so it checks
+membership itself and returns **404** — not 403 — for a league the viewer is not
+in, so the endpoint cannot be used to probe which league ids exist.
 
 ### Errors
 
