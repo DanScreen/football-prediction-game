@@ -6,6 +6,13 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-06 — Build 1.0.0 (5) uploaded
+
+iOS **1.0.0 (5)** built from `5a4f483` and uploaded to App Store Connect. It
+carries the gameweek leaderboards and the Results-tab scroll fix, so it — not
+(4) — is the build to submit for review. See
+[store-release.md](store-release.md#submitting).
+
 ## 2026-09-06 — Gameweek leaderboards in the app
 
 The Leaderboard tab now toggles each league between **Overall** and **Gameweek**,
