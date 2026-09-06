@@ -333,6 +333,13 @@ One league's standings for a **single gameweek** — the Gameweek half of the
 Leaderboard tab's Overall/Gameweek toggle. Both parameters are required (400
 without them).
 
+This endpoint exists **for the app only**. The web has the same feature (parity
+is the rule — see [product.md](product.md)), but its leaderboard is a server
+component, so it calls `computeLeaderboard(leagueId, { round })` directly and
+keeps the selection in the URL rather than fetching over HTTP. Don't assume a
+change here is needed for a web change to the gameweek view, or vice versa; the
+one thing both must share is `lib/leaderboard.ts`.
+
 `playedRounds` on the block above is the picker's range: every round of the
 league's competition that has kicked off, **newest first**, ordered on each
 round's *latest* kickoff so a round spanning a weekend does not sort ahead of one

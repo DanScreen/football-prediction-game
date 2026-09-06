@@ -5,6 +5,19 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## Player features go on both clients; admin features stay on the web
+Anything a player uses ships on the web *and* in the app. Host (`/host`) and
+commissioner (`/admin`) tools are web-only and will not be ported.
+**Why:** players choose a client by preference, so a feature that exists in only
+one makes the product feel unfinished — "it's on the website" answers nothing
+for someone holding a phone. The gameweek leaderboard shipped app-first and was
+immediately backfilled to the web for exactly this reason. Admin inverts every
+term: it's occasional, deliberate, desk-bound work over dense tables that a
+phone renders badly, and it serves one person who already owns a laptop —
+building the hardest screens twice for that is a bad trade. The rule also has
+teeth in review: a player-facing PR that touches one client should say where the
+other one is.
+
 ## "Finished" is its own column, not a reuse of `isActive`
 `Competition.archivedAt` (nullable timestamp) marks a competition a host has
 declared over; `isActive` stays what it always was — whether the competition is

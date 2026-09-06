@@ -6,6 +6,26 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-06 — Gameweek leaderboards on the web, and honest medals
+
+The web leaderboard gets the Overall / Gameweek toggle and the ‹ › round stepper
+the app shipped this morning, closing the gap the app-only version opened. The
+selection lives in the URL — one `gw-<leagueId>` param per league — so a gameweek
+table can be linked to and the back button walks the rounds. No new endpoint: the
+page is a server component and calls `computeLeaderboard(leagueId, { round })`
+directly.
+
+Building it surfaced a real bug in both clients. Medals were handed out by row
+position, so an unconfirmed gameweek — every player on zero, all tied — awarded
+🥇🥈🥉 to whichever three names sorted first, inventing a winner for a round
+nobody had been scored on. `podiumRank` now reads `rank` and refuses to medal a
+zero, on the web and in the app. Joint-first is two golds with silver skipped,
+which is also what the season table should have been doing all along.
+
+Documented the rule this came from in [product.md](product.md) and
+[decisions.md](decisions.md): **every player-facing feature ships on both web and
+app; admin tools stay web-only.**
+
 ## 2026-09-06 — Build 1.0.0 (5) uploaded
 
 iOS **1.0.0 (5)** built from `5a4f483` and uploaded to App Store Connect. It
