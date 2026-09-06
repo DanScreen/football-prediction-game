@@ -25,7 +25,7 @@ The images it refers to are in `store-assets/promo/` (upload these) and
 | Export compliance | ✅ `ITSAppUsesNonExemptEncryption: false` in `app.json` |
 | On-device testing before submission | ✅ Expo Go, `npm run start:go` (no Apple account needed) |
 | Apple Developer Program membership | ✅ active — team `MB86PHVDWH` (individual) |
-| `eas login` / `eas build` / submission | ✅ build **1.0.0 (5)** uploaded to App Store Connect 2026-09-06 |
+| `eas login` / `eas build` / submission | ✅ build **1.0.0 (6)** uploaded to App Store Connect 2026-09-06 |
 | Production demo account for the reviewer | ✅ done (2026-09-04) — see `app-store-listing.md` |
 | iPad screenshots **or** `supportsTablet: false` | ✅ `supportsTablet: false` (2026-09-04) — iPhone only, no iPad set needed |
 
@@ -157,7 +157,8 @@ Log of uploaded builds:
 
 | Build | Commit | Uploaded | Notes |
 |---|---|---|---|
-| 1.0.0 (5) | `5a4f483` | 2026-09-06 | Gameweek leaderboards in the app; Results tab scrolling fixed. **Submit this one** — (4) cannot scroll the Results tab. |
+| 1.0.0 (6) | `28ee059` | 2026-09-06 | Podium medals go by rank and skip zero-point rounds. **Submit this one.** |
+| 1.0.0 (5) | `5a4f483` | 2026-09-06 | Gameweek leaderboards in the app; Results tab scrolling fixed. Superseded by (6), which fixes the medals shown on an unconfirmed gameweek. |
 | 1.0.0 (4) | `1b662b1` | 2026-09-05 | First build sent to App Store Connect. Support page, finished competitions, reorganised Results tab, account icon in the header. |
 | 1.0.0 (2) | `3cf457b` | — | Built 2026-08-17, never uploaded. Predates all of the above. |
 
