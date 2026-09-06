@@ -99,6 +99,22 @@ export type LeaderboardBlock = {
   competitionName: string
   /** Round names behind the form strip, oldest → newest. */
   formRounds: string[]
+  /**
+   * Every round that has kicked off, newest first — the range the gameweek
+   * picker cycles through. Empty before a competition's first kickoff.
+   *
+   * Optional because the app and the server version independently: a build can
+   * always meet a server deployed before this field existed, and must fall back
+   * to the overall table rather than crash. Treat a missing value as none.
+   */
+  playedRounds?: string[]
+  standings: LeaderboardEntry[]
+}
+
+/** One league's standings for a single round. */
+export type RoundLeaderboard = {
+  leagueId: string
+  round: string
   standings: LeaderboardEntry[]
 }
 
@@ -269,6 +285,18 @@ export async function fetchBonuses(): Promise<BonusRound[]> {
 
 export async function fetchLeaderboards(): Promise<LeaderboardBlock[]> {
   return apiRequest("/leaderboards")
+}
+
+/**
+ * A single gameweek's table. Fetched only when a player opens the gameweek
+ * view — the round *names* already arrive with `fetchLeaderboards`.
+ */
+export async function fetchRoundLeaderboard(
+  leagueId: string,
+  round: string,
+): Promise<RoundLeaderboard> {
+  const query = `?leagueId=${encodeURIComponent(leagueId)}&round=${encodeURIComponent(round)}`
+  return apiRequest(`/leaderboards/round${query}`)
 }
 
 export async function fetchLeagues(): Promise<LeagueSummary[]> {

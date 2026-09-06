@@ -42,8 +42,18 @@ export type LeaderboardEntry = {
 /**
  * Compute a league's standings from its members' predictions on the league's
  * competition fixtures. Shared by the leaderboard page and /api/v1/leaderboard.
+ *
+ * Pass `round` to score a single gameweek instead of the season. That filters
+ * the predictions *and* the bonus awards, so a round table is the same
+ * calculation over a smaller set rather than a second idea of what a point is
+ * worth — the two could otherwise drift apart, and a round table that doesn't
+ * sum to the overall one is worse than no round table.
  */
-export async function computeLeaderboard(leagueId: string): Promise<LeaderboardEntry[]> {
+export async function computeLeaderboard(
+  leagueId: string,
+  options: { round?: string } = {},
+): Promise<LeaderboardEntry[]> {
+  const { round } = options
   const league = await prisma.league.findUnique({
     where: { id: leagueId },
     select: { competitionId: true, memberships: { select: { userId: true } } },
@@ -59,7 +69,7 @@ export async function computeLeaderboard(leagueId: string): Promise<LeaderboardE
     prisma.prediction.findMany({
       where: {
         userId: { in: memberIds },
-        fixture: { competitionId: league.competitionId },
+        fixture: { competitionId: league.competitionId, ...(round ? { round } : {}) },
       },
       select: {
         userId: true,
@@ -81,7 +91,7 @@ export async function computeLeaderboard(leagueId: string): Promise<LeaderboardE
       },
     }),
     prisma.bonusAward.findMany({
-      where: { leagueId },
+      where: { leagueId, ...(round ? { round } : {}) },
       select: { userId: true, points: true },
     }),
   ])
@@ -252,4 +262,40 @@ export async function computeLeagueForm(
   }
 
   return { rounds, byUser }
+}
+
+/**
+ * The league competition's rounds that have a table worth showing, newest
+ * first. A round qualifies once its first fixture has kicked off: before that
+ * every pick is still hidden and every score is zero, so an empty table would
+ * only invite people to read a gameweek that has not happened.
+ *
+ * Ordered on each round's *latest* kickoff, the same rule the form strip and
+ * the mobile Results tab use — a round that spans a weekend must not sort ahead
+ * of one that finished after it.
+ */
+export async function listPlayedRounds(
+  leagueId: string,
+  now: Date = new Date(),
+): Promise<string[]> {
+  const league = await prisma.league.findUnique({
+    where: { id: leagueId },
+    select: { competitionId: true },
+  })
+  if (!league) return []
+
+  const fixtures = await prisma.fixture.findMany({
+    where: { competitionId: league.competitionId, kickoffTime: { lte: now } },
+    select: { round: true, kickoffTime: true },
+  })
+
+  const latestKickoff = new Map<string, Date>()
+  for (const f of fixtures) {
+    const existing = latestKickoff.get(f.round)
+    if (!existing || f.kickoffTime > existing) latestKickoff.set(f.round, f.kickoffTime)
+  }
+
+  return [...latestKickoff.entries()]
+    .sort(([, a], [, b]) => b.getTime() - a.getTime())
+    .map(([round]) => round)
 }

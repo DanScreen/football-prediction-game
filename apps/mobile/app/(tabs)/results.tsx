@@ -84,7 +84,7 @@ export default function ResultsScreen() {
   return (
     <Screen>
       <ScrollView
-        contentContainerStyle={screenPadding.pad}
+        contentContainerStyle={screenPadding.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

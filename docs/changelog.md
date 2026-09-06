@@ -6,6 +6,32 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-06 — Gameweek leaderboards in the app
+
+The Leaderboard tab now toggles each league between **Overall** and **Gameweek**,
+with ‹ › arrows to step back through previous rounds. It opens on the latest round
+that has kicked off. New `GET /api/mobile/v1/leaderboards/round`; `playedRounds`
+added to each `/leaderboards` block as the picker's range.
+
+A round table is `computeLeaderboard(leagueId, { round })` — the existing function
+with the predictions and the bonus awards filtered to one round, so the gameweek
+and season tables cannot disagree. Web leaderboard unchanged; the shared function
+is ready if it wants the same view. See [mobile.md](mobile.md) and
+[features.md](features.md#leaderboard-leaderboard).
+
+## 2026-09-06 — Fix: the Results tab could not scroll
+
+The Results rewrite passed `screenPadding.pad` as the ScrollView's
+`contentContainerStyle`. That style sets `flex: 1`, which pins the content
+container to the viewport height, so the list could never grow and everything
+past the first screenful was unreachable. Now uses `scrollContent`
+(`flexGrow: 1`), which fills a short screen and grows past a long one.
+
+The login and register screens had the same style on a scrollable form — no
+report against them, but a form that cannot scroll under a keyboard on a small
+phone is the same bug, so they moved too. `lib/mobileScreenPadding.test.ts`
+now fails if `pad` is used as a scroll container's style anywhere in the app.
+
 ## 2026-09-05 — First build uploaded to App Store Connect
 
 iOS **1.0.0 (4)** built from `1b662b1` and uploaded via `eas submit`. It is the
