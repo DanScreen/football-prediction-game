@@ -6,6 +6,19 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-06 — Fix: the Results tab could not scroll
+
+The Results rewrite passed `screenPadding.pad` as the ScrollView's
+`contentContainerStyle`. That style sets `flex: 1`, which pins the content
+container to the viewport height, so the list could never grow and everything
+past the first screenful was unreachable. Now uses `scrollContent`
+(`flexGrow: 1`), which fills a short screen and grows past a long one.
+
+The login and register screens had the same style on a scrollable form — no
+report against them, but a form that cannot scroll under a keyboard on a small
+phone is the same bug, so they moved too. `lib/mobileScreenPadding.test.ts`
+now fails if `pad` is used as a scroll container's style anywhere in the app.
+
 ## 2026-09-05 — First build uploaded to App Store Connect
 
 iOS **1.0.0 (4)** built from `1b662b1` and uploaded via `eas submit`. It is the

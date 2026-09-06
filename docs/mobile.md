@@ -369,6 +369,19 @@ See `apps/mobile/README.md`.
 
 ---
 
+## Gotchas
+
+**Scrolling screens use `screenPadding.scrollContent`, never `.pad`.** `pad` sets
+`flex: 1`, which pins a ScrollView's content container to the viewport height —
+the content cannot grow, so the screen silently stops scrolling past the first
+screenful. `scrollContent` uses `flexGrow: 1`, which fills a short screen and
+grows past a long one; it is right for every ScrollView, including short forms.
+`pad` is for non-scrolling layouts only. This shipped as a bug on the Results tab
+(2026-09-05) and is now enforced by `lib/mobileScreenPadding.test.ts`, which
+lives in the root project because the mobile tsconfig has no Node types.
+
+---
+
 ## Working agreement (Cursor)
 
 1. **Phase 1 before UI** — mobile API + tests green on the existing Next server; then scaffold Expo.

@@ -57,7 +57,7 @@ export default function LoginScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <ScrollView contentContainerStyle={screenPadding.pad} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={screenPadding.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={{ gap: 4, marginTop: 24, marginBottom: 8 }}>
             <BrandMark />
             <Text style={{ fontSize: 16, color: t.inkMuted, marginTop: 4 }}>
