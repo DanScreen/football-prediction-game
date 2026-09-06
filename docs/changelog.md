@@ -6,6 +6,14 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-06 — Build 1.0.0 (6) uploaded
+
+iOS **1.0.0 (6)** from `28ee059`, carrying the podium fix. It supersedes (5) for
+submission: the gameweek picker opens on the most recent round that has kicked
+off, which is usually the one a host has not confirmed yet, so the medal bug was
+the *default* thing a player — or a reviewer — saw on tapping Gameweek, not an
+edge case.
+
 ## 2026-09-06 — Gameweek leaderboards on the web, and honest medals
 
 The web leaderboard gets the Overall / Gameweek toggle and the ‹ › round stepper
