@@ -4,6 +4,7 @@ import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { NOT_ARCHIVED } from "@/lib/peers"
 import LeagueBoard, { FORM_LEGEND } from "./LeagueBoard"
+import type { SearchParams } from "./roundNav"
 
 export const metadata = { title: "Leaderboard" }
 
@@ -18,7 +19,9 @@ export const metadata = { title: "Leaderboard" }
 export default async function LeaderboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ archived?: string }>
+  // Loosely typed because each league contributes its own `gw-<leagueId>`
+  // param for the gameweek picker — see `roundNav.ts`.
+  searchParams: Promise<SearchParams>
 }) {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
@@ -26,7 +29,8 @@ export default async function LeaderboardPage({
 
   // Finished competitions are off this page by default — the standings survive,
   // they just stop padding it out once the season is over.
-  const showArchived = (await searchParams).archived === "1"
+  const params = await searchParams
+  const showArchived = params.archived === "1"
 
   const memberships = await prisma.leagueMembership.findMany({
     where: {
@@ -106,6 +110,7 @@ export default async function LeaderboardPage({
             }
             currentUserId={userId}
             showHeading={multiple}
+            searchParams={params}
           />
         ))}
       </div>

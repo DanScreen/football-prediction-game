@@ -1,10 +1,14 @@
+import Link from "next/link"
 import {
   computeLeaderboard,
   computeLeagueForm,
+  listPlayedRounds,
   type FormTier,
   type PointsBreakdown,
 } from "@/lib/leaderboard"
 import { AnimatedPoints } from "./AnimatedPoints"
+import { roundHref, selectedRound, type SearchParams } from "./roundNav"
+import { podiumRank } from "./podium"
 
 /**
  * Form cells are dual-encoded: a glyph as well as a colour. Colour alone left
@@ -77,6 +81,53 @@ const BREAKDOWN_COLUMNS: {
   },
 ]
 
+/** One half of the Overall / Gameweek switch. */
+function ModeTab({ href, active, children }: { href: string; active: boolean; children: string }) {
+  return (
+    <Link
+      href={href}
+      // The page stacks several leagues, so scrolling back to the top on every
+      // click would throw the reader away from the table they are using.
+      scroll={false}
+      aria-current={active ? "page" : undefined}
+      className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+        active ? "bg-pitch text-white" : "text-ink-mid hover:bg-chip"
+      }`}
+    >
+      {children}
+    </Link>
+  )
+}
+
+/**
+ * One end of the gameweek stepper. Renders as plain text at the ends of the
+ * season rather than disappearing, so the control keeps its width and the round
+ * name doesn't jump sideways as you step.
+ */
+function StepArrow({
+  href,
+  label,
+  glyph,
+}: {
+  href: string | null
+  label: string
+  glyph: string
+}) {
+  const shape = "flex h-7 w-7 items-center justify-center rounded-full text-sm"
+  if (!href) {
+    return (
+      <span aria-hidden="true" className={`${shape} text-ink-faint`}>
+        {glyph}
+      </span>
+    )
+  }
+  return (
+    <Link href={href} scroll={false} aria-label={label} className={`${shape} text-ink-mid hover:bg-chip`}>
+      <span aria-hidden="true">{glyph}</span>
+    </Link>
+  )
+}
+
 type Props = {
   leagueId: string
   leagueName: string
@@ -84,6 +135,8 @@ type Props = {
   currentUserId: string
   /** Rendered as a section heading only when the user is in more than one league. */
   showHeading: boolean
+  /** The page's query params, which carry this league's gameweek selection. */
+  searchParams: SearchParams
 }
 
 /**
@@ -97,29 +150,49 @@ export default async function LeagueBoard({
   competitionName,
   currentUserId,
   showHeading,
+  searchParams,
 }: Props) {
+  // Which rounds exist has to be known before the table can be scored, because
+  // it decides whether the URL's round is one anybody actually played.
+  const playedRounds = await listPlayedRounds(leagueId)
+  const round = selectedRound(searchParams, leagueId, playedRounds)
+
   const [ranked, form] = await Promise.all([
-    computeLeaderboard(leagueId),
-    computeLeagueForm(leagueId),
+    computeLeaderboard(leagueId, round ? { round } : {}),
+    // Form is last-five-rounds by definition, so it means nothing inside a
+    // single round. Skipping the query also keeps the round view cheaper.
+    round ? Promise.resolve(null) : computeLeagueForm(leagueId),
   ])
 
-  const last5Rounds = form.rounds
-  const formForUser = (userId: string) => form.byUser.get(userId) ?? []
+  const last5Rounds = form?.rounds ?? []
+  const formForUser = (userId: string) => form?.byUser.get(userId) ?? []
 
-  const rankDisplay = (i: number) =>
-    i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : ranked[i].rank
+  // `playedRounds` is newest first, so stepping *back* through the season means
+  // walking forwards through the array.
+  const roundIndex = round ? playedRounds.indexOf(round) : -1
+  const olderRound = round ? (playedRounds[roundIndex + 1] ?? null) : null
+  const newerRound = roundIndex > 0 ? playedRounds[roundIndex - 1] : null
+
+  const rankDisplay = (i: number) => {
+    const podium = podiumRank(ranked[i])
+    return podium === 1 ? "🥇" : podium === 2 ? "🥈" : podium === 3 ? "🥉" : ranked[i].rank
+  }
 
   // Podium rows fade from a gold-ish tint down to the plain surface. Tinting by
   // opacity of one token keeps the ramp readable in both themes — stock oranges
   // and ambers turned to mud on the dark ground.
-  const rowBg = (i: number) =>
-    i === 0
-      ? "bg-clock-tint hover:bg-clock-tint/70"
-      : i === 1
-        ? "bg-chip/60 hover:bg-chip"
-        : i === 2
-          ? "bg-clock-tint/40 hover:bg-clock-tint/60"
-          : "hover:bg-ground"
+  const rowBg = (i: number) => {
+    switch (podiumRank(ranked[i])) {
+      case 1:
+        return "bg-clock-tint hover:bg-clock-tint/70"
+      case 2:
+        return "bg-chip/60 hover:bg-chip"
+      case 3:
+        return "bg-clock-tint/40 hover:bg-clock-tint/60"
+      default:
+        return "hover:bg-ground"
+    }
+  }
 
   return (
     <section id={`league-${leagueId}`} className="scroll-mt-4">
@@ -132,6 +205,46 @@ export default async function LeagueBoard({
         </div>
       )}
 
+      {playedRounds.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
+          <div
+            role="group"
+            aria-label={`${leagueName} leaderboard view`}
+            className="inline-flex rounded-full border border-line-strong p-0.5"
+          >
+            <ModeTab href={roundHref(searchParams, leagueId, null)} active={round === null}>
+              Overall
+            </ModeTab>
+            {/* Entering gameweek mode lands on the latest round played, which is
+                what someone clicking "Gameweek" almost always wants to see. */}
+            <ModeTab
+              href={roundHref(searchParams, leagueId, round ?? playedRounds[0])}
+              active={round !== null}
+            >
+              Gameweek
+            </ModeTab>
+          </div>
+
+          {round !== null && (
+            <div className="flex items-center gap-1">
+              <StepArrow
+                href={olderRound ? roundHref(searchParams, leagueId, olderRound) : null}
+                label={olderRound ? `Show ${olderRound}` : "No earlier gameweek"}
+                glyph="‹"
+              />
+              <span className="min-w-28 text-center text-xs font-semibold text-ink" aria-live="polite">
+                {round}
+              </span>
+              <StepArrow
+                href={newerRound ? roundHref(searchParams, leagueId, newerRound) : null}
+                label={newerRound ? `Show ${newerRound}` : "No later gameweek"}
+                glyph="›"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       {ranked.length === 0 ? (
         <div className="rounded-xl border border-line bg-surface py-10 text-center text-ink-muted shadow-card">
           <p className="mb-2 text-3xl">🏆</p>
@@ -141,7 +254,8 @@ export default async function LeagueBoard({
         <div className="overflow-x-auto rounded-xl border border-line shadow-card bg-surface">
           <table className="w-full text-sm">
             <caption className="sr-only">
-              {leagueName} standings, ranked by confirmed points
+              {leagueName} {round ? `${round} standings` : "standings"}, ranked by
+              confirmed points
             </caption>
             <thead className="bg-board text-board-fore text-xs uppercase tracking-wider">
               <tr>

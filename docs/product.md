@@ -34,6 +34,30 @@ This "hub-and-spoke" model is the defining product decision. See
 [decisions.md](decisions.md) for the rationale and [data-model.md](data-model.md)
 for how it's modelled.
 
+## Web and app: feature parity for players
+
+**Every player-facing feature ships on both the web and the mobile app.** If a
+player can do it in one, they can do it in the other — predicting, results,
+leaderboards (including the gameweek picker), leagues, profile, account.
+
+**Admin features are web-only.** Host tools (`/host`) and commissioner tools
+(`/admin`) stay on the web and are not ported to the app.
+
+Why the split: a player picks a client by preference and shouldn't have to learn
+which half of the game lives where — "it's on the website" is a bug report, not
+an answer. Admin work is the opposite. It's occasional, done deliberately at a
+desk, and involves dense tables (fixture editors, result confirmation, gameweek
+management) that a phone renders badly. Building it twice would double the cost
+of the most complex screens in the product to serve the smallest audience — one
+host — who already has a laptop.
+
+Practical consequence for anyone adding a feature: a player-facing change is not
+finished when the web version merges. Either ship both clients together, or land
+the shared server work first and the second client immediately after — and say
+so in [changelog.md](changelog.md) so the gap is visible rather than forgotten.
+Note that the clients deploy independently, so a new API field must be optional
+on the client until both are live (see [mobile.md](mobile.md)).
+
 ## Product goals
 
 1. **Effortless for players.** Predict, see the leaderboard, done. No admin burden.

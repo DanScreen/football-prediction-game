@@ -19,6 +19,7 @@ import {
   type LeaderboardEntry,
 } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
+import { podiumRank } from "@/lib/podium"
 import { useTokens } from "@/lib/theme"
 import type { Tokens } from "@/constants/tokens"
 import { useAsyncData } from "@/lib/useAsyncData"
@@ -226,7 +227,6 @@ function LeagueBoard({ block, youId }: { block: LeaderboardBlock; youId?: string
           <StandingRow
             key={row.id}
             row={row}
-            index={i}
             isYou={row.id === youId}
             last={i === standings.length - 1}
           />
@@ -351,12 +351,10 @@ function StepArrow({
 
 function StandingRow({
   row,
-  index,
   isYou,
   last,
 }: {
   row: LeaderboardEntry
-  index: number
   isYou: boolean
   last: boolean
 }) {
@@ -365,7 +363,8 @@ function StandingRow({
 
   // Podium rows fade from a gold-ish tint down to the plain surface, matching
   // the web's `rowBg` ramp. Everything else sits on the surface token.
-  const bg = index === 0 ? t.clockTint : index === 1 ? t.chip : t.surface
+  const podium = podiumRank(row)
+  const bg = podium === 1 ? t.clockTint : podium === 2 ? t.chip : t.surface
 
   return (
     <View
@@ -382,7 +381,7 @@ function StandingRow({
         <Text
           style={{ width: 26, fontWeight: "700", color: t.inkMuted, fontSize: 15, ...scoreDigits }}
         >
-          {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : row.rank}
+          {podium === 1 ? "🥇" : podium === 2 ? "🥈" : podium === 3 ? "🥉" : row.rank}
         </Text>
 
         <View style={{ flex: 1, minWidth: 0 }}>
