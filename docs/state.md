@@ -13,9 +13,9 @@ platform-owned competitions model (the big refactor) is complete and live.
 **Native apps:** Phases 1–4 complete (`apps/mobile` + `/api/mobile/v1`). Phase 5
 is **prepared**: the app now matches the website visually, in-app account
 deletion, a real privacy policy and a support page are shipped, and the listing copy and
-screenshots are generated (`store-assets/`, `npm run store:shots`). What remains
-needs your Apple account — membership and `eas build`; the reviewer account
-and the iPad decision are done. The app itself can be tried on a phone today
+screenshots are generated (`store-assets/`, `npm run store:shots`). iOS build
+**1.0.0 (4)** was uploaded to App Store Connect on 2026-09-05; the only step left
+is pressing **Submit for Review** there. The app itself can be tried on a phone today
 through **Expo Go** (`cd apps/mobile && npm run start:go`), verified 2026-09-05 —
 everything but push reminders and `scorers://` deep links works there. See
 [store-release.md](store-release.md).

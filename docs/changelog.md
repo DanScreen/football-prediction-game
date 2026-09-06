@@ -6,6 +6,15 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-05 — First build uploaded to App Store Connect
+
+iOS **1.0.0 (4)** built from `1b662b1` and uploaded via `eas submit`. It is the
+first binary Apple has seen — the August production build was never uploaded — so
+it carries everything since: the support page, finished competitions, the
+reorganised Results tab and the account icon. Submitting for review remains a
+human pressing a button in App Store Connect. See
+[store-release.md](store-release.md#submitting).
+
 ## 2026-09-05 — Support page for the store listings
 
 New public `/support`: a real FAQ (leagues and invite codes, the kickoff deadline,
