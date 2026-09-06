@@ -101,7 +101,10 @@ function LeagueBoard({ block, youId }: { block: LeaderboardBlock; youId?: string
   const [roundError, setRoundError] = useState<string | null>(null)
   const [roundLoading, setRoundLoading] = useState(false)
 
-  const round: string | null = block.playedRounds[roundIndex] ?? null
+  // A server older than the gameweek endpoints omits this entirely, so the tab
+  // falls back to the overall table instead of throwing on undefined.
+  const playedRounds = block.playedRounds ?? []
+  const round: string | null = playedRounds[roundIndex] ?? null
   const cached = round ? roundCache[round] : undefined
 
   useEffect(() => {
@@ -173,7 +176,7 @@ function LeagueBoard({ block, youId }: { block: LeaderboardBlock; youId?: string
       >
         {/* No picker before a competition kicks off: there is no gameweek to
             show, and an empty one reads as a bug. */}
-        {block.playedRounds.length > 0 ? (
+        {playedRounds.length > 0 ? (
           <View
             style={{
               flexDirection: "row",
@@ -197,7 +200,7 @@ function LeagueBoard({ block, youId }: { block: LeaderboardBlock; youId?: string
                 round={round}
                 // Newest first, so "older" is a higher index.
                 onOlder={
-                  roundIndex < block.playedRounds.length - 1
+                  roundIndex < playedRounds.length - 1
                     ? () => setRoundIndex((i) => i + 1)
                     : null
                 }

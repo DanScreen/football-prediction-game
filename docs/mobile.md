@@ -355,6 +355,13 @@ Unlike `/leaderboards`, this takes a league id from the caller, so it checks
 membership itself and returns **404** — not 403 — for a league the viewer is not
 in, so the endpoint cannot be used to probe which league ids exist.
 
+**Version skew.** The app and the server deploy independently, so a build can
+always meet a server older than this endpoint. `playedRounds` is therefore
+optional on the client: when it is missing the picker does not render at all and
+the tab shows the overall table, rather than throwing on `undefined`. Any field
+added to a mobile payload needs the same treatment — the app in someone's pocket
+is not redeployed when Cloud Run is.
+
 ### Errors
 
 Consistent JSON: `{ "error": "human-readable message" }` with appropriate HTTP status

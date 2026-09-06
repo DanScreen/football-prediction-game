@@ -102,8 +102,12 @@ export type LeaderboardBlock = {
   /**
    * Every round that has kicked off, newest first — the range the gameweek
    * picker cycles through. Empty before a competition's first kickoff.
+   *
+   * Optional because the app and the server version independently: a build can
+   * always meet a server deployed before this field existed, and must fall back
+   * to the overall table rather than crash. Treat a missing value as none.
    */
-  playedRounds: string[]
+  playedRounds?: string[]
   standings: LeaderboardEntry[]
 }
 
