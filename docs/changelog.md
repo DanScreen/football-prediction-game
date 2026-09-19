@@ -6,6 +6,16 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-19 — Reconcile AI results after disallowed goals
+
+The 10-minute resolve sweep now re-checks recent `AI_CONFIRMED` scores against
+football-data.org for 24 hours after kickoff. If the published scoreline changes
+(e.g. a goal disallowed after the feed first marked the match finished), Scorers
+re-applies the new score, re-scores predictions, and updates streak bonuses —
+without waiting for a host edit. Host `MANUAL` corrections are left alone. Cron
+responses gain a `corrected` count. See [features.md](features.md#result-resolution)
+and [decisions.md](decisions.md).
+
 ## 2026-09-06 — Build 1.0.0 (6) uploaded
 
 iOS **1.0.0 (6)** from `28ee059`, carrying the podium fix. It supersedes (5) for

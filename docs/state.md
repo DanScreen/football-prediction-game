@@ -3,7 +3,7 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-09-05
+**Last updated:** 2026-09-19
 
 ## Status: live in production
 
@@ -43,7 +43,9 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 - **Banker** — one fixture per gameweek scores double. Always on (it can't be a
   per-league toggle; see [decisions.md](decisions.md)), locked at kickoff.
 - **Result resolution** — cron confirms scores from football-data.org as soon as
-  they’re available; hosts can enter missing results or edit confirmed scores from
+  they’re available, then **reconciles** recent AI-confirmed results for 24h after
+  kickoff so a later feed correction (disallowed goal, etc.) updates points without
+  a host edit. Hosts can still enter missing results or edit confirmed scores from
   `/host/results` and `/host/fixtures`.
 - **Standings** — leaderboard ranks by confirmed points (including streak bonuses).
   No provisional/pre-confirm step — results score immediately once confirmed.
@@ -83,7 +85,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **275 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **278 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the suite **before** deploying, so a red test blocks production.
 

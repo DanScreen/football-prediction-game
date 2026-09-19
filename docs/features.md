@@ -290,11 +290,17 @@ Results are applied automatically once football-data.org has them:
 2. **Auto-confirm** — when a score is found, `confirmFixtureResult()` (`lib/results.ts`)
    saves it immediately, marks the fixture `COMPLETED`, scores every prediction once,
    and fans out streak bonuses per subscribing league. No host sign-off step.
-3. **Host correction** — site hosts can enter a missing result or **edit a confirmed
+3. **Reconcile** — for **24 hours after kickoff**, the same sweep re-checks every
+   `AI_CONFIRMED` result against the API. If the published scoreline has changed
+   (typical case: a goal disallowed after football-data.org first marked the match
+   `FINISHED`), it re-applies the new score, re-scores predictions, and updates
+   streak bonuses. Host **`MANUAL`** corrections are never overwritten. Matching
+   scores are a no-op so the extra work is cheap.
+4. **Host correction** — site hosts can enter a missing result or **edit a confirmed
    score** from `/host/results` or `/host/fixtures` (re-scores every prediction and
    updates streak bonuses for the round). API lookup on the enter-result page also
    confirms immediately.
-4. **Fallbacks** — members can **Request result** from Predictions once the fixture is
+5. **Fallbacks** — members can **Request result** from Predictions once the fixture is
    due; hosts have a **Check for Updates** button (runs the sweep on demand); manual
    entry always works when the API has nothing yet.
 
