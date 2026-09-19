@@ -375,6 +375,14 @@ confirm step added friction once results were reliable enough; correction after 
 fact is enough when the API is wrong. Supersedes the 2026-08-16 provisional/confirm-queue
 decisions below (those entries are kept for history).
 
+**Follow-up (2026-09-19):** auto-confirm alone left a hole — football-data.org can
+publish `FINISHED` with a score that later changes (disallowed goal / post-whistle VAR).
+Once a fixture was `COMPLETED`, the sweep never looked it up again, so the wrong
+score stuck until a host edited it. The sweep now **reconciles** recent
+`AI_CONFIRMED` results for 24h after kickoff (`RESULT_RECONCILE_WINDOW_MS` in
+`lib/resolution.ts`), re-applying a changed scoreline via the same
+`confirmFixtureResult` path. Host `MANUAL` edits are never overwritten.
+
 ---
 
 ## 2026-08-22 — Split Predictions and Results tabs

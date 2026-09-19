@@ -123,10 +123,12 @@ export default function SupportPage() {
           yet, or the match may need a host to confirm it by hand. Email us and we will look.
         </Question>
         <Question q="My points went down.">
-          This is rare but real. If a scoreline is corrected after we first read it, every
-          prediction on that fixture is rescored, and because the streak bonus counts
-          correct results across a whole gameweek, a correction can also move you between
-          bonus tiers. The leaderboard always reflects the current confirmed scores.
+          This is rare but real. If a scoreline is corrected after we first read it —
+          for example a goal later disallowed — every prediction on that fixture is
+          rescored automatically (the feed is re-checked for a day after kickoff), and
+          because the streak bonus counts correct results across a whole gameweek, a
+          correction can also move you between bonus tiers. The leaderboard always
+          reflects the current confirmed scores.
         </Question>
         <Question q="A competition I used to play has disappeared.">
           When a season is over, a host can mark the competition{" "}

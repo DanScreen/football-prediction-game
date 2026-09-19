@@ -89,7 +89,7 @@ streak bonus fans out per subscribing league. Full schema in
 | `lib/results.ts` | `confirmFixtureResult` (score once + streak-bonus fan-out), `acceptAllProposed` |
 | `lib/provisional.ts` | Read-time provisional score/points helpers (never stored) |
 | `lib/leaderboard.ts` | `computeLeaderboard` (+ the per-player points breakdown) — shared by the leaderboard page **and** the API |
-| `lib/resolution.ts` | The cron sweep: transitions, proposal fetch, `runResolutionSweep` |
+| `lib/resolution.ts` | The cron sweep: transitions, confirm + reconcile, `runResolutionSweep` |
 | `lib/autoImport.ts` | Auto-import upcoming fixtures for active competitions |
 | `lib/footballData.ts` | football-data.org client (fetch fixtures, look up results) |
 | `lib/predictions.ts` | `upsertPrediction` (one canonical prediction per fixture) |

@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { transitionDueFixtures, confirmResultsFromApi, runResolutionSweep, RESULT_DELAY_MS } from "./resolution"
+import {
+  transitionDueFixtures,
+  confirmResultsFromApi,
+  runResolutionSweep,
+  RESULT_DELAY_MS,
+  RESULT_RECONCILE_WINDOW_MS,
+} from "./resolution"
 import { prisma } from "@/lib/prisma"
 import { fetchFinishedMatches } from "@/lib/footballData"
 import { autoImportFixtures } from "@/lib/autoImport"
@@ -42,8 +48,23 @@ function awaitingFixture(overrides: Partial<Record<string, unknown>> = {}) {
     status: "AWAITING_RESULT",
     proposedHomeScore: null,
     proposedAwayScore: null,
+    actualHomeScore: null,
+    actualAwayScore: null,
+    resultSource: null,
     ...overrides,
   }
+}
+
+function completedAiFixture(overrides: Partial<Record<string, unknown>> = {}) {
+  return awaitingFixture({
+    id: "done",
+    status: "COMPLETED",
+    actualHomeScore: 2,
+    actualAwayScore: 1,
+    resultSource: "AI_CONFIRMED",
+    kickoffTime: new Date(Date.now() - 3 * 60 * 60 * 1000),
+    ...overrides,
+  })
 }
 
 function finishedMatch(home: string, away: string, homeScore: number, awayScore: number) {
@@ -94,7 +115,7 @@ describe("transitionDueFixtures", () => {
 describe("confirmResultsFromApi", () => {
   it("no-ops without an API key", async () => {
     vi.stubEnv("FOOTBALL_DATA_API_KEY", "")
-    expect(await confirmResultsFromApi()).toEqual({ confirmed: 0, errors: [] })
+    expect(await confirmResultsFromApi()).toEqual({ confirmed: 0, corrected: 0, errors: [] })
     expect(fixtureFindMany).not.toHaveBeenCalled()
   })
 
@@ -108,7 +129,7 @@ describe("confirmResultsFromApi", () => {
     const result = await confirmResultsFromApi()
 
     expect(confirmResult).toHaveBeenCalledWith("legacy", 1, 0, "AI_CONFIRMED")
-    expect(result.confirmed).toBe(1)
+    expect(result).toEqual({ confirmed: 1, corrected: 0, errors: [] })
   })
 
   it("makes one API call per competition and confirms matched scores", async () => {
@@ -135,7 +156,7 @@ describe("confirmResultsFromApi", () => {
     const result = await confirmResultsFromApi()
 
     expect(fetchFinished).toHaveBeenCalledTimes(2)
-    expect(result).toEqual({ confirmed: 3, errors: [] })
+    expect(result).toEqual({ confirmed: 3, corrected: 0, errors: [] })
     expect(confirmResult).toHaveBeenCalledWith("f1", 2, 1, "AI_CONFIRMED")
     expect(confirmResult).toHaveBeenCalledWith("f3", 0, 3, "AI_CONFIRMED")
   })
@@ -144,7 +165,7 @@ describe("confirmResultsFromApi", () => {
     fixtureFindMany.mockResolvedValueOnce([] as never).mockResolvedValueOnce([awaitingFixture()] as never)
     fetchFinished.mockResolvedValue([finishedMatch("Liverpool", "Everton", 1, 0)] as never)
 
-    expect(await confirmResultsFromApi()).toEqual({ confirmed: 0, errors: [] })
+    expect(await confirmResultsFromApi()).toEqual({ confirmed: 0, corrected: 0, errors: [] })
     expect(confirmResult).not.toHaveBeenCalled()
   })
 
@@ -167,7 +188,52 @@ describe("confirmResultsFromApi", () => {
 
     const result = await confirmResultsFromApi()
     expect(result.confirmed).toBe(1)
+    expect(result.corrected).toBe(0)
     expect(result.errors).toEqual([expect.stringContaining("429")])
+  })
+
+  it("re-confirms a recent AI result when the API score later changes", async () => {
+    fixtureFindMany
+      .mockResolvedValueOnce([] as never)
+      .mockResolvedValueOnce([completedAiFixture()] as never)
+    fetchFinished.mockResolvedValue([finishedMatch("Arsenal", "Chelsea", 1, 1)] as never)
+
+    const result = await confirmResultsFromApi()
+
+    expect(result).toEqual({ confirmed: 0, corrected: 1, errors: [] })
+    expect(confirmResult).toHaveBeenCalledWith("done", 1, 1, "AI_CONFIRMED")
+  })
+
+  it("does not re-confirm when the stored AI score still matches the API", async () => {
+    fixtureFindMany
+      .mockResolvedValueOnce([] as never)
+      .mockResolvedValueOnce([completedAiFixture()] as never)
+    fetchFinished.mockResolvedValue([finishedMatch("Arsenal", "Chelsea", 2, 1)] as never)
+
+    expect(await confirmResultsFromApi()).toEqual({ confirmed: 0, corrected: 0, errors: [] })
+    expect(confirmResult).not.toHaveBeenCalled()
+  })
+
+  it("queries recent AI_CONFIRMED fixtures inside the reconcile window", async () => {
+    const before = Date.now()
+    fixtureFindMany.mockResolvedValueOnce([] as never).mockResolvedValueOnce([] as never)
+
+    await confirmResultsFromApi()
+
+    const lookupWhere = fixtureFindMany.mock.calls[1]![0]!.where as {
+      OR: Array<Record<string, unknown>>
+    }
+    expect(lookupWhere.OR[0]).toEqual({ status: "AWAITING_RESULT" })
+    const completed = lookupWhere.OR[1] as {
+      status: string
+      resultSource: string
+      kickoffTime: { gte: Date }
+    }
+    expect(completed.status).toBe("COMPLETED")
+    expect(completed.resultSource).toBe("AI_CONFIRMED")
+    expect(Math.abs(before - RESULT_RECONCILE_WINDOW_MS - completed.kickoffTime.gte.getTime())).toBeLessThan(
+      5000,
+    )
   })
 })
 
@@ -185,6 +251,7 @@ describe("runResolutionSweep", () => {
     expect(result.imported).toBe(4)
     expect(result.transitioned).toBe(1)
     expect(result.confirmed).toBe(0)
+    expect(result.corrected).toBe(0)
     expect(result.errors).toEqual([
       "import boom",
       expect.stringContaining("lookup boom"),
