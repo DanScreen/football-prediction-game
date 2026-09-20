@@ -3,7 +3,7 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-09-19
+**Last updated:** 2026-09-20
 
 ## Status: live in production
 
@@ -18,7 +18,8 @@ screenshots are generated (`store-assets/`, `npm run store:shots`). iOS build
 is pressing **Submit for Review** there. The app itself can be tried on a phone today
 through **Expo Go** (`cd apps/mobile && npm run start:go`), verified 2026-09-05 —
 everything but push reminders and `scorers://` deep links works there. See
-[store-release.md](store-release.md).
+[store-release.md](store-release.md). Open fixtures on Predictions (web and app) are
+capped at the current and next gameweek per competition.
 
 ## What's built and working
 

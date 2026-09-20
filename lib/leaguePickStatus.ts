@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/prisma"
+import {
+  takeNearestFixturesByRound,
+  VISIBLE_OPEN_ROUNDS,
+} from "@/lib/visibleOpenRounds"
 
 export type LeaguePickMember = {
   userId: string
@@ -88,16 +92,19 @@ export async function getLeagueUpcomingPickStatus(
     },
   })
 
-  const fixtures: LeaguePickFixture[] = rawFixtures.map((f) => ({
-    id: f.id,
-    round: f.round,
-    homeTeam: f.homeTeam,
-    awayTeam: f.awayTeam,
-    kickoffTime: f.kickoffTime,
-    competitionId: f.competitionId,
-    competitionName: f.competition.name,
-    predictedUserIds: f.predictions.map((p) => p.userId),
-  }))
+  const fixtures: LeaguePickFixture[] = takeNearestFixturesByRound(
+    rawFixtures.map((f) => ({
+      id: f.id,
+      round: f.round,
+      homeTeam: f.homeTeam,
+      awayTeam: f.awayTeam,
+      kickoffTime: f.kickoffTime,
+      competitionId: f.competitionId,
+      competitionName: f.competition.name,
+      predictedUserIds: f.predictions.map((p) => p.userId),
+    })),
+    VISIBLE_OPEN_ROUNDS,
+  )
 
   return {
     leagueName: league.name,

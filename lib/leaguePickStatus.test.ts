@@ -100,4 +100,29 @@ describe("getLeagueUpcomingPickStatus", () => {
       }),
     )
   })
+
+  it("caps upcoming fixtures at the current and next gameweek", async () => {
+    leagueFindUnique.mockResolvedValue({
+      name: "Office League",
+      competitionId: "comp1",
+      competition: { name: "Premier League" },
+      memberships: [{ user: { id: "u1", displayName: "Alice", isBot: false } }],
+    } as never)
+
+    fixtureFindMany.mockResolvedValue(
+      ["Matchweek 5", "Matchweek 6", "Matchweek 8", "Matchweek 9"].map((round, i) => ({
+        id: `fx${i}`,
+        round,
+        homeTeam: "Arsenal",
+        awayTeam: "Chelsea",
+        kickoffTime: new Date(`2026-09-${String(20 + i * 7).padStart(2, "0")}T15:00:00Z`),
+        competitionId: "comp1",
+        competition: { name: "Premier League" },
+        predictions: [],
+      })) as never,
+    )
+
+    const result = await getLeagueUpcomingPickStatus("league1")
+    expect(result?.fixtures.map((f) => f.round)).toEqual(["Matchweek 5", "Matchweek 6"])
+  })
 })
