@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma"
 import { authenticateMobileAccess } from "@/lib/mobileAuth"
 import { jsonError } from "@/lib/mobileHttp"
 import { provisionalScore, provisionalPoints } from "@/lib/provisional"
+import {
+  takeNearestFixturesByRound,
+  VISIBLE_OPEN_ROUNDS,
+} from "@/lib/visibleOpenRounds"
 
 function fixtureStatusFilter(status: string | null) {
   const now = new Date()
@@ -129,8 +133,13 @@ export async function GET(request: NextRequest) {
     },
   })
 
+  // Same cap as the web predict tab: current + next gameweek per competition.
+  // Applied here so already-shipped app builds pick it up without a store update.
+  const visible =
+    status === "open" ? takeNearestFixturesByRound(fixtures, VISIBLE_OPEN_ROUNDS) : fixtures
+
   return Response.json(
-    fixtures.map((f) => {
+    visible.map((f) => {
       const prov = provisionalScore(f)
       const myPred = f.predictions.find((p) => p.userId === user.id)
       const kickedOff = f.kickoffTime <= now

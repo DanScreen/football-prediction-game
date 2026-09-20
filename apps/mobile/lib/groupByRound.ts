@@ -53,3 +53,27 @@ export function groupByRound(fixtures: MobileFixture[]): FixtureRound[] {
 export function sortRoundsNewestFirst(rounds: FixtureRound[]): FixtureRound[] {
   return [...rounds].sort((a, b) => b.latestKickoff.getTime() - a.latestKickoff.getTime())
 }
+
+/**
+ * How many upcoming gameweeks the predict tab shows per competition — mirrors
+ * the web's VISIBLE_OPEN_ROUNDS. The mobile API also caps `status=open`; this
+ * keeps the client honest if an older server omits the filter.
+ */
+export const VISIBLE_OPEN_ROUNDS = 2
+
+/**
+ * Keep only the nearest `perCompetition` rounds for each competition.
+ * Relies on `groupByRound` preserving kickoff-ascending arrival order.
+ */
+export function takeNearestRounds(
+  rounds: FixtureRound[],
+  perCompetition: number = VISIBLE_OPEN_ROUNDS,
+): FixtureRound[] {
+  const taken = new Map<string, number>()
+  return rounds.filter((group) => {
+    const soFar = taken.get(group.competitionId) ?? 0
+    if (soFar >= perCompetition) return false
+    taken.set(group.competitionId, soFar + 1)
+    return true
+  })
+}

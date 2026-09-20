@@ -107,14 +107,16 @@ Open fixtures to pick on and kicked-off fixtures still in play, scoped by **comp
 
 - **Open** — upcoming fixtures with a countdown and a score input each, **grouped into
   gameweeks** (`FixtureRoundGroup.tsx`) and capped at the **current gameweek and the next
-  one** per competition (`VISIBLE_OPEN_ROUNDS`). Later rounds can exist in the database —
-  hosts add fixtures by hand, and the auto-import window moves on — but picks four
-  gameweeks out aren't the game, and they buried the round with a live deadline. The cap
-  is applied to the grouped rounds, so the banker header and the nudge below only ever
-  describe fixtures the player can act on. Cards carry an amber left edge when unpredicted,
-  green when predicted. Scores **auto-save** once both boxes have a valid integer
-  (debounced ~450ms, also on blur) — there is no Save button. A brief ✓ Saved / Saving
-  status appears beside the inputs. Only the nearest round that still needs picks is
+  one** per competition (`VISIBLE_OPEN_ROUNDS` in `lib/visibleOpenRounds.ts`). Later rounds
+  can exist in the database — hosts add fixtures by hand, and the auto-import window moves
+  on — but picks four gameweeks out aren't the game, and they buried the round with a live
+  deadline. The same cap applies on the **mobile** Predictions tab (client-side) and on
+  `GET /api/mobile/v1/fixtures?status=open` (so already-shipped app builds pick it up without
+  a store update). The cap is applied before the banker header and the nudge derive from the
+  list, so they only ever describe fixtures the player can act on. Cards carry an amber left
+  edge when unpredicted, green when predicted. Scores **auto-save** once both boxes have a
+  valid integer (debounced ~450ms, also on blur) — there is no Save button. A brief ✓ Saved /
+  Saving status appears beside the inputs. Only the nearest round that still needs picks is
   expanded; later rounds collapse to a one-line summary with a "N to predict" badge. A
   full Premier League round is 10 fixtures and several rounds import at once, so a flat
   list ran past 20 cards. Built on native `<details>` — no client JS for the grouping,
@@ -263,7 +265,7 @@ Two destinations, scoped to the league chosen via **Manage** on `/leagues`:
 
 | Page | Purpose |
 |---|---|
-| `/admin/picks` | **Pick status** — for each upcoming fixture, see which league members have submitted a prediction and which haven't. Actual scores stay hidden until kickoff; commissioners only see picked vs not yet. Includes a per-member summary across all open fixtures. |
+| `/admin/picks` | **Pick status** — for each upcoming fixture in the **current and next gameweek** (same `VISIBLE_OPEN_ROUNDS` cap as Predictions), see which league members have submitted a prediction and which haven't. Actual scores stay hidden until kickoff; commissioners only see picked vs not yet. Includes a per-member summary across those open fixtures. |
 | `/admin/settings` | Rename the league, manage its invite code, plus a read-only summary of the streak tiers (kept because commissioners used to configure the Grand Slam here and will look for it). |
 
 Fixtures and results are handled by site hosts, not league commissioners.

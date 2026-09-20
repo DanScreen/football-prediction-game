@@ -6,6 +6,16 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-20 — Cap open gameweeks on mobile (and pick status)
+
+The website Predictions tab already hid anything past the current and next gameweek
+(`VISIBLE_OPEN_ROUNDS`), but the mobile fixtures API and Predictions tab still returned
+every scheduled round — so Matchweek 8 / 9 could sit alongside the live deadline again.
+The same shared helper (`lib/visibleOpenRounds.ts`) now caps `status=open` on
+`/api/mobile/v1/fixtures` (so shipped app builds pick it up without a store update), the
+mobile client, and commissioner pick status. See [features.md](features.md#predictions-)
+and [mobile.md](mobile.md).
+
 ## 2026-09-19 — Reconcile AI results after disallowed goals
 
 The 10-minute resolve sweep now re-checks recent `AI_CONFIRMED` scores against

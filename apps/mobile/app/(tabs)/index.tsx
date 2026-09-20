@@ -16,7 +16,7 @@ import {
   type MobileFixture,
 } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
-import { groupByRound } from "@/lib/groupByRound"
+import { groupByRound, takeNearestRounds } from "@/lib/groupByRound"
 import { useTokens } from "@/lib/theme"
 import { useAsyncData } from "@/lib/useAsyncData"
 
@@ -81,7 +81,7 @@ export default function PredictionsScreen() {
     [data],
   )
 
-  const openRounds = useMemo(() => groupByRound(open), [open])
+  const openRounds = useMemo(() => takeNearestRounds(groupByRound(open)), [open])
   const lockedRounds = useMemo(() => groupByRound(locked), [locked])
 
   useEffect(() => {
