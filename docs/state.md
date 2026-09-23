@@ -16,7 +16,10 @@ deletion, a real privacy policy and a support page are shipped, and the listing 
 screenshots are generated (`store-assets/`, `npm run store:shots`). **iOS 1.0.0
 is reviewed and live on the App Store.** It has no email-verification screen, so
 **1.0.1 (8)** carries it and was uploaded 2026-09-23 — it just needs selecting
-under the 1.0.1 version in App Store Connect and **Submit for Review**. The app itself can be tried on a phone today
+under the 1.0.1 version in App Store Connect and **Submit for Review**. From now on
+iOS builds ship from CI: bumping `expo.version` and merging to `main` builds on EAS
+and uploads to App Store Connect (`mobile-release.yml`, see
+[deployment.md](deployment.md#mobile-release)). The app itself can be tried on a phone today
 through **Expo Go** (`cd apps/mobile && npm run start:go`), verified 2026-09-05 —
 everything but push reminders and `scorers://` deep links works there. See
 [store-release.md](store-release.md). Open fixtures on Predictions (web and app) are
