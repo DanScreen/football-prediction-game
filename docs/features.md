@@ -231,10 +231,13 @@ Five extra numeric columns would force a phone to scroll the table sideways, so 
 non-zero parts. The ★ and 🔥 headers carry `sr-only` labels, since an emoji alone
 announces nothing useful.
 
-Each form cell is **dual-encoded**## Host area (`/host`) — site hosts only
+Each form cell is **dual-encoded**.
+
+## Host area (`/host`) — site hosts only
 
 | Page | Purpose |
 |------|---------|
+| `/host` | **Overview** — platform user counts (humans/bots), DAU/WAU/MAU from `lastSeenAt`, signups and prediction volume (7d/30d, web vs API), mobile reach, and a recent-users table. |
 | `/host/competitions` | Create/edit competitions (name, football-data code, flag, active). No delete. |
 | `/host/fixtures` | Add/edit/delete canonical fixtures for a competition. |
 | `/host/fixtures/editor` | **Gameweek editor** — one competition at a time, every fixture in the database grouped by gameweek. Tick any number and move them to another gameweek or delete them in bulk. For re-cutting rounds that don't divide evenly (TV splits, postponements, cup ties landing mid-round). Guards below. |

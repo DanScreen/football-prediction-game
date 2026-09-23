@@ -5,6 +5,40 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## Host metrics come from Postgres, not a product-analytics SaaS
+Site-host user counts and activity live in the app DB and show on a `/host`
+overview. We do **not** wire PostHog / Amplitude / GA as the source of truth.
+**What we track**
+- **Volume (derived, no new writes):** `User` rows (split `isBot`),
+  `User.createdAt` for signups, `League` / `LeagueMembership` counts,
+  `Prediction` counts (and `submittedVia` for web vs API), mobile reach via
+  `MobileDeviceToken` / non-revoked `MobileRefreshToken`.
+- **Presence (one new field):** `User.lastSeenAt`, bumped on login
+  (`authorize`), prediction upsert, and mobile token refresh — **throttled**
+  (e.g. at most once per ~15 minutes per user) so JWT sessions don't turn into
+  a write storm. DAU / WAU / MAU = distinct users with `lastSeenAt` in the last
+  1 / 7 / 30 days. Optional later: `lastLoginAt` if "signed in" must differ from
+  "did something".
+- **No event log in v1.** Predictions already are the product's meaningful
+  actions. A `UserActivityEvent` (or daily rollup) only if we later need funnels
+  that existing tables can't answer (e.g. visited Predictions but never picked).
+**Where it shows**
+- **Site hosts (`/host`):** replace the index redirect with an overview —
+  totals (users, humans, bots, leagues), active (DAU/WAU/MAU), recent signups,
+  prediction volume (7d / 30d), and a simple recent-users table. Web-only, gated
+  by `requireSiteAdmin()`.
+- **Commissioners (`/admin`):** stay **league-scoped**. Keep pick status as the
+  activity view; do **not** expose platform-wide user counts. Optional later: a
+  small member pulse (joined date, last pick) on `/admin/picks`.
+**Why:** Scorers is a private friends game with one host audience. Almost every
+useful number already exists as relational data; a third-party analytics stack
+would add cookies, privacy surface, and another vendor for metrics a SQL query
+already answers. Throttled `lastSeenAt` is the only gap JWT sessions leave
+(stateless auth never records "was here"). Keeping commissioners league-only
+matches the existing auth split and avoids leaking other leagues' membership.
+
+---
+
 ## Player features go on both clients; admin features stay on the web
 Anything a player uses ships on the web *and* in the app. Host (`/host`) and
 commissioner (`/admin`) tools are web-only and will not be ported.

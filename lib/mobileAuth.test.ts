@@ -12,7 +12,7 @@ import { prisma } from "@/lib/prisma"
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    user: { findUnique: vi.fn() },
+    user: { findUnique: vi.fn(), updateMany: vi.fn() },
     mobileRefreshToken: {
       create: vi.fn(),
       findUnique: vi.fn(),
@@ -21,6 +21,10 @@ vi.mock("@/lib/prisma", () => ({
     },
     $transaction: vi.fn(),
   },
+}))
+
+vi.mock("@/lib/lastSeen", () => ({
+  touchLastSeen: vi.fn().mockResolvedValue(undefined),
 }))
 
 const userFindUnique = vi.mocked(prisma.user.findUnique)
@@ -129,6 +133,7 @@ describe("refresh token rotation", () => {
   })
 
   it("rotates a valid refresh token", async () => {
+    const { touchLastSeen } = await import("./lastSeen")
     refreshFindUnique.mockResolvedValue({
       id: "r1",
       userId: "u1",
@@ -144,6 +149,7 @@ describe("refresh token rotation", () => {
     expect(result!.accessToken).toBeTruthy()
     expect(result!.refreshToken).toBeTruthy()
     expect(verifyMobileAccessToken(result!.accessToken)).toBe("u1")
+    expect(touchLastSeen).toHaveBeenCalledWith("u1")
   })
 
   it("returns null for an expired refresh token", async () => {

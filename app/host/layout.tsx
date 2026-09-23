@@ -19,6 +19,12 @@ export default async function HostLayout({ children }: { children: React.ReactNo
         <div className="max-w-5xl mx-auto flex items-center gap-6">
           <span className="text-xs font-bold text-board-gold uppercase tracking-widest">Host</span>
           <Link
+            href="/host"
+            className="text-sm text-board-muted hover:text-board-fore transition-colors"
+          >
+            Overview
+          </Link>
+          <Link
             href="/host/competitions"
             className="text-sm text-board-muted hover:text-board-fore transition-colors"
           >

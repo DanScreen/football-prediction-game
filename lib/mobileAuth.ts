@@ -1,5 +1,6 @@
 import { createHmac, createHash, randomBytes, timingSafeEqual } from "node:crypto"
 import { prisma } from "@/lib/prisma"
+import { touchLastSeen } from "@/lib/lastSeen"
 
 /** Access JWT lifetime — short enough that theft window is limited. */
 export const MOBILE_ACCESS_TTL_SECONDS = 30 * 60 // 30 minutes
@@ -137,6 +138,8 @@ export async function rotateMobileRefreshToken(
       },
     }),
   ])
+
+  await touchLastSeen(existing.userId)
 
   return {
     userId: existing.userId,
