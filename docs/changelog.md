@@ -6,6 +6,22 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-23 — Email format checks and required email verification
+
+Junk sign-ups (addresses with no domain, one-letter TLDs, typos) were getting in.
+Sign-up now checks the address format on web and app, and sends a verification
+link; **every account — including all existing ones — must click it before using
+Scorers.** Unverified web sessions are held on `/verify-email`, which can resend
+the link, fix a mistyped address, or sign out; the app gets a matching verify
+screen, and player endpoints return 403 `email_unverified`. The session picks up a
+click from any device without signing in again. A completed password reset also
+verifies, unverified accounts get no reminders, and the App Store reviewer's demo
+account is backfilled as verified. New `EmailVerificationToken` table and
+`User.emailVerifiedAt` (migration `20260923000000_email_verification`). Build
+1.0.0 (6) predates this — a new iOS build is needed before submission. Detail:
+[features.md](features.md#email-format-check--verification-verify-email),
+[mobile.md](mobile.md#email-verification), [decisions.md](decisions.md).
+
 ## 2026-09-06 — Build 1.0.0 (6) uploaded
 
 iOS **1.0.0 (6)** from `28ee059`, carrying the podium fix. It supersedes (5) for

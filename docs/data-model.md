@@ -33,8 +33,13 @@ Platform-owned. Owns the canonical fixtures that leagues share.
 - `isSiteAdmin` — **site host**. Synced from the `SITE_ADMIN_EMAILS` env var on
   login (see `auth.ts`); gates the `/host` area.
 - `apiKey` (unique) — Bearer token for the public API.
+- `emailVerifiedAt` (nullable) — when the user proved they own `email` (verification
+  link or a completed password reset). Null = held at `/verify-email` / 403
+  `email_unverified` on the mobile API. Every pre-existing account started null
+  (migration `20260923000000_email_verification`), except the App Store reviewer's
+  demo account, which it backfills.
 - Relations: `memberships[]`, `predictions[]`, `bonusAwards[]`, `resetTokens[]`,
-  `mobileRefreshTokens[]`, `mobileDeviceTokens[]`.
+  `emailVerificationTokens[]`, `mobileRefreshTokens[]`, `mobileDeviceTokens[]`.
 
 ### League
 A group of players subscribed to one competition.
@@ -82,6 +87,14 @@ A per-round bonus (currently only the streak bonus), kept separate from
 ### PasswordResetToken
 - `id`, `userId`, `tokenHash` (unique — **SHA-256 hash only**, the raw token lives
   only in the email link), `expiresAt`, `usedAt` (nullable), `createdAt`.
+
+### EmailVerificationToken
+Migration `20260923000000_email_verification`.
+- `id`, `userId`, `email` (the address the link was sent to — a link only verifies
+  that address), `tokenHash` (unique, SHA-256 only), `expiresAt` (24 h), `usedAt`
+  (nullable), `createdAt` (drives the 60 s resend cooldown).
+- Verifying marks every unused token for the user as used; changing the address
+  deletes them all. Deleted with the account.
 
 ### MobileDeviceToken
 Expo push tokens for deadline reminders. Migration

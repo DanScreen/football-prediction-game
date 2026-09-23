@@ -3,7 +3,7 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-09-05
+**Last updated:** 2026-09-23
 
 ## Status: live in production
 
@@ -14,8 +14,9 @@ platform-owned competitions model (the big refactor) is complete and live.
 is **prepared**: the app now matches the website visually, in-app account
 deletion, a real privacy policy and a support page are shipped, and the listing copy and
 screenshots are generated (`store-assets/`, `npm run store:shots`). iOS build
-**1.0.0 (4)** was uploaded to App Store Connect on 2026-09-05; the only step left
-is pressing **Submit for Review** there. The app itself can be tried on a phone today
+**1.0.0 (6)** is the latest upload (2026-09-06), but it has no email-verification
+screen — once that feature deploys, a new build is needed before pressing **Submit
+for Review**. The app itself can be tried on a phone today
 through **Expo Go** (`cd apps/mobile && npm run start:go`), verified 2026-09-05 —
 everything but push reminders and `scorers://` deep links works there. See
 [store-release.md](store-release.md).
@@ -24,8 +25,11 @@ everything but push reminders and `scorers://` deep links works there. See
 
 Everything through **phase 23** (see [changelog.md](changelog.md) for the phase list):
 
-- **Auth** — open email/password registration, login, JWT sessions, profile page with
-  API-key generation, forgot-password / reset via email. **Invite links**
+- **Auth** — open email/password registration (email format checked), login, JWT
+  sessions, profile page with API-key generation, forgot-password / reset via email.
+  **Email verification is required** (branch `feature/email-verification`, 2026-09-23,
+  not yet deployed): every account — existing ones included — is held at
+  `/verify-email` (web) / the verify screen (app) until it clicks the emailed link. **Invite links**
   (`/register?invite=CODE`) create the account and join the league in one step.
 - **Two admin tiers:**
   - **Site hosts** (`User.isSiteAdmin`) own competitions, fixtures, imports, and
@@ -83,7 +87,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **275 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **340 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the suite **before** deploying, so a red test blocks production.
 
