@@ -9,9 +9,9 @@
 
 Nothing is currently blocking, and the core product is live. Candidate next work:
 
-- **Mobile Phase 5 — store release** — Apple/Google accounts, EAS project id, TestFlight /
-  Play internal then public. Checklist: [store-release.md](store-release.md).
-  Phases 1–4 are done on `feature/mobile-apps`.
+- **Mobile Phase 5 — store release** — iOS 1.0.0 is live; **1.0.1** (email
+  verification screen) is next to build and submit. Google Play still to do.
+  Checklist: [store-release.md](store-release.md).
 - **Staging environment** — a second Cloud Run service + DB from a `staging` branch,
   to review changes before they hit the live site instead of pushing straight to prod.
   Now the only remaining safety gap in the pipeline (CI does gate on tests).

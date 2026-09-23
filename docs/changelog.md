@@ -6,6 +6,15 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-23 — iOS app version 1.0.1
+
+iOS 1.0.0 is reviewed and live, so its version train is closed: an upload still
+marked 1.0.0 was rejected by App Store Connect (ITMS-90186 / ITMS-90062). The app
+version is now **1.0.1** (`apps/mobile/app.json`, `package.json`), the release that
+carries the email-verification screen. EAS only auto-increments the build number,
+so the version must be raised by hand after each approved release — see
+[store-release.md](store-release.md#submitting).
+
 ## 2026-09-23 — Email format checks and required email verification
 
 Junk sign-ups (addresses with no domain, one-letter TLDs, typos) were getting in.
@@ -17,8 +26,8 @@ screen, and player endpoints return 403 `email_unverified`. The session picks up
 click from any device without signing in again. A completed password reset also
 verifies, unverified accounts get no reminders, and the App Store reviewer's demo
 account is backfilled as verified. New `EmailVerificationToken` table and
-`User.emailVerifiedAt` (migration `20260923120000_email_verification`). Build
-1.0.0 (6) predates this — a new iOS build is needed before submission. Detail:
+`User.emailVerifiedAt` (migration `20260923120000_email_verification`). The live
+iOS 1.0.0 predates this — it ships in 1.0.1. Detail:
 [features.md](features.md#email-format-check--verification-verify-email),
 [mobile.md](mobile.md#email-verification), [decisions.md](decisions.md).
 
