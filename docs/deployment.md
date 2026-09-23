@@ -191,3 +191,8 @@ build talks to is live — and checks out the exact commit Deploy shipped.
 [store-release.md](store-release.md#submitting). **Run workflow** (Actions tab →
 Mobile release) skips the check, for another build under the same unreleased
 version. Pressing **Submit for Review** in App Store Connect stays manual.
+
+> **`npm ci` comes before any `eas` command**, the version check included: EAS
+> evaluates `app.json`, which loads config plugins (`expo-router`) from
+> `node_modules`. Without it `eas build:list` fails with *Failed to resolve plugin
+> for module "expo-router"* — the first run on 2026-09-23 did exactly that.
