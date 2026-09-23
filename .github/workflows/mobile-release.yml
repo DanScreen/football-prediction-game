@@ -30,6 +30,9 @@ jobs:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
     defaults:
       run:
+        # An explicit `bash` adds pipefail, so a failing `eas … | jq` fails
+        # with eas's error rather than jq's.
+        shell: bash
         working-directory: apps/mobile
 
     steps:
@@ -47,6 +50,11 @@ jobs:
 
       - name: Install EAS CLI
         run: npm install -g eas-cli
+
+      # Before the version check too: every eas command evaluates the app config,
+      # which loads config plugins (expo-router) from node_modules.
+      - name: Install mobile dependencies
+        run: npm ci
 
       # "New" means no production iOS build of this version exists on EAS yet,
       # other than failed or cancelled ones — so a retry after a failed build
@@ -71,10 +79,6 @@ jobs:
             echo "Version $VERSION is new: building and uploading."
             echo "build=true" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Install mobile dependencies
-        if: steps.version.outputs.build == 'true'
-        run: npm ci
 
       # --auto-submit hands the upload to EAS once the build finishes (the App
       # Store Connect API key lives on EAS), and --no-wait means this job ends
