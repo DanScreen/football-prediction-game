@@ -4,6 +4,21 @@ export function jsonError(error: string, status: number): Response {
   return Response.json({ error }, { status })
 }
 
+/**
+ * The answer every player endpoint gives an account whose email isn't verified.
+ * The app keys off `code`, not the status: a 403 alone is ambiguous. Builds that
+ * predate verification just show `error`, which is written to stand on its own.
+ */
+export function emailUnverifiedError(): Response {
+  return Response.json(
+    {
+      error: "Verify your email address to continue — check your inbox for a link from Scorers.",
+      code: "email_unverified",
+    },
+    { status: 403 },
+  )
+}
+
 export async function readJsonBody(
   request: Request,
 ): Promise<{ ok: true; body: Record<string, unknown> } | { ok: false; response: Response }> {

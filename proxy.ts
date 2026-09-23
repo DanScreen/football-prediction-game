@@ -6,8 +6,18 @@ const { auth } = NextAuth(authConfig)
 
 // `/rules` is public on purpose: someone following an invite link should be able
 // to read what they're joining before creating an account. It personalises when
-// there is a session, but never requires one.
-const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/rules", "/privacy", "/support"]
+// there is a session, but never requires one. `/verify-email` is public because
+// the link in the email is often opened on a device that isn't signed in.
+const PUBLIC_PATHS = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+  "/rules",
+  "/privacy",
+  "/support",
+]
 
 export default auth((req) => {
   const { pathname } = req.nextUrl
@@ -31,6 +41,13 @@ export default auth((req) => {
     const loginUrl = new URL("/login", req.url)
     loginUrl.searchParams.set("callbackUrl", pathname)
     return NextResponse.redirect(loginUrl)
+  }
+
+  // Signed in but the email isn't verified yet: every other page funnels to the
+  // "check your inbox" screen. The claim is refreshed from the DB in the jwt
+  // callback, so this lifts as soon as the link is clicked.
+  if (!req.auth.user?.hasVerifiedEmail) {
+    return NextResponse.redirect(new URL("/verify-email", req.url))
   }
 
   return NextResponse.next()

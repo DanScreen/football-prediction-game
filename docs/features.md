@@ -377,12 +377,51 @@ Eligibility counts *correct results*, so:
 Replaced the all-or-nothing **Grand Slam** on 2026-08-16, which was a per-league toggle
 with a configurable points value. See [decisions.md](decisions.md).
 
+## Email format check & verification (`/verify-email`)
+
+**Format check at sign-up.** `lib/emailAddress.ts` (`isValidEmail`) runs on web
+register, mobile register and the change-address form: a pragmatic dot-atom local
+part, ≥2 hostname labels, a letters-only (or punycode) TLD of 2+ chars, 254/64 length
+caps. It rejects the junk that actually turned up (`name@gmail`, `a@b.c`, spaces,
+`a..b@x.com`). The Expo app has a copy (`apps/mobile/lib/emailAddress.ts`) for instant
+feedback; the server's is the authority.
+
+**Every account must verify its email before using the product** — new sign-ups and
+every account that existed before this shipped (2026-09-23).
+
+- **Sign-up** sends a single-use link (`/verify-email/<token>`, 24 h, SHA-256 hash
+  stored only) and lands the user on **`/verify-email`**, signed in. A failed send
+  doesn't fail the sign-up — the page's button re-sends (60 s cooldown).
+- **The gate (web):** `proxy.ts` redirects any signed-in, unverified session to
+  `/verify-email`; the header hides the nav for them. The JWT carries
+  `hasVerifiedEmail`, and **the `jwt` callback re-reads it from the DB on every request
+  until it's true** — the proxy re-issues the cookie — so clicking the link on another
+  device (the phone, usually) lifts the gate without signing in again, and sessions from
+  before this feature (no claim at all) are checked too. Once true it sticks, so
+  verified users cost no extra query.
+- **Opening the link** verifies on render. It only works for the address it was sent
+  to; re-opening a used link on a verified account says "verified" (mail scanners
+  pre-click links). It works signed out too, and tells app users to go back to the app.
+- **Wrong address?** Unverified users can change it from the verify page (or the
+  app). That kills every outstanding verification link *and* password-reset link, then
+  sends a new link. Verified addresses can't be changed — that isn't a feature.
+- **A completed password reset verifies the account** — it proved the mailbox.
+- **Mobile:** player endpoints answer an unverified account with
+  **403 `{ code: "email_unverified" }`**; the app shows its own verify screen. See
+  [mobile.md](mobile.md#email-verification).
+- **Unverified accounts get no reminders** (email or push).
+- Not gated: the bot API (`/api/v1`, API-key auth), `/profile`-free public pages,
+  sign-out, and account deletion in the app.
+
+Code: `lib/emailVerification.ts`, `app/verify-email/`, `proxy.ts`, `auth.config.ts`.
+
 ## Deadline reminder emails
 
 The cron sweep emails league members who haven't predicted a fixture kicking off within
 the next 3 hours — one email per user listing their open fixtures (via Resend). A
 multi-league user gets a single deduped email. Each fixture triggers one batch only
 (`reminderSentAt` guard). Silently skipped if `RESEND_API_KEY`/`EMAIL_FROM` are unset.
+Bots and accounts with an unverified email are skipped (no email, no push).
 
 ## Forgot password / reset
 
@@ -392,7 +431,8 @@ multi-league user gets a single deduped email. Each fixture triggers one batch o
 password invalidates all the user's other outstanding tokens. Only the SHA-256 hash of
 the token is stored. There's a 5-minute per-user cooldown. Unlike reminders, this flow
 **requires** Resend to be configured (account recovery isn't optional) and errors if
-it isn't. See `lib/passwordReset.ts`.
+it isn't. Completing a reset also marks an unverified email as verified — the link
+proved the mailbox. See `lib/passwordReset.ts`.
 
 ## Account deletion (`/profile`)
 

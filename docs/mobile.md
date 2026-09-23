@@ -96,6 +96,29 @@ Do **not** ask mobile users to paste an API key.
 Auth routes are unauthenticated; everything else requires a valid access JWT inside
 the handler.
 
+### Email verification
+
+Accounts must verify their email before playing (see
+[features.md](features.md#email-format-check--verification-verify-email)). The
+contract:
+
+- `authenticateMobileAccess` returns the user with **`emailVerified: boolean`**, and
+  every **player route must gate on it** right after the 401 check:
+  `if (!user.emailVerified) return emailUnverifiedError()` — a **403**
+  `{ error, code: "email_unverified" }`. Not a 401: the app treats 401 as "token
+  expired", refreshes, retries, and signs the user out.
+  **Any new player endpoint needs this line.**
+- **Not gated** (an unverified user needs them): `GET/PATCH/DELETE /me`,
+  `auth/*` (incl. `resend-verification`), `rules`, and `DELETE /devices` (sign-out
+  cleanup).
+- `emailVerified` is on the `user` object from `register`/`login` and on `GET /me`.
+  The app treats a *missing* field as verified, so a new build still works against an
+  older server.
+- The app keeps unverified users on `app/verify-email.tsx` (via `Stack.Protected`
+  guards in the root layout) and re-checks `/me` when it returns to the foreground —
+  the link opens in the browser. Any `email_unverified` response also flips the app
+  to that screen. Push registration waits until verified.
+
 ---
 
 ## Phase 1 — Mobile API surface (shipped)
@@ -128,7 +151,16 @@ Body:
 - Same validation rules as web register.
 - Optional `inviteCode`: join that league after create (same semantics as
   `/register?invite=CODE` — unrecognised code must not block account creation).
-- Response `201`: `{ user, accessToken, refreshToken }` (same `user` shape as login).
+- The email must pass the shared format check (`lib/emailAddress.ts`) — 400 otherwise.
+- Sends the verification email (a failed send doesn't fail the sign-up).
+- Response `201`: `{ user, accessToken, refreshToken }` (same `user` shape as login,
+  with `emailVerified: false`). The tokens work, but player routes 403 until verified.
+
+#### `POST /api/mobile/v1/auth/resend-verification`
+
+Authenticated (access JWT); allowed while unverified. Sends a fresh verification link.
+`200 { status: "sent" | "already-verified" }`; `429 { error, retryInSeconds }` (plus
+`Retry-After`) inside the 60 s cooldown; `502` if the email provider fails.
 
 #### `POST /api/mobile/v1/auth/login`
 
@@ -159,7 +191,8 @@ later.
 
 #### `GET /api/mobile/v1/me`
 
-Response: `{ id, email, displayName, isBot }` plus membership summary if cheap:
+Response: `{ id, email, displayName, isBot, emailVerified }` plus membership summary.
+Deliberately not gated on verification — it's how the app learns the account's state:
 
 ```json
 {
@@ -167,6 +200,7 @@ Response: `{ id, email, displayName, isBot }` plus membership summary if cheap:
   "email": "...",
   "displayName": "...",
   "isBot": false,
+  "emailVerified": true,
   "leagues": [
     {
       "id": "...",
@@ -178,6 +212,13 @@ Response: `{ id, email, displayName, isBot }` plus membership summary if cheap:
   ]
 }
 ```
+
+#### `PATCH /api/mobile/v1/me`
+
+Body `{ email }`. Corrects a mistyped address **while unverified only** (400 once
+verified, or if the address is malformed or taken) and sends a new link to it.
+`200 { email, emailVerified: false, warning? }` — `warning` means the address changed
+but the link couldn't be sent (the user can resend).
 
 #### `DELETE /api/mobile/v1/me`
 
@@ -375,7 +416,8 @@ is not redeployed when Cloud Run is.
 ### Errors
 
 Consistent JSON: `{ "error": "human-readable message" }` with appropriate HTTP status
-(`400` validation, `401` auth, `404`, `409`, `422` business rule / locked fixture).
+(`400` validation, `401` auth, `403` + `code: "email_unverified"` for an unverified
+account, `404`, `409`, `422` business rule / locked fixture, `429` resend cooldown).
 
 ### Out of Phase 1 originally — now shipped in Phase 4
 
@@ -402,6 +444,7 @@ Still out of native scope: host/commissioner endpoints; API-key management in-ap
 |------|------|
 | `app/(auth)/login\|register` | Auth (+ forgot password via API) |
 | `app/join` | Deep-link join (`scorers://join?code=`) |
+| `app/verify-email` | Held here until the email is verified: continue / resend / change address / account / sign out |
 | `app/(tabs)/index` | Predictions — Open + Kicked off; scores auto-save |
 | `app/(tabs)/results` | Settled fixtures with every league-mate's pick — flat sections, newest round first, per-round subtotal (mirrors web `/results`) |
 | `app/(tabs)/leaderboard` | Stacked standings |

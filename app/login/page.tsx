@@ -12,12 +12,11 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{
     callbackUrl?: string
-    registered?: string
     reset?: string
     deleted?: string
   }>
 }) {
-  const { callbackUrl, registered, reset, deleted } = await searchParams
+  const { callbackUrl, reset, deleted } = await searchParams
 
   return (
     <div className="flex min-h-[calc(100vh-60px)] items-center justify-center px-4 py-12">
@@ -31,7 +30,7 @@ export default async function LoginPage({
           </p>
         </div>
         <div className="bg-surface rounded-xl shadow-card border border-line px-8 py-8">
-          <LoginForm callbackUrl={callbackUrl} registered={registered === "1"} reset={reset === "1"} deleted={deleted === "1"} />
+          <LoginForm callbackUrl={callbackUrl} reset={reset === "1"} deleted={deleted === "1"} />
         </div>
         <p className="mt-6 text-center text-xs text-ink-faint">
           Scorers is a friendly game where you predict football scorelines and compete with

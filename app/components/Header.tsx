@@ -10,9 +10,12 @@ import { getTheme } from "@/lib/theme.server"
 export default async function Header() {
   const session = await auth()
   const theme = await getTheme()
+  // Unverified users are held on /verify-email by the proxy, so nav links would
+  // only bounce them back there — show the bare header instead.
+  const canNavigate = !!session?.user?.hasVerifiedEmail
   // Commissioner of *any* league, not just a selected one — the Admin link should
   // be present whenever there's something to administer.
-  const isCommissioner = session?.user?.id
+  const isCommissioner = session?.user?.id && canNavigate
     ? !!(await prisma.leagueMembership.findFirst({
         where: { userId: session.user.id, role: "COMMISSIONER" },
         select: { id: true },
@@ -31,7 +34,7 @@ export default async function Header() {
             <Logo />
             Scorers
           </Link>
-          {session && (
+          {canNavigate && (
             <div className="flex items-center gap-2">
               <NavLinks />
               {isCommissioner && (
@@ -42,7 +45,7 @@ export default async function Header() {
                   Admin
                 </Link>
               )}
-              {session.user.isSiteAdmin && (
+              {session?.user.isSiteAdmin && (
                 <Link
                   href="/host"
                   className="rounded-full border border-clock/25 bg-clock-tint px-2.5 py-0.5 text-xs font-semibold text-clock transition-colors hover:border-clock/50"
@@ -112,8 +115,8 @@ export default async function Header() {
         </div>
       </div>
     </header>
-    {/* Only signed-in users have anywhere to navigate to. */}
-    {session && <MobileNav />}
+    {/* Only signed-in, verified users have anywhere to navigate to. */}
+    {canNavigate && <MobileNav />}
     </>
   )
 }

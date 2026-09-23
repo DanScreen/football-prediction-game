@@ -33,6 +33,7 @@ beforeEach(() => {
     email: "a@b.c",
     displayName: "A",
     isBot: false,
+    emailVerified: true,
   })
 })
 

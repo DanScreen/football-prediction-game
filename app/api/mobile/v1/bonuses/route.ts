@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { authenticateMobileAccess } from "@/lib/mobileAuth"
-import { jsonError } from "@/lib/mobileHttp"
+import { emailUnverifiedError, jsonError } from "@/lib/mobileHttp"
 
 /**
  * The viewer's streak bonuses, rolled up per competition + round.
@@ -13,6 +13,7 @@ import { jsonError } from "@/lib/mobileHttp"
 export async function GET(request: Request) {
   const user = await authenticateMobileAccess(request)
   if (!user) return jsonError("Unauthorized", 401)
+  if (!user.emailVerified) return emailUnverifiedError()
 
   const memberships = await prisma.leagueMembership.findMany({
     where: { userId: user.id, league: { competition: { archivedAt: null } } },

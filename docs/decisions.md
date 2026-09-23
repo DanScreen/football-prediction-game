@@ -5,6 +5,37 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## 2026-09-23 — Email verification is a hard gate, for existing accounts too
+Sign-ups with junk addresses were getting in. Format checking stops typos and
+nonsense; only a verification email proves the mailbox, so both shipped. Every
+account — including every one created before this — must click a link before it
+can use the web or the app.
+**Why a hard gate and not a banner:** the problem was accounts that can't be
+reached (no reminders, no password reset). A dismissible nag leaves them in the
+leagues forever. Holding them on one page, where they can resend, **fix a mistyped
+address**, get help or delete the account, is the minimum that actually cleans up.
+The cost — every existing player clicks one link once — was judged worth it.
+**How it's enforced cheaply:** the web JWT carries `hasVerifiedEmail` and the `jwt`
+callback re-reads the DB only while that's false, so verified users pay nothing and
+unverified sessions pick up a click from any device. Mobile routes check a flag the
+access-token lookup already fetches, and answer 403 with `code: "email_unverified"`
+— not 401, which the app treats as "signed out" and would loop on refresh.
+**Carve-outs:**
+- The bot API (`/api/v1`) isn't gated — bots authenticate by API key, which an
+  account can only mint from `/profile`, behind the gate.
+- The App Store reviewer's demo account is backfilled verified in the migration:
+  nobody reads that inbox, and a reviewer stuck on "check your inbox" rejects.
+- Changing the address is allowed only while unverified, and it invalidates
+  outstanding **password-reset** links too — a completed reset now verifies the
+  current address, so a link sent to the old one mustn't vouch for the new one.
+- A link is verified on render (GET), and a re-opened used link on a verified
+  account still says "verified": mail scanners pre-fetch links, and a scanner
+  verifying the owner's own mailbox is harmless.
+- The session claim is `hasVerifiedEmail`, not `emailVerified`: NextAuth's
+  `AdapterUser.emailVerified` is a `Date | null` and the types collide.
+
+---
+
 ## Host metrics come from Postgres, not a product-analytics SaaS
 Site-host user counts and activity live in the app DB and show on a `/host`
 overview. We do **not** wire PostHog / Amplitude / GA as the source of truth.

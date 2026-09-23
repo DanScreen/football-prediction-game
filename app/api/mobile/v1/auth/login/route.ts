@@ -3,13 +3,14 @@ import { prisma } from "@/lib/prisma"
 import { issueMobileTokenPair, toMobileUserPublic } from "@/lib/mobileAuth"
 import { touchLastSeen } from "@/lib/lastSeen"
 import { jsonError, readJsonBody } from "@/lib/mobileHttp"
+import { normaliseEmail } from "@/lib/emailAddress"
 
 export async function POST(request: Request) {
   const parsed = await readJsonBody(request)
   if (!parsed.ok) return parsed.response
   const { body } = parsed
 
-  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : ""
+  const email = normaliseEmail(body.email)
   const password = typeof body.password === "string" ? body.password : ""
   if (!email || !password) {
     return jsonError("Email and password are required.", 400)

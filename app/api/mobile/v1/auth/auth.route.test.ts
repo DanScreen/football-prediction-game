@@ -4,6 +4,7 @@ import { POST as register } from "@/app/api/mobile/v1/auth/register/route"
 import { POST as refresh } from "@/app/api/mobile/v1/auth/refresh/route"
 import { prisma } from "@/lib/prisma"
 import * as mobileAuth from "@/lib/mobileAuth"
+import { sendVerificationEmail } from "@/lib/emailVerification"
 import bcrypt from "bcryptjs"
 
 vi.mock("@/lib/prisma", () => ({
@@ -24,11 +25,16 @@ vi.mock("@/lib/mobileAuth", async () => {
   }
 })
 
+vi.mock("@/lib/emailVerification", () => ({
+  sendVerificationEmail: vi.fn(),
+}))
+
 const userFindUnique = vi.mocked(prisma.user.findUnique)
 const userCreate = vi.mocked(prisma.user.create)
 const leagueFindUnique = vi.mocked(prisma.league.findUnique)
 const issuePair = vi.mocked(mobileAuth.issueMobileTokenPair)
 const rotate = vi.mocked(mobileAuth.rotateMobileRefreshToken)
+const sendVerification = vi.mocked(sendVerificationEmail)
 
 function post(url: string, body: unknown) {
   return new Request(url, {
@@ -66,13 +72,15 @@ describe("POST /api/mobile/v1/auth/login", () => {
       email: "a@b.c",
       displayName: "A",
       isBot: false,
+      emailVerifiedAt: new Date(),
       passwordHash: hash,
     } as never)
-    const res = await login(post("http://t/login", { email: "a@b.c", password: "secret12" }))
+    const res = await login(post("http://t/login", { email: " A@B.c ", password: "secret12" }))
     expect(res.status).toBe(200)
+    expect(userFindUnique).toHaveBeenCalledWith({ where: { email: "a@b.c" } })
     const json = await res.json()
     expect(json).toEqual({
-      user: { id: "u1", email: "a@b.c", displayName: "A", isBot: false },
+      user: { id: "u1", email: "a@b.c", displayName: "A", isBot: false, emailVerified: true },
       accessToken: "access",
       refreshToken: "refresh",
     })
@@ -83,7 +91,7 @@ describe("POST /api/mobile/v1/auth/register", () => {
   it("400s when password is too short", async () => {
     const res = await register(
       post("http://t/register", {
-        email: "a@b.c",
+        email: "a@b.co",
         password: "short",
         displayName: "A",
       }),
@@ -96,13 +104,13 @@ describe("POST /api/mobile/v1/auth/register", () => {
     leagueFindUnique.mockResolvedValue(null)
     userCreate.mockResolvedValue({
       id: "u1",
-      email: "a@b.c",
+      email: "a@b.co",
       displayName: "A",
       isBot: false,
     } as never)
     const res = await register(
       post("http://t/register", {
-        email: "a@b.c",
+        email: "a@b.co",
         password: "password1",
         displayName: "A",
         inviteCode: "BADCODE",
@@ -112,7 +120,38 @@ describe("POST /api/mobile/v1/auth/register", () => {
     expect(userCreate).toHaveBeenCalled()
     const json = await res.json()
     expect(json.accessToken).toBe("access")
-    expect(json.user.email).toBe("a@b.c")
+    expect(json.user.email).toBe("a@b.co")
+    expect(json.user.emailVerified).toBe(false)
+    expect(sendVerification).toHaveBeenCalledWith("u1")
+  })
+
+  it.each(["not-an-email", "a@b", "a b@c.com", "a@b.c"])(
+    "400s on a malformed email (%s) without creating anyone",
+    async (email) => {
+      const res = await register(
+        post("http://t/register", { email, password: "password1", displayName: "A" }),
+      )
+      expect(res.status).toBe(400)
+      expect((await res.json()).error).toMatch(/valid email/)
+      expect(userCreate).not.toHaveBeenCalled()
+    },
+  )
+
+  it("still signs the user up when the verification email fails", async () => {
+    userFindUnique.mockResolvedValue(null)
+    userCreate.mockResolvedValue({
+      id: "u1",
+      email: "a@b.co",
+      displayName: "A",
+      isBot: false,
+      emailVerifiedAt: null,
+    } as never)
+    sendVerification.mockRejectedValue(new Error("Resend down"))
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    const res = await register(
+      post("http://t/register", { email: "a@b.co", password: "password1", displayName: "A" }),
+    )
+    expect(res.status).toBe(201)
   })
 
   it("joins a league when invite is valid", async () => {
@@ -120,13 +159,13 @@ describe("POST /api/mobile/v1/auth/register", () => {
     leagueFindUnique.mockResolvedValue({ id: "league-1" } as never)
     userCreate.mockResolvedValue({
       id: "u1",
-      email: "a@b.c",
+      email: "a@b.co",
       displayName: "A",
       isBot: false,
     } as never)
     await register(
       post("http://t/register", {
-        email: "a@b.c",
+        email: "a@b.co",
         password: "password1",
         displayName: "A",
         inviteCode: "abc123",

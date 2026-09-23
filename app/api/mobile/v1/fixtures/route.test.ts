@@ -18,7 +18,7 @@ const authMock = vi.mocked(authenticateMobileAccess)
 const membershipFindMany = vi.mocked(prisma.leagueMembership.findMany)
 const fixtureFindMany = vi.mocked(prisma.fixture.findMany)
 
-const user = { id: "u1", email: "a@b.c", displayName: "Alice", isBot: false }
+const user = { id: "u1", email: "a@b.c", displayName: "Alice", isBot: false, emailVerified: true }
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -39,6 +39,14 @@ describe("GET /api/mobile/v1/fixtures", () => {
     authMock.mockResolvedValue(null)
     const res = await GET(new NextRequest("http://test/api/mobile/v1/fixtures"))
     expect(res.status).toBe(401)
+  })
+
+  it("403s with email_unverified until the address is verified", async () => {
+    authMock.mockResolvedValue({ ...user, emailVerified: false })
+    const res = await GET(new NextRequest("http://test/api/mobile/v1/fixtures"))
+    expect(res.status).toBe(403)
+    expect((await res.json()).code).toBe("email_unverified")
+    expect(fixtureFindMany).not.toHaveBeenCalled()
   })
 
   it("omits peer predictions before kickoff", async () => {

@@ -32,6 +32,10 @@ model User {
   // Site host — may manage competitions, canonical fixtures, and confirm
   // results platform-wide. Synced from SITE_ADMIN_EMAILS at login.
   isSiteAdmin  Boolean               @default(false)
+  // Set when the user clicks the link in a verification email (or completes a
+  // password reset, which proves the same thing). Null = unverified: the web
+  // and the mobile API gate the account until it's set.
+  emailVerifiedAt DateTime?
   apiKey       String                @unique @default(cuid())
   createdAt    DateTime              @default(now())
   // Last meaningful presence (login, prediction, mobile refresh). Throttled
@@ -41,6 +45,7 @@ model User {
   predictions      Prediction[]
   bonusAwards      BonusAward[]
   resetTokens      PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
   mobileRefreshTokens MobileRefreshToken[]
   mobileDeviceTokens  MobileDeviceToken[]
 
@@ -71,6 +76,22 @@ model Competition {
 
 // Single-use, expiring token for the forgot-password flow. Only the SHA-256
 // hash of the token is stored — the raw value only ever exists in the email link.
+// Single-use link sent to prove a user owns their email address. Only the
+// SHA-256 of the raw token is stored. `email` pins the token to the address it
+// was sent to, so changing the address orphans any link already in flight.
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  email     String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
 model PasswordResetToken {
   id        String    @id @default(cuid())
   userId    String

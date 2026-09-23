@@ -8,12 +8,10 @@ const initial: LoginState = {}
 
 export default function LoginForm({
   callbackUrl,
-  registered,
   reset,
   deleted,
 }: {
   callbackUrl?: string
-  registered?: boolean
   reset?: boolean
   deleted?: boolean
 }) {
@@ -21,11 +19,6 @@ export default function LoginForm({
 
   return (
     <form action={formAction} className="space-y-4">
-      {registered && (
-        <div className="rounded-md bg-good-tint border border-good-line text-good px-4 py-3 text-sm">
-          Account created! Sign in to continue.
-        </div>
-      )}
       {reset && (
         <div className="rounded-md bg-good-tint border border-good-line text-good px-4 py-3 text-sm">
           Password reset! Sign in with your new password.

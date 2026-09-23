@@ -5,7 +5,7 @@ import { sendEmail } from "@/lib/email"
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    user: { findUnique: vi.fn(), update: vi.fn() },
+    user: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     passwordResetToken: {
       findFirst: vi.fn(),
       findUnique: vi.fn(),
@@ -22,6 +22,7 @@ vi.mock("@/lib/email", () => ({
 
 const userFindUnique = vi.mocked(prisma.user.findUnique)
 const userUpdate = vi.mocked(prisma.user.update)
+const userUpdateMany = vi.mocked(prisma.user.updateMany)
 const tokenFindFirst = vi.mocked(prisma.passwordResetToken.findFirst)
 const tokenFindUnique = vi.mocked(prisma.passwordResetToken.findUnique)
 const tokenCreate = vi.mocked(prisma.passwordResetToken.create)
@@ -148,6 +149,22 @@ describe("resetPassword", () => {
     expect(tokenUpdateMany).toHaveBeenCalledWith({
       where: { userId: "u1", usedAt: null },
       data: { usedAt: expect.any(Date) },
+    })
+  })
+
+  it("marks an unverified email as verified, since the link proved the mailbox", async () => {
+    tokenFindUnique.mockResolvedValue({
+      id: "t1",
+      userId: "u1",
+      usedAt: null,
+      expiresAt: new Date(Date.now() + 1000),
+    } as never)
+
+    await resetPassword("good-token", "newpassword1")
+
+    expect(userUpdateMany).toHaveBeenCalledWith({
+      where: { id: "u1", emailVerifiedAt: null },
+      data: { emailVerifiedAt: expect.any(Date) },
     })
   })
 })

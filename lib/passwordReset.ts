@@ -67,6 +67,13 @@ export async function resetPassword(
 
   await prisma.$transaction([
     prisma.user.update({ where: { id: record.userId }, data: { passwordHash } }),
+    // The link reached the account's mailbox, which is exactly what email
+    // verification proves — so a completed reset verifies too. Safe because
+    // changing an unverified address kills outstanding reset links.
+    prisma.user.updateMany({
+      where: { id: record.userId, emailVerifiedAt: null },
+      data: { emailVerifiedAt: new Date() },
+    }),
     // Invalidate every outstanding token for this user, not just the one used
     prisma.passwordResetToken.updateMany({
       where: { userId: record.userId, usedAt: null },

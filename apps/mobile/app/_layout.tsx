@@ -25,6 +25,9 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { isLoading, user } = useAuth()
+  // Missing (a server from before verification) counts as verified.
+  const verified = !!user && user.emailVerified !== false
+  const unverified = !!user && user.emailVerified === false
   const t = useTokens()
   const scheme = useColorScheme()
 
@@ -34,13 +37,15 @@ function RootNavigator() {
     }
   }, [isLoading])
 
+  // No push until verified: the server won't accept the device (403) and
+  // doesn't send reminders to unverified accounts anyway.
   useEffect(() => {
-    if (user) {
+    if (verified) {
       void registerForPushReminders().catch(() => {
         /* permission denied or missing EAS project id — non-fatal */
       })
     }
-  }, [user])
+  }, [verified])
 
   if (isLoading) {
     return null
@@ -58,12 +63,17 @@ function RootNavigator() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Protected guard={!!user}>
+        <Stack.Protected guard={verified}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack.Protected>
+        <Stack.Protected guard={unverified}>
+          <Stack.Screen name="verify-email" options={{ title: "Verify your email" }} />
         </Stack.Protected>
         <Stack.Protected guard={!user}>
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         </Stack.Protected>
+        {/* Open to unverified users too, so they can delete an account they
+            can't verify (App Store 5.1.1(v)). */}
         <Stack.Protected guard={!!user}>
           <Stack.Screen name="account" options={{ title: "Account" }} />
         </Stack.Protected>
