@@ -142,10 +142,12 @@ eas build --platform ios --profile production
 with `--auto-submit` ([deployment.md](deployment.md#mobile-release)). So the release
 steps are:
 
-1. Add the new version in App Store Connect (see below).
-2. Bump `expo.version` (and `package.json`) and merge to `main`.
-3. Wait for the upload and for Apple's processing email, select the build, and press
-   **Submit for Review**.
+1. Bump `expo.version` (and `package.json`) and merge to `main`. CI builds and
+   uploads; the build waits in TestFlight.
+2. Add the new version in App Store Connect (see below) — any time before submitting;
+   it doesn't have to exist before the upload.
+3. Once Apple's processing email arrives, select the build under that version and
+   press **Submit for Review**.
 
 For another build under the same version (a fix before review), use **Run
 workflow** on the Mobile release action. By hand, the equivalent is:
@@ -172,12 +174,14 @@ as 1.0.0 after 1.0.0 was live. Bump the patch (`1.0.1`) for fixes, the minor
 (`1.1.0`) for new features, and keep `apps/mobile/package.json` in step. Builds
 within one unreleased version can be uploaded as often as needed.
 
-`eas submit` **uploads** the binary; it does not submit for review. For an update,
-first add the version in App Store Connect (**+** next to *iOS App* → the new
-version number, with its *What's New* text from `app-store-listing.md`). After the
-upload Apple processes the build for 5–10 minutes, then it becomes selectable
-under *<version> Prepare for Submission → Build*, and **Submit for Review** is a
-button a human presses.
+`eas submit` **uploads** the binary; it does not submit for review. Apple accepts an
+upload for any version higher than the last approved one, whether or not that
+version exists in App Store Connect yet — the build appears in TestFlight. To
+submit it, add the version (**+** next to *iOS App* → the new version number, with
+its *What's New* text from `app-store-listing.md`), before or after the upload.
+Apple processes a build for 5–10 minutes, then it becomes selectable under
+*<version> Prepare for Submission → Build*, and **Submit for Review** is a button a
+human presses.
 
 > **The app icon comes from the build, not from a form.** App Store Connect has no
 > icon upload field for iOS — Apple reads the 1024×1024 marketing icon out of the
