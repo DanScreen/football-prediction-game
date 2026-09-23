@@ -12,6 +12,8 @@ export type MobileUserPublic = {
   email: string
   displayName: string
   isBot: boolean
+  /** False until the user clicks the link in their verification email. */
+  emailVerified: boolean
 }
 
 type AccessClaims = {
@@ -79,12 +81,14 @@ export function toMobileUserPublic(user: {
   email: string
   displayName: string
   isBot: boolean
+  emailVerifiedAt: Date | null
 }): MobileUserPublic {
   return {
     id: user.id,
     email: user.email,
     displayName: user.displayName,
     isBot: user.isBot,
+    emailVerified: !!user.emailVerifiedAt,
   }
 }
 
@@ -164,17 +168,22 @@ export async function revokeAllMobileRefreshTokens(userId: string): Promise<void
 
 /**
  * Resolves `Authorization: Bearer <accessToken>` to the user, or null.
- * Re-checks the DB so deleted users cannot keep calling the API.
+ * Re-checks the DB so deleted users cannot keep calling the API, and so
+ * `emailVerified` is always current — player endpoints must refuse an
+ * unverified user with `emailUnverifiedError()` (see mobile.md).
  */
-export async function authenticateMobileAccess(request: Request) {
+export async function authenticateMobileAccess(
+  request: Request,
+): Promise<MobileUserPublic | null> {
   const auth = request.headers.get("authorization") ?? ""
   if (!auth.startsWith("Bearer ")) return null
   const token = auth.slice("Bearer ".length).trim()
   if (!token) return null
   const userId = verifyMobileAccessToken(token)
   if (!userId) return null
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, displayName: true, isBot: true },
+    select: { id: true, email: true, displayName: true, isBot: true, emailVerifiedAt: true },
   })
+  return user ? toMobileUserPublic(user) : null
 }

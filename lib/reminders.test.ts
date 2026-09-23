@@ -14,9 +14,15 @@ const fixtureUpdateMany = vi.mocked(prisma.fixture.updateMany)
 const deviceFindMany = vi.mocked(prisma.mobileDeviceToken.findMany)
 const fetchMock = vi.fn()
 
-function member(id: string, opts: { isBot?: boolean } = {}) {
+function member(id: string, opts: { isBot?: boolean; verified?: boolean } = {}) {
   return {
-    user: { id, email: `${id}@test.com`, displayName: id, isBot: opts.isBot ?? false },
+    user: {
+      id,
+      email: `${id}@test.com`,
+      displayName: id,
+      isBot: opts.isBot ?? false,
+      emailVerifiedAt: opts.verified === false ? null : new Date("2026-09-01"),
+    },
   }
 }
 
@@ -101,6 +107,26 @@ describe("sendDeadlineReminders", () => {
     const body = JSON.parse(emailCalls[0]![1].body)
     expect(body.to).toBe("bob@test.com")
     expect(body.html).toContain("Arsenal vs Chelsea")
+  })
+
+  it("skips members whose email isn't verified — no email and no push", async () => {
+    fixtureFindMany.mockResolvedValue([
+      dueFixture({
+        competition: {
+          name: "Premier League",
+          leagues: [{ memberships: [member("alice", { verified: false }), member("bob")] }],
+        },
+      }),
+    ] as never)
+    deviceFindMany.mockResolvedValue([])
+
+    const result = await sendDeadlineReminders()
+
+    expect(result.sent).toBe(1)
+    const emailCalls = fetchMock.mock.calls.filter((c) => c[0] === "https://api.resend.com/emails")
+    expect(JSON.parse(emailCalls[0]![1].body).to).toBe("bob@test.com")
+    const deviceWhere = deviceFindMany.mock.calls[0][0]!.where as { userId: { in: string[] } }
+    expect(deviceWhere.userId.in).toEqual(["bob"])
   })
 
   it("skips fixtures on a competition a host has declared finished", async () => {

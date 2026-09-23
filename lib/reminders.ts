@@ -46,7 +46,15 @@ export async function sendDeadlineReminders(): Promise<{
             select: {
               memberships: {
                 select: {
-                  user: { select: { id: true, email: true, displayName: true, isBot: true } },
+                  user: {
+                    select: {
+                      id: true,
+                      email: true,
+                      displayName: true,
+                      isBot: true,
+                      emailVerifiedAt: true,
+                    },
+                  },
                 },
               },
             },
@@ -73,7 +81,10 @@ export async function sendDeadlineReminders(): Promise<{
     const seenForFixture = new Set<string>()
     for (const league of f.competition.leagues) {
       for (const { user } of league.memberships) {
-        if (user.isBot || predicted.has(user.id) || seenForFixture.has(user.id)) continue
+        // Unverified users are locked out until they verify, and their address
+        // may not even exist — mailing it would only earn bounces.
+        if (user.isBot || !user.emailVerifiedAt) continue
+        if (predicted.has(user.id) || seenForFixture.has(user.id)) continue
         seenForFixture.add(user.id)
         const entry = byUser.get(user.id) ?? {
           email: user.email,

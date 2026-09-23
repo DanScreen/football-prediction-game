@@ -45,6 +45,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.displayName,
           isBot: user.isBot,
           isSiteAdmin,
+          hasVerifiedEmail: !!user.emailVerifiedAt,
         }
       },
     }),

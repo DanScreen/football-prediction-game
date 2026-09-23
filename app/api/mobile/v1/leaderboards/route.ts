@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/prisma"
 import { authenticateMobileAccess } from "@/lib/mobileAuth"
-import { jsonError } from "@/lib/mobileHttp"
+import { emailUnverifiedError, jsonError } from "@/lib/mobileHttp"
 import { computeLeaderboard, computeLeagueForm, listPlayedRounds } from "@/lib/leaderboard"
 
 export async function GET(request: Request) {
   const user = await authenticateMobileAccess(request)
   if (!user) return jsonError("Unauthorized", 401)
+  if (!user.emailVerified) return emailUnverifiedError()
 
   // `?archived=1` includes leagues on finished competitions, mirroring
   // `/leaderboard?archived=1` on the web. Default is live competitions only.

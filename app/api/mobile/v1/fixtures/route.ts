@@ -1,7 +1,7 @@
 import { type NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { authenticateMobileAccess } from "@/lib/mobileAuth"
-import { jsonError } from "@/lib/mobileHttp"
+import { emailUnverifiedError, jsonError } from "@/lib/mobileHttp"
 import { provisionalScore, provisionalPoints } from "@/lib/provisional"
 
 function fixtureStatusFilter(status: string | null) {
@@ -63,6 +63,7 @@ function sortPeerPredictions<T extends { userId: string; displayName: string }>(
 export async function GET(request: NextRequest) {
   const user = await authenticateMobileAccess(request)
   if (!user) return jsonError("Unauthorized", 401)
+  if (!user.emailVerified) return emailUnverifiedError()
 
   // Finished competitions drop off the app's core tabs, exactly as they drop
   // off the website's. Their fixtures and predictions are untouched.

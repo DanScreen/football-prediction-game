@@ -25,7 +25,7 @@ const membershipFindFirst = vi.mocked(prisma.leagueMembership.findFirst)
 const upsertMock = vi.mocked(upsertPrediction)
 const setBankerMock = vi.mocked(setBanker)
 
-const user = { id: "u1", email: "a@b.c", displayName: "A", isBot: false }
+const user = { id: "u1", email: "a@b.c", displayName: "A", isBot: false, emailVerified: true }
 const futureFixture = {
   id: "fx1",
   competitionId: "c1",
@@ -54,6 +54,13 @@ describe("POST /api/mobile/v1/predictions", () => {
   it("401s without access token", async () => {
     authMock.mockResolvedValue(null)
     expect((await POST(post({}))).status).toBe(401)
+  })
+
+  it("403s with email_unverified until the address is verified", async () => {
+    authMock.mockResolvedValue({ ...user, emailVerified: false })
+    const res = await POST(post({ fixtureId: "fx1", home: 1, away: 0 }))
+    expect(res.status).toBe(403)
+    expect((await res.json()).code).toBe("email_unverified")
   })
 
   it("422s once the fixture has kicked off", async () => {

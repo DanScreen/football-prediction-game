@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { authenticateMobileAccess } from "@/lib/mobileAuth"
-import { jsonError } from "@/lib/mobileHttp"
+import { emailUnverifiedError, jsonError } from "@/lib/mobileHttp"
 import { computeLeaderboard } from "@/lib/leaderboard"
 
 type Ctx = { params: Promise<{ leagueId: string }> }
@@ -8,6 +8,7 @@ type Ctx = { params: Promise<{ leagueId: string }> }
 export async function GET(request: Request, context: Ctx) {
   const user = await authenticateMobileAccess(request)
   if (!user) return jsonError("Unauthorized", 401)
+  if (!user.emailVerified) return emailUnverifiedError()
 
   const { leagueId } = await context.params
   const membership = await prisma.leagueMembership.findUnique({

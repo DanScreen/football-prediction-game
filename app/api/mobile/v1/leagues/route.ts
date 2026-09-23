@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/prisma"
 import { authenticateMobileAccess } from "@/lib/mobileAuth"
-import { jsonError, readJsonBody } from "@/lib/mobileHttp"
+import { emailUnverifiedError, jsonError, readJsonBody } from "@/lib/mobileHttp"
 import { generateInviteCode, normaliseInviteCode } from "@/lib/inviteCode"
 
 export async function GET(request: Request) {
   const user = await authenticateMobileAccess(request)
   if (!user) return jsonError("Unauthorized", 401)
+  if (!user.emailVerified) return emailUnverifiedError()
 
   const memberships = await prisma.leagueMembership.findMany({
     where: { userId: user.id },
@@ -42,6 +43,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const user = await authenticateMobileAccess(request)
   if (!user) return jsonError("Unauthorized", 401)
+  if (!user.emailVerified) return emailUnverifiedError()
 
   const parsed = await readJsonBody(request)
   if (!parsed.ok) return parsed.response

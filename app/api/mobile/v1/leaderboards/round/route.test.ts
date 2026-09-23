@@ -14,7 +14,7 @@ const authMock = vi.mocked(authenticateMobileAccess)
 const membershipFindFirst = vi.mocked(prisma.leagueMembership.findFirst)
 const computeMock = vi.mocked(computeLeaderboard)
 
-const user = { id: "u1", email: "a@b.c", displayName: "Alice", isBot: false }
+const user = { id: "u1", email: "a@b.c", displayName: "Alice", isBot: false, emailVerified: true }
 const url = (query: string) => new Request(`http://test/api/mobile/v1/leaderboards/round${query}`)
 const validRequest = url("?leagueId=l1&round=Matchday+5")
 

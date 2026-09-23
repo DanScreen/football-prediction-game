@@ -9,11 +9,14 @@ declare module "next-auth" {
       name: string
       isBot: boolean
       isSiteAdmin: boolean
+      hasVerifiedEmail: boolean
     }
   }
   interface User {
     isBot: boolean
     isSiteAdmin: boolean
+    /** Absent on sessions minted before email verification existed. */
+    hasVerifiedEmail?: boolean
   }
 }
 
@@ -22,5 +25,7 @@ declare module "next-auth/jwt" {
     id: string
     isBot: boolean
     isSiteAdmin: boolean
+    /** Absent on sessions minted before email verification existed. */
+    hasVerifiedEmail?: boolean
   }
 }

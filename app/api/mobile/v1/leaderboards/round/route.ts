@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { authenticateMobileAccess } from "@/lib/mobileAuth"
-import { jsonError } from "@/lib/mobileHttp"
+import { emailUnverifiedError, jsonError } from "@/lib/mobileHttp"
 import { computeLeaderboard } from "@/lib/leaderboard"
 
 /**
@@ -20,6 +20,7 @@ import { computeLeaderboard } from "@/lib/leaderboard"
 export async function GET(request: Request) {
   const user = await authenticateMobileAccess(request)
   if (!user) return jsonError("Unauthorized", 401)
+  if (!user.emailVerified) return emailUnverifiedError()
 
   const params = new URL(request.url).searchParams
   const leagueId = params.get("leagueId")

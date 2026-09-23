@@ -94,6 +94,7 @@ describe("authenticateMobileAccess", () => {
       email: "a@b.c",
       displayName: "A",
       isBot: false,
+      emailVerifiedAt: new Date(),
     } as never)
     const user = await authenticateMobileAccess(
       new Request("http://t", { headers: { authorization: `Bearer ${token}` } }),
@@ -103,11 +104,27 @@ describe("authenticateMobileAccess", () => {
       email: "a@b.c",
       displayName: "A",
       isBot: false,
+      emailVerified: true,
     })
     expect(userFindUnique).toHaveBeenCalledWith({
       where: { id: "u1" },
-      select: { id: true, email: true, displayName: true, isBot: true },
+      select: { id: true, email: true, displayName: true, isBot: true, emailVerifiedAt: true },
     })
+  })
+
+  it("still authenticates an unverified user, flagged so routes can gate", async () => {
+    const token = signMobileAccessToken("u1")
+    userFindUnique.mockResolvedValue({
+      id: "u1",
+      email: "a@b.c",
+      displayName: "A",
+      isBot: false,
+      emailVerifiedAt: null,
+    } as never)
+    const user = await authenticateMobileAccess(
+      new Request("http://t", { headers: { authorization: `Bearer ${token}` } }),
+    )
+    expect(user?.emailVerified).toBe(false)
   })
 })
 

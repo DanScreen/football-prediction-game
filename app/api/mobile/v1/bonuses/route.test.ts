@@ -17,7 +17,7 @@ const authMock = vi.mocked(authenticateMobileAccess)
 const membershipFindMany = vi.mocked(prisma.leagueMembership.findMany)
 const bonusFindMany = vi.mocked(prisma.bonusAward.findMany)
 
-const user = { id: "u1", email: "a@b.c", displayName: "Alice", isBot: false }
+const user = { id: "u1", email: "a@b.c", displayName: "Alice", isBot: false, emailVerified: true }
 const request = new Request("http://test/api/mobile/v1/bonuses")
 
 beforeEach(() => {

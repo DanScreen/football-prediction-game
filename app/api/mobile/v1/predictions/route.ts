@@ -1,7 +1,7 @@
 import { type NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { authenticateMobileAccess } from "@/lib/mobileAuth"
-import { jsonError, readJsonBody } from "@/lib/mobileHttp"
+import { emailUnverifiedError, jsonError, readJsonBody } from "@/lib/mobileHttp"
 import { upsertPrediction } from "@/lib/predictions"
 import { provisionalScore, provisionalPoints } from "@/lib/provisional"
 import { setBanker } from "@/lib/banker"
@@ -9,6 +9,7 @@ import { setBanker } from "@/lib/banker"
 export async function GET(request: NextRequest) {
   const user = await authenticateMobileAccess(request)
   if (!user) return jsonError("Unauthorized", 401)
+  if (!user.emailVerified) return emailUnverifiedError()
 
   const competitionId = request.nextUrl.searchParams.get("competitionId")
 
@@ -89,6 +90,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const user = await authenticateMobileAccess(request)
   if (!user) return jsonError("Unauthorized", 401)
+  if (!user.emailVerified) return emailUnverifiedError()
 
   const parsed = await readJsonBody(request)
   if (!parsed.ok) return parsed.response
