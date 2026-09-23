@@ -25,19 +25,17 @@ The images it refers to are in `store-assets/promo/` (upload these) and
 | Export compliance | ✅ `ITSAppUsesNonExemptEncryption: false` in `app.json` |
 | On-device testing before submission | ✅ Expo Go, `npm run start:go` (no Apple account needed) |
 | Apple Developer Program membership | ✅ active — team `MB86PHVDWH` (individual) |
-| `eas login` / `eas build` / submission | ⚠️ build **1.0.0 (6)** uploaded 2026-09-06, but it predates email verification — **build and upload a new one first** (see below) |
+| `eas login` / `eas build` / submission | ✅ build **1.0.0 (7)** uploaded 2026-09-23 — includes the email-verification screen; **submit this one** |
 | Production demo account for the reviewer | ✅ done (2026-09-04) — see `app-store-listing.md` |
 | iPad screenshots **or** `supportsTablet: false` | ✅ `supportsTablet: false` (2026-09-04) — iPhone only, no iPad set needed |
 
-> **Email verification (2026-09-23) makes (6) unsubmittable once it deploys.** The
-> server now refuses player endpoints for unverified accounts (403
-> `email_unverified`), and (6) has no verify screen: a reviewer who *signs up* gets
-> an error on every tab. The demo account is backfilled as verified by the
-> migration, so signing in with it still works on any build — but Apple does test
-> sign-up. Build and upload from a commit that includes `app/verify-email.tsx`,
-> then submit that.
+> **Submit (7), never (6) or earlier.** Email verification is live (2026-09-23):
+> the server refuses player endpoints for unverified accounts (403
+> `email_unverified`), and builds up to (6) have no verify screen, so a reviewer who
+> *signs up* on one gets an error on every tab. (7) has the screen. The demo account
+> is backfilled as verified, so signing in with it works on any build.
 
-Apart from that new build, everything above is done. Submitting for review is a
+Everything above is done. Submitting for review is a
 button in App Store Connect — see [Submitting](#submitting) below.
 
 > **iPad:** decided 2026-09-04 — `app.json` sets `supportsTablet: false`, so 1.0
@@ -165,7 +163,8 @@ Log of uploaded builds:
 
 | Build | Commit | Uploaded | Notes |
 |---|---|---|---|
-| 1.0.0 (6) | `28ee059` | 2026-09-06 | Podium medals go by rank and skip zero-point rounds. **Don't submit once email verification is deployed** — it has no verify screen. |
+| 1.0.0 (7) | `2b5080e` | 2026-09-23 | Email verification: format check at sign-up and the verify-email screen that holds unverified accounts. **The build to submit.** |
+| 1.0.0 (6) | `28ee059` | 2026-09-06 | Podium medals go by rank and skip zero-point rounds. **Don't submit** — no verify screen, and verification is now live. |
 | 1.0.0 (5) | `5a4f483` | 2026-09-06 | Gameweek leaderboards in the app; Results tab scrolling fixed. Superseded by (6), which fixes the medals shown on an unconfirmed gameweek. |
 | 1.0.0 (4) | `1b662b1` | 2026-09-05 | First build sent to App Store Connect. Support page, finished competitions, reorganised Results tab, account icon in the header. |
 | 1.0.0 (2) | `3cf457b` | — | Built 2026-08-17, never uploaded. Predates all of the above. |

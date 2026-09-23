@@ -6,6 +6,12 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-23 — Build 1.0.0 (7) uploaded
+
+iOS build from `2b5080e`, straight after email verification deployed. Adds the
+verify-email screen and the sign-up format check to the app. This is the build to
+submit for review — (6) has no verify screen. See [store-release.md](store-release.md).
+
 ## 2026-09-23 — Email format checks and required email verification
 
 Junk sign-ups (addresses with no domain, one-letter TLDs, typos) were getting in.
@@ -18,7 +24,7 @@ click from any device without signing in again. A completed password reset also
 verifies, unverified accounts get no reminders, and the App Store reviewer's demo
 account is backfilled as verified. New `EmailVerificationToken` table and
 `User.emailVerifiedAt` (migration `20260923120000_email_verification`). Build
-1.0.0 (6) predates this — a new iOS build is needed before submission. Detail:
+1.0.0 (7) carries the app side (see below). Detail:
 [features.md](features.md#email-format-check--verification-verify-email),
 [mobile.md](mobile.md#email-verification), [decisions.md](decisions.md).
 

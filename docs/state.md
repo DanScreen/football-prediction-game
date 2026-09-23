@@ -14,9 +14,9 @@ platform-owned competitions model (the big refactor) is complete and live.
 is **prepared**: the app now matches the website visually, in-app account
 deletion, a real privacy policy and a support page are shipped, and the listing copy and
 screenshots are generated (`store-assets/`, `npm run store:shots`). iOS build
-**1.0.0 (6)** is the latest upload (2026-09-06), but it has no email-verification
-screen — once that feature deploys, a new build is needed before pressing **Submit
-for Review**. The app itself can be tried on a phone today
+**1.0.0 (7)** is the latest upload (2026-09-23) and includes the email-verification
+screen — it's the build to send with **Submit for Review**; earlier builds must not
+be submitted now that verification is live. The app itself can be tried on a phone today
 through **Expo Go** (`cd apps/mobile && npm run start:go`), verified 2026-09-05 —
 everything but push reminders and `scorers://` deep links works there. See
 [store-release.md](store-release.md). Open fixtures on Predictions (web and app) are
@@ -28,9 +28,9 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 - **Auth** — open email/password registration (email format checked), login, JWT
   sessions, profile page with API-key generation, forgot-password / reset via email.
-  **Email verification is required** (branch `feature/email-verification`, 2026-09-23,
-  not yet deployed): every account — existing ones included — is held at
-  `/verify-email` (web) / the verify screen (app) until it clicks the emailed link. **Invite links**
+  **Email verification is required** (live 2026-09-23): every account — existing
+  ones included — is held at `/verify-email` (web) / the verify screen (app) until
+  it clicks the emailed link. **Invite links**
   (`/register?invite=CODE`) create the account and join the league in one step.
 - **Two admin tiers:**
   - **Site hosts** (`User.isSiteAdmin`) own competitions, fixtures, imports, and
