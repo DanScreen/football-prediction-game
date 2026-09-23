@@ -1,0 +1,85 @@
+# Builds the iOS app on EAS and uploads it to App Store Connect — but only when
+# `expo.version` in apps/mobile/app.json is new. Bumping the version is the
+# "ship it" signal: most pushes to `main` are web-only, and an upload under a
+# version Apple has already approved is rejected (ITMS-90186 / ITMS-90062).
+#
+# Runs after Deploy succeeds, so the tests and mobile typecheck have passed and
+# the API the new build talks to is already live. The manual "Run workflow"
+# button skips the version check, for another upload under the same unreleased
+# version (e.g. a fix before pressing Submit for Review).
+#
+# Submitting for review stays a human step in App Store Connect.
+name: Mobile release
+
+on:
+  workflow_run:
+    workflows: [Deploy]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-release
+  cancel-in-progress: false
+
+jobs:
+  ios:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      # workflow_run checks out the default branch's latest commit by default;
+      # build exactly the commit Deploy just shipped.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      # "New" means no production iOS build of this version exists on EAS yet,
+      # other than failed or cancelled ones — so a retry after a failed build
+      # still ships, and a second push under the same version does not.
+      - name: Check for a new app version
+        id: version
+        run: |
+          VERSION=$(jq -r .expo.version app.json)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual run: building $VERSION regardless."
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          EXISTING=$(eas build:list --platform ios --build-profile production \
+            --app-version "$VERSION" --limit 50 --json \
+            | jq '[.[] | select(.status != "ERRORED" and .status != "CANCELED")] | length')
+          if [ "$EXISTING" -gt 0 ]; then
+            echo "Version $VERSION already has $EXISTING build(s) on EAS; nothing to release."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version $VERSION is new: building and uploading."
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install mobile dependencies
+        if: steps.version.outputs.build == 'true'
+        run: npm ci
+
+      # --auto-submit hands the upload to EAS once the build finishes (the App
+      # Store Connect API key lives on EAS), and --no-wait means this job ends
+      # as soon as the build is queued rather than idling for ~15 minutes.
+      # Follow progress, and any submit failure, on expo.dev.
+      - name: Build and submit
+        if: steps.version.outputs.build == 'true'
+        run: eas build --platform ios --profile production --non-interactive --auto-submit --no-wait

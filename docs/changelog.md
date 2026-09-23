@@ -6,6 +6,21 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-23 — iOS builds ship from CI
+
+New workflow `.github/workflows/mobile-release.yml`: after Deploy succeeds on
+`main`, EAS builds the iOS app and auto-submits it to App Store Connect — only when
+`expo.version` in `apps/mobile/app.json` hasn't been built yet. Needs the
+`EXPO_TOKEN` GitHub secret. Detail: [deployment.md](deployment.md#mobile-release),
+[decisions.md](decisions.md).
+
+## 2026-09-23 — Build 1.0.1 (8) uploaded
+
+iOS build from `8f43628` (the version bump on `main`), uploaded to App Store
+Connect with `eas submit`. First 1.0.1 build; carries the verify-email screen and
+the sign-up format check. This is the build to submit for review. See
+[store-release.md](store-release.md).
+
 ## 2026-09-23 — iOS app version 1.0.1
 
 iOS 1.0.0 is reviewed and live, so its version train is closed: an upload still

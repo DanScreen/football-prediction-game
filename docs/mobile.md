@@ -486,7 +486,7 @@ lives in the root project because the mobile tsconfig has no Node types.
 
 ## Open items (Phase 5)
 
-- Apple/Google developer accounts and the actual `eas build` / submit — [store-release.md](store-release.md)
+- Apple/Google developer accounts and the actual `eas build` / submit — [store-release.md](store-release.md). iOS builds and uploads now run from CI when `expo.version` changes ([deployment.md](deployment.md#mobile-release))
 - A production demo account for the App Store reviewer
 - Decide iPad: produce a 13" screenshot set, or set `supportsTablet: false`
 - Universal links / App Links for `https://scorersonline.uk/register?invite=` (optional; scheme works)
