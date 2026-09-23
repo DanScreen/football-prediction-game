@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Text, V
 import { ApiError } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { API_BASE_URL } from "@/lib/config"
+import { INVALID_EMAIL_MESSAGE, isValidEmail } from "@/lib/emailAddress"
 import { useTokens } from "@/lib/theme"
 import {
   BrandMark,
@@ -32,6 +33,10 @@ export default function RegisterScreen() {
 
   async function onSubmit() {
     setError(null)
+    if (!isValidEmail(email.trim().toLowerCase())) {
+      setError(INVALID_EMAIL_MESSAGE)
+      return
+    }
     if (password.length < 8) {
       setError("Password must be at least 8 characters.")
       return

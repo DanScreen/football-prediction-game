@@ -14,6 +14,9 @@ import {
   logoutRemote,
   deleteAccount as apiDeleteAccount,
   register as apiRegister,
+  resendVerification as apiResendVerification,
+  changeEmail as apiChangeEmail,
+  setEmailUnverifiedHandler,
   type MeResponse,
   type MobileUser,
 } from "@/lib/api"
@@ -34,6 +37,23 @@ type AuthContextValue = {
   /** Permanent account deletion. Signs out locally once the server confirms. */
   deleteAccount: () => Promise<void>
   refreshProfile: () => Promise<void>
+  /** Re-send the verification link. Throws `ApiError` (429 during the cooldown). */
+  resendVerification: () => Promise<void>
+  /**
+   * Fix a mistyped address while unverified. Resolves to a warning when the
+   * address changed but the new link couldn't be sent.
+   */
+  changeEmail: (email: string) => Promise<string | undefined>
+}
+
+function toUser(profile: MeResponse): MobileUser {
+  return {
+    id: profile.id,
+    email: profile.email,
+    displayName: profile.displayName,
+    isBot: profile.isBot,
+    emailVerified: profile.emailVerified,
+  }
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -53,12 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const profile = await fetchMe()
       setMe(profile)
-      setUser({
-        id: profile.id,
-        email: profile.email,
-        displayName: profile.displayName,
-        isBot: profile.isBot,
-      })
+      setUser(toUser(profile))
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         await clearTokens()
@@ -66,6 +81,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
       setMe(null)
     }
+  }, [])
+
+  // A gated endpoint said "verify first" — our copy of the user is stale (or
+  // predates the field), so flip it and the root layout shows the verify screen.
+  useEffect(() => {
+    setEmailUnverifiedHandler(() => {
+      setUser((u) => (u && u.emailVerified !== false ? { ...u, emailVerified: false } : u))
+    })
+    return () => setEmailUnverifiedHandler(null)
   }, [])
 
   useEffect(() => {
@@ -130,17 +154,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = useCallback(async () => {
     const profile = await fetchMe()
     setMe(profile)
-    setUser({
-      id: profile.id,
-      email: profile.email,
-      displayName: profile.displayName,
-      isBot: profile.isBot,
-    })
+    setUser(toUser(profile))
+  }, [])
+
+  const resendVerification = useCallback(async () => {
+    const result = await apiResendVerification()
+    // Verified in the meantime (link clicked elsewhere) — pick that up.
+    if (result.status === "already-verified") await refreshProfile()
+  }, [refreshProfile])
+
+  const changeEmail = useCallback(async (email: string) => {
+    const result = await apiChangeEmail(email.trim().toLowerCase())
+    setUser((u) => (u ? { ...u, email: result.email } : u))
+    setMe((m) => (m ? { ...m, email: result.email } : m))
+    return result.warning
   }, [])
 
   const value = useMemo(
-    () => ({ user, me, isLoading, login, register, logout, deleteAccount, refreshProfile }),
-    [user, me, isLoading, login, register, logout, deleteAccount, refreshProfile],
+    () => ({
+      user,
+      me,
+      isLoading,
+      login,
+      register,
+      logout,
+      deleteAccount,
+      refreshProfile,
+      resendVerification,
+      changeEmail,
+    }),
+    [
+      user,
+      me,
+      isLoading,
+      login,
+      register,
+      logout,
+      deleteAccount,
+      refreshProfile,
+      resendVerification,
+      changeEmail,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

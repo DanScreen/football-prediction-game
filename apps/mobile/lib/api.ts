@@ -11,6 +11,13 @@ export type MobileUser = {
   email: string
   displayName: string
   isBot: boolean
+  /**
+   * False until the user clicks the link in the verification email; the server
+   * refuses player endpoints until then. Optional because a server deployed
+   * before verification existed doesn't send it — treat a missing value as
+   * verified (that server wouldn't gate anything).
+   */
+  emailVerified?: boolean
 }
 
 export type LeagueSummary = {
@@ -130,10 +137,23 @@ export type RulesResponse = {
 
 export class ApiError extends Error {
   status: number
-  constructor(status: number, message: string) {
+  /** Machine-readable reason, when the server gives one (e.g. `email_unverified`). */
+  code?: string
+  constructor(status: number, message: string, code?: string) {
     super(message)
     this.status = status
+    this.code = code
   }
+}
+
+/**
+ * Called when any request is refused with `email_unverified` — the auth
+ * context uses it to route to the verify screen if its idea of the user is
+ * stale. Set once by `AuthProvider`.
+ */
+let onEmailUnverified: (() => void) | null = null
+export function setEmailUnverifiedHandler(handler: (() => void) | null) {
+  onEmailUnverified = handler
 }
 
 type RequestOptions = {
@@ -172,14 +192,14 @@ async function tryRefresh(): Promise<boolean> {
   return refreshInFlight
 }
 
-async function parseError(res: Response): Promise<string> {
+async function parseError(res: Response): Promise<{ message: string; code?: string }> {
   try {
-    const data = (await res.json()) as { error?: string }
-    if (data.error) return data.error
+    const data = (await res.json()) as { error?: string; code?: string }
+    if (data.error) return { message: data.error, code: data.code }
   } catch {
     /* ignore */
   }
-  return res.statusText || `Request failed (${res.status})`
+  return { message: res.statusText || `Request failed (${res.status})` }
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -206,7 +226,9 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   if (res.status === 204) return undefined as T
 
   if (!res.ok) {
-    throw new ApiError(res.status, await parseError(res))
+    const { message, code } = await parseError(res)
+    if (code === "email_unverified") onEmailUnverified?.()
+    throw new ApiError(res.status, message, code)
   }
 
   return (await res.json()) as T
@@ -235,6 +257,21 @@ export async function register(input: {
 
 export async function fetchMe(): Promise<MeResponse> {
   return apiRequest<MeResponse>("/me")
+}
+
+/** Send (or re-send) the verification link. 429 inside the resend cooldown. */
+export async function resendVerification(): Promise<{ status: "sent" | "already-verified" }> {
+  return apiRequest("/auth/resend-verification", { method: "POST" })
+}
+
+/**
+ * Correct a mistyped address while still unverified; a new link goes to it.
+ * `warning` is set when the address changed but the link couldn't be sent.
+ */
+export async function changeEmail(
+  email: string,
+): Promise<{ email: string; emailVerified: boolean; warning?: string }> {
+  return apiRequest("/me", { method: "PATCH", body: { email } })
 }
 
 /** Permanent, irreversible account deletion (App Store guideline 5.1.1(v)). */

@@ -17,6 +17,7 @@ vi.mock("@/lib/prisma", () => ({
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
+      delete: vi.fn(),
       updateMany: vi.fn(),
       deleteMany: vi.fn(),
     },
@@ -34,6 +35,7 @@ const userUpdate = vi.mocked(prisma.user.update)
 const tokenFindFirst = vi.mocked(prisma.emailVerificationToken.findFirst)
 const tokenFindUnique = vi.mocked(prisma.emailVerificationToken.findUnique)
 const tokenCreate = vi.mocked(prisma.emailVerificationToken.create)
+const tokenDelete = vi.mocked(prisma.emailVerificationToken.delete)
 const tokenUpdateMany = vi.mocked(prisma.emailVerificationToken.updateMany)
 const tokenDeleteMany = vi.mocked(prisma.emailVerificationToken.deleteMany)
 const resetUpdateMany = vi.mocked(prisma.passwordResetToken.updateMany)
@@ -51,6 +53,8 @@ beforeEach(() => {
   vi.resetAllMocks()
   vi.stubEnv("AUTH_URL", "https://example.com")
   transaction.mockImplementation((ops: unknown[]) => Promise.all(ops) as never)
+  tokenCreate.mockResolvedValue({ id: "t1" } as never)
+  tokenDelete.mockResolvedValue({} as never)
 })
 
 afterEach(() => {
@@ -99,11 +103,13 @@ describe("sendVerificationEmail", () => {
     expect(sendEmailMock).not.toHaveBeenCalled()
   })
 
-  it("propagates a send failure to the caller", async () => {
+  it("propagates a send failure and drops the unsent token", async () => {
     userFindUnique.mockResolvedValue(unverified as never)
     tokenFindFirst.mockResolvedValue(null)
     sendEmailMock.mockRejectedValue(new Error("Resend down"))
     await expect(sendVerificationEmail("u1")).rejects.toThrow("Resend down")
+    // Otherwise the page would say "we sent a link" and the retry would be in cooldown
+    expect(tokenDelete).toHaveBeenCalledWith({ where: { id: "t1" } })
   })
 })
 

@@ -49,7 +49,7 @@ export async function sendVerificationEmail(userId: string): Promise<SendVerific
   }
 
   const rawToken = crypto.randomBytes(32).toString("hex")
-  await prisma.emailVerificationToken.create({
+  const token = await prisma.emailVerificationToken.create({
     data: {
       userId,
       email: user.email,
@@ -59,14 +59,21 @@ export async function sendVerificationEmail(userId: string): Promise<SendVerific
   })
 
   const link = `${process.env.AUTH_URL ?? ""}/verify-email/${rawToken}`
-  await sendEmail({
-    to: user.email,
-    subject: "Confirm your email for Scorers",
-    html: `<p>Hi ${escapeHtml(user.displayName)},</p>
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: "Confirm your email for Scorers",
+      html: `<p>Hi ${escapeHtml(user.displayName)},</p>
 <p>Confirm this is your email address to finish setting up your Scorers account.</p>
 <p><a href="${link}">Confirm my email address</a></p>
 <p>The link works once and expires in 24 hours. If you didn't sign up for Scorers, you can ignore this email.</p>`,
-  })
+    })
+  } catch (err) {
+    // A token nobody was sent would claim "we sent a link" on the verify page
+    // and hold the resend button in its cooldown — drop it so a retry is free.
+    await prisma.emailVerificationToken.delete({ where: { id: token.id } }).catch(() => {})
+    throw err
+  }
 
   return { status: "sent" }
 }
