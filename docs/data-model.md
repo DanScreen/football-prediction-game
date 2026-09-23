@@ -32,11 +32,15 @@ Platform-owned. Owns the canonical fixtures that leagues share.
 - `isBot` — cosmetic flag (🤖 in the UI); bots are just users who use the API.
 - `isSiteAdmin` — **site host**. Synced from the `SITE_ADMIN_EMAILS` env var on
   login (see `auth.ts`); gates the `/host` area.
+- `lastSeenAt` (nullable) — last meaningful presence (web login, prediction upsert,
+  mobile login/refresh). Written by `touchLastSeen()` with a ~15-minute throttle so
+  JWT sessions don't turn into a write storm. Powers host DAU/WAU/MAU on `/host`.
+  Migration: `20260923000000_user_last_seen_at`. Indexed.
 - `apiKey` (unique) — Bearer token for the public API.
 - `emailVerifiedAt` (nullable) — when the user proved they own `email` (verification
   link or a completed password reset). Null = held at `/verify-email` / 403
   `email_unverified` on the mobile API. Every pre-existing account started null
-  (migration `20260923000000_email_verification`), except the App Store reviewer's
+  (migration `20260923120000_email_verification`), except the App Store reviewer's
   demo account, which it backfills.
 - Relations: `memberships[]`, `predictions[]`, `bonusAwards[]`, `resetTokens[]`,
   `emailVerificationTokens[]`, `mobileRefreshTokens[]`, `mobileDeviceTokens[]`.
@@ -89,7 +93,7 @@ A per-round bonus (currently only the streak bonus), kept separate from
   only in the email link), `expiresAt`, `usedAt` (nullable), `createdAt`.
 
 ### EmailVerificationToken
-Migration `20260923000000_email_verification`.
+Migration `20260923120000_email_verification`.
 - `id`, `userId`, `email` (the address the link was sent to — a link only verifies
   that address), `tokenHash` (unique, SHA-256 only), `expiresAt` (24 h), `usedAt`
   (nullable), `createdAt` (drives the 60 s resend cooldown).

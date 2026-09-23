@@ -107,14 +107,16 @@ Open fixtures to pick on and kicked-off fixtures still in play, scoped by **comp
 
 - **Open** — upcoming fixtures with a countdown and a score input each, **grouped into
   gameweeks** (`FixtureRoundGroup.tsx`) and capped at the **current gameweek and the next
-  one** per competition (`VISIBLE_OPEN_ROUNDS`). Later rounds can exist in the database —
-  hosts add fixtures by hand, and the auto-import window moves on — but picks four
-  gameweeks out aren't the game, and they buried the round with a live deadline. The cap
-  is applied to the grouped rounds, so the banker header and the nudge below only ever
-  describe fixtures the player can act on. Cards carry an amber left edge when unpredicted,
-  green when predicted. Scores **auto-save** once both boxes have a valid integer
-  (debounced ~450ms, also on blur) — there is no Save button. A brief ✓ Saved / Saving
-  status appears beside the inputs. Only the nearest round that still needs picks is
+  one** per competition (`VISIBLE_OPEN_ROUNDS` in `lib/visibleOpenRounds.ts`). Later rounds
+  can exist in the database — hosts add fixtures by hand, and the auto-import window moves
+  on — but picks four gameweeks out aren't the game, and they buried the round with a live
+  deadline. The same cap applies on the **mobile** Predictions tab (client-side) and on
+  `GET /api/mobile/v1/fixtures?status=open` (so already-shipped app builds pick it up without
+  a store update). The cap is applied before the banker header and the nudge derive from the
+  list, so they only ever describe fixtures the player can act on. Cards carry an amber left
+  edge when unpredicted, green when predicted. Scores **auto-save** once both boxes have a
+  valid integer (debounced ~450ms, also on blur) — there is no Save button. A brief ✓ Saved /
+  Saving status appears beside the inputs. Only the nearest round that still needs picks is
   expanded; later rounds collapse to a one-line summary with a "N to predict" badge. A
   full Premier League round is 10 fixtures and several rounds import at once, so a flat
   list ran past 20 cards. Built on native `<details>` — no client JS for the grouping,
@@ -229,10 +231,13 @@ Five extra numeric columns would force a phone to scroll the table sideways, so 
 non-zero parts. The ★ and 🔥 headers carry `sr-only` labels, since an emoji alone
 announces nothing useful.
 
-Each form cell is **dual-encoded**## Host area (`/host`) — site hosts only
+Each form cell is **dual-encoded**.
+
+## Host area (`/host`) — site hosts only
 
 | Page | Purpose |
 |------|---------|
+| `/host` | **Overview** — platform user counts (humans/bots), DAU/WAU/MAU from `lastSeenAt`, signups and prediction volume (7d/30d, web vs API), mobile reach, and a recent-users table. |
 | `/host/competitions` | Create/edit competitions (name, football-data code, flag, active). No delete. |
 | `/host/fixtures` | Add/edit/delete canonical fixtures for a competition. |
 | `/host/fixtures/editor` | **Gameweek editor** — one competition at a time, every fixture in the database grouped by gameweek. Tick any number and move them to another gameweek or delete them in bulk. For re-cutting rounds that don't divide evenly (TV splits, postponements, cup ties landing mid-round). Guards below. |
@@ -263,7 +268,7 @@ Two destinations, scoped to the league chosen via **Manage** on `/leagues`:
 
 | Page | Purpose |
 |---|---|
-| `/admin/picks` | **Pick status** — for each upcoming fixture, see which league members have submitted a prediction and which haven't. Actual scores stay hidden until kickoff; commissioners only see picked vs not yet. Includes a per-member summary across all open fixtures. |
+| `/admin/picks` | **Pick status** — for each upcoming fixture in the **current and next gameweek** (same `VISIBLE_OPEN_ROUNDS` cap as Predictions), see which league members have submitted a prediction and which haven't. Actual scores stay hidden until kickoff; commissioners only see picked vs not yet. Includes a per-member summary across those open fixtures. |
 | `/admin/settings` | Rename the league, manage its invite code, plus a read-only summary of the streak tiers (kept because commissioners used to configure the Grand Slam here and will look for it). |
 
 Fixtures and results are handled by site hosts, not league commissioners.
@@ -290,11 +295,17 @@ Results are applied automatically once football-data.org has them:
 2. **Auto-confirm** — when a score is found, `confirmFixtureResult()` (`lib/results.ts`)
    saves it immediately, marks the fixture `COMPLETED`, scores every prediction once,
    and fans out streak bonuses per subscribing league. No host sign-off step.
-3. **Host correction** — site hosts can enter a missing result or **edit a confirmed
+3. **Reconcile** — for **24 hours after kickoff**, the same sweep re-checks every
+   `AI_CONFIRMED` result against the API. If the published scoreline has changed
+   (typical case: a goal disallowed after football-data.org first marked the match
+   `FINISHED`), it re-applies the new score, re-scores predictions, and updates
+   streak bonuses. Host **`MANUAL`** corrections are never overwritten. Matching
+   scores are a no-op so the extra work is cheap.
+4. **Host correction** — site hosts can enter a missing result or **edit a confirmed
    score** from `/host/results` or `/host/fixtures` (re-scores every prediction and
    updates streak bonuses for the round). API lookup on the enter-result page also
    confirms immediately.
-4. **Fallbacks** — members can **Request result** from Predictions once the fixture is
+5. **Fallbacks** — members can **Request result** from Predictions once the fixture is
    due; hosts have a **Check for Updates** button (runs the sweep on demand); manual
    entry always works when the API has nothing yet.
 

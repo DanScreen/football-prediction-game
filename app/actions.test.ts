@@ -39,7 +39,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   authMock.mockResolvedValue({ user: { id: "u1" } } as never)
   membershipFindFirst.mockResolvedValue({ id: "m1" } as never)
-  confirmFromApiMock.mockResolvedValue({ confirmed: 0, errors: [] })
+  confirmFromApiMock.mockResolvedValue({ confirmed: 0, corrected: 0, errors: [] })
   fixtureUpdateMany.mockResolvedValue({ count: 1 })
 })
 
@@ -93,7 +93,7 @@ describe("requestResult", () => {
 
   it("surfaces lookup errors", async () => {
     fixtureFindUnique.mockResolvedValue(fixture() as never)
-    confirmFromApiMock.mockResolvedValue({ confirmed: 0, errors: ["API error 429"] })
+    confirmFromApiMock.mockResolvedValue({ confirmed: 0, corrected: 0, errors: ["API error 429"] })
     expect(await requestResult("fx1")).toEqual({ error: "API error 429" })
   })
 })

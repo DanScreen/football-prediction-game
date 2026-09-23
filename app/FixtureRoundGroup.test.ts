@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { groupByRound, takeNearestRounds, VISIBLE_OPEN_ROUNDS } from "@/app/FixtureRoundGroup"
+import { groupByRound } from "@/app/FixtureRoundGroup"
+import { takeNearestRounds, VISIBLE_OPEN_ROUNDS } from "@/lib/visibleOpenRounds"
 
 type TestFixture = {
   competitionId: string

@@ -3,7 +3,7 @@
 > What's planned, known gaps, and parked ideas. When you ship something from here,
 > move it to [changelog.md](changelog.md) and update [state.md](state.md).
 
-**Last updated:** 2026-08-16
+**Last updated:** 2026-09-23
 
 ## Known gaps / near-term
 

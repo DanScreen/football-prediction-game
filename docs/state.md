@@ -19,7 +19,8 @@ screen — once that feature deploys, a new build is needed before pressing **Su
 for Review**. The app itself can be tried on a phone today
 through **Expo Go** (`cd apps/mobile && npm run start:go`), verified 2026-09-05 —
 everything but push reminders and `scorers://` deep links works there. See
-[store-release.md](store-release.md).
+[store-release.md](store-release.md). Open fixtures on Predictions (web and app) are
+capped at the current and next gameweek per competition.
 
 ## What's built and working
 
@@ -33,7 +34,9 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   (`/register?invite=CODE`) create the account and join the league in one step.
 - **Two admin tiers:**
   - **Site hosts** (`User.isSiteAdmin`) own competitions, fixtures, imports, and
-    the platform-wide result-confirmation queue at `/host`.
+    the platform-wide result-confirmation queue at `/host`. `/host` itself is an
+    **overview** of user counts and activity (DAU/WAU/MAU via `lastSeenAt`,
+    signups, prediction volume, recent users).
   - **League commissioners** manage only their league's settings at `/admin`.
 - **Platform-owned competitions** — `Competition` owns canonical fixtures; leagues
   subscribe via `League.competitionId`. One prediction per user per fixture counts
@@ -47,7 +50,9 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 - **Banker** — one fixture per gameweek scores double. Always on (it can't be a
   per-league toggle; see [decisions.md](decisions.md)), locked at kickoff.
 - **Result resolution** — cron confirms scores from football-data.org as soon as
-  they’re available; hosts can enter missing results or edit confirmed scores from
+  they’re available, then **reconciles** recent AI-confirmed results for 24h after
+  kickoff so a later feed correction (disallowed goal, etc.) updates points without
+  a host edit. Hosts can still enter missing results or edit confirmed scores from
   `/host/results` and `/host/fixtures`.
 - **Standings** — leaderboard ranks by confirmed points (including streak bonuses).
   No provisional/pre-confirm step — results score immediately once confirmed.
@@ -87,7 +92,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **340 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **351 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the suite **before** deploying, so a red test blocks production.
 

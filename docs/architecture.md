@@ -70,7 +70,7 @@ streak bonus fans out per subscribing league. Full schema in
 | `app/leaderboard/` | Standings table + form strip |
 | `app/leagues/` | Create/join/switch leagues; competition picker |
 | `app/profile/` | API key management |
-| `app/host/` | **Site-host area** (isSiteAdmin): competitions, fixtures, import, results |
+| `app/host/` | **Site-host area** (isSiteAdmin): overview metrics, competitions, fixtures, import, results |
 | `app/admin/` | **League commissioner area**: settings only |
 | `app/api/v1/` | Public bot API (fixtures, predictions, leaderboard) |
 | `app/api/mobile/v1/` | Native-app API (access/refresh auth + player endpoints) — [mobile.md](mobile.md) |
@@ -85,11 +85,13 @@ streak bonus fans out per subscribing league. Full schema in
 
 | File | Responsibility |
 |------|----------------|
+| `lib/lastSeen.ts` | Throttled `User.lastSeenAt` bumps for host DAU/WAU/MAU |
+| `lib/hostMetrics.ts` | Aggregates for the `/host` overview page |
 | `lib/scoring.ts` | Pure scoring: `scoreOnePrediction`, `awardedPoints` (banker multiplier), `streakPoints` (bonus tiers) |
 | `lib/results.ts` | `confirmFixtureResult` (score once + streak-bonus fan-out), `acceptAllProposed` |
 | `lib/provisional.ts` | Read-time provisional score/points helpers (never stored) |
 | `lib/leaderboard.ts` | `computeLeaderboard` (+ the per-player points breakdown) — shared by the leaderboard page **and** the API |
-| `lib/resolution.ts` | The cron sweep: transitions, proposal fetch, `runResolutionSweep` |
+| `lib/resolution.ts` | The cron sweep: transitions, confirm + reconcile, `runResolutionSweep` |
 | `lib/autoImport.ts` | Auto-import upcoming fixtures for active competitions |
 | `lib/footballData.ts` | football-data.org client (fetch fixtures, look up results) |
 | `lib/predictions.ts` | `upsertPrediction` (one canonical prediction per fixture) |

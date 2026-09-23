@@ -17,10 +17,40 @@ screen, and player endpoints return 403 `email_unverified`. The session picks up
 click from any device without signing in again. A completed password reset also
 verifies, unverified accounts get no reminders, and the App Store reviewer's demo
 account is backfilled as verified. New `EmailVerificationToken` table and
-`User.emailVerifiedAt` (migration `20260923000000_email_verification`). Build
+`User.emailVerifiedAt` (migration `20260923120000_email_verification`). Build
 1.0.0 (6) predates this — a new iOS build is needed before submission. Detail:
 [features.md](features.md#email-format-check--verification-verify-email),
 [mobile.md](mobile.md#email-verification), [decisions.md](decisions.md).
+
+## 2026-09-23 — Host overview: user counts and activity
+
+`/host` is no longer a redirect to Results — it shows platform metrics for site
+hosts: user totals (humans/bots), DAU/WAU/MAU from a throttled `User.lastSeenAt`
+(bumped on web login, prediction upsert, mobile login/refresh), signup and
+prediction volume, mobile reach, and a recent-users table. Counts come from
+Postgres, not a product-analytics SaaS. Commissioners stay on league-scoped pick
+status. See [features.md](features.md#host-area-host--site-hosts-only),
+[data-model.md](data-model.md), and [decisions.md](decisions.md).
+
+## 2026-09-20 — Cap open gameweeks on mobile (and pick status)
+
+The website Predictions tab already hid anything past the current and next gameweek
+(`VISIBLE_OPEN_ROUNDS`), but the mobile fixtures API and Predictions tab still returned
+every scheduled round — so Matchweek 8 / 9 could sit alongside the live deadline again.
+The same shared helper (`lib/visibleOpenRounds.ts`) now caps `status=open` on
+`/api/mobile/v1/fixtures` (so shipped app builds pick it up without a store update), the
+mobile client, and commissioner pick status. See [features.md](features.md#predictions-)
+and [mobile.md](mobile.md).
+
+## 2026-09-19 — Reconcile AI results after disallowed goals
+
+The 10-minute resolve sweep now re-checks recent `AI_CONFIRMED` scores against
+football-data.org for 24 hours after kickoff. If the published scoreline changes
+(e.g. a goal disallowed after the feed first marked the match finished), Scorers
+re-applies the new score, re-scores predictions, and updates streak bonuses —
+without waiting for a host edit. Host `MANUAL` corrections are left alone. Cron
+responses gain a `corrected` count. See [features.md](features.md#result-resolution)
+and [decisions.md](decisions.md).
 
 ## 2026-09-06 — Build 1.0.0 (6) uploaded
 

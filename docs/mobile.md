@@ -257,6 +257,9 @@ filtered) fixtures for competitions they belong to, grouped for the UI.
 - Flat list (client groups by competition/round). `status`: `open` | `locked` |
   `completed` | omit/`all`.
 - Covers **all** competitions the user plays via any league membership.
+- For `status=open` only: capped at the **current gameweek and the next one** per
+  competition (`VISIBLE_OPEN_ROUNDS`), matching the website Predictions tab. Locked and
+  completed lists are unscoped so history still loads in full.
 
 Each fixture:
 
