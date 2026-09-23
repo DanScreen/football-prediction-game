@@ -13,10 +13,10 @@ platform-owned competitions model (the big refactor) is complete and live.
 **Native apps:** Phases 1–4 complete (`apps/mobile` + `/api/mobile/v1`). Phase 5
 is **prepared**: the app now matches the website visually, in-app account
 deletion, a real privacy policy and a support page are shipped, and the listing copy and
-screenshots are generated (`store-assets/`, `npm run store:shots`). iOS build
-**1.0.0 (6)** is the latest upload (2026-09-06), but it has no email-verification
-screen — once that feature deploys, a new build is needed before pressing **Submit
-for Review**. The app itself can be tried on a phone today
+screenshots are generated (`store-assets/`, `npm run store:shots`). **iOS 1.0.0
+is reviewed and live on the App Store.** It has no email-verification screen, so
+**1.0.1** (`app.json` bumped 2026-09-23) needs building, uploading and submitting
+to go with that feature. The app itself can be tried on a phone today
 through **Expo Go** (`cd apps/mobile && npm run start:go`), verified 2026-09-05 —
 everything but push reminders and `scorers://` deep links works there. See
 [store-release.md](store-release.md). Open fixtures on Predictions (web and app) are

@@ -122,7 +122,13 @@ list above keeps "table" deliberately; drop it if you re-add it to the subtitle.
 
 ---
 
-## What's New in This Version (4000 max) — for version 1.0.0
+## What's New in This Version (4000 max) — for version 1.0.1
+
+```
+Scorers now asks you to confirm your email address with a link we send you, so password resets and reminders always reach you. If you haven't confirmed yet, the app will show you how — you can resend the link or fix a mistyped address from there.
+```
+
+### Version 1.0.0 (live)
 
 ```
 The first release of Scorers for iPhone.
