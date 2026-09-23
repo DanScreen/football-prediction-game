@@ -5,6 +5,23 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## 2026-09-23 — CI ships the iOS app only when its version changes
+`mobile-release.yml` builds and uploads to App Store Connect after Deploy succeeds,
+but only when no production build of `expo.version` exists on EAS yet.
+**Why not every push, like the web deploy:** most pushes are web-only, and each
+EAS iOS build costs ~15 minutes and plan quota. Uploading on every mobile change
+fails too: once Apple approves a version, further uploads under it are rejected
+(ITMS-90186), and that already happened by hand on 2026-09-23. Tying releases to
+the version bump makes the bump the deliberate "ship it" step, and the closed-train
+error can't happen.
+**Why ask EAS rather than diff `app.json`:** `workflow_run` doesn't carry the push's
+`before` SHA. Checking what's already built also means a retry after a failed build
+still ships. **Run workflow** skips the check for a second build under the same
+unreleased version.
+**Why `--auto-submit --no-wait`:** EAS already holds the App Store Connect API key
+and does the upload server-side after the build, so the runner doesn't idle for the
+build. Submit for Review stays a human button.
+
 ## 2026-09-23 — Email verification is a hard gate, for existing accounts too
 Sign-ups with junk addresses were getting in. Format checking stops typos and
 nonsense; only a verification email proves the mailbox, so both shipped. Every

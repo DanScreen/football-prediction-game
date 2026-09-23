@@ -137,6 +137,19 @@ eas build --platform ios --profile production
 
 ## Submitting
 
+**CI does the build and upload.** When a push to `main` changes `expo.version` in
+`app.json` and Deploy succeeds, `.github/workflows/mobile-release.yml` runs the build
+with `--auto-submit` ([deployment.md](deployment.md#mobile-release)). So the release
+steps are:
+
+1. Add the new version in App Store Connect (see below).
+2. Bump `expo.version` (and `package.json`) and merge to `main`.
+3. Wait for the upload and for Apple's processing email, select the build, and press
+   **Submit for Review**.
+
+For another build under the same version (a fix before review), use **Run
+workflow** on the Mobile release action. By hand, the equivalent is:
+
 ```bash
 cd apps/mobile
 eas build  --platform ios --profile production --non-interactive

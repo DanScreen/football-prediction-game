@@ -14,7 +14,7 @@ How the system fits together and where to find things in the code.
 | Email | Resend (deadline reminders + password reset) |
 | Hosting | GCP Cloud Run + Cloud SQL (europe-west2) |
 | Infra | Terraform (`terraform/`) |
-| CI/CD | GitHub Actions (`.github/workflows/deploy.yml`) |
+| CI/CD | GitHub Actions (`.github/workflows/deploy.yml`; iOS builds via EAS in `mobile-release.yml`) |
 | Domain | Cloudflare Worker proxy → Cloud Run (`cloudflare/worker.js`) |
 | Mobile | Expo app in `apps/mobile/` (Phases 1–4) — [mobile.md](mobile.md); store submit [store-release.md](store-release.md) |
 

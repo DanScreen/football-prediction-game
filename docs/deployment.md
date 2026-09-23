@@ -6,8 +6,10 @@ or pipeline change.**
 ## Overview
 
 Every push to `main` triggers `.github/workflows/deploy.yml`, which runs DB migrations
-then builds and deploys to Cloud Run. Infra is provisioned with Terraform in
-`terraform/`.
+then builds and deploys to Cloud Run. When it succeeds,
+`.github/workflows/mobile-release.yml` builds and uploads the iOS app — but only if
+the app version is new ([Mobile release](#mobile-release)). Infra is provisioned with
+Terraform in `terraform/`.
 
 ## Infrastructure (Terraform)
 
@@ -86,6 +88,7 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" \
 | `RESEND_API_KEY` | Resend key. Optional for reminders (skipped without it); **required** for password-reset emails |
 | `EMAIL_FROM` | Sender, e.g. `Scorers <predictions@scorersonline.uk>` — same requirement as `RESEND_API_KEY` |
 | `SITE_ADMIN_EMAILS` | Comma-separated emails granted the host role on login |
+| `EXPO_TOKEN` | Expo robot/personal access token for `mobile-release.yml` (expo.dev → account settings → Access tokens). The Apple distribution cert and App Store Connect API key live on EAS, so no Apple secrets are needed in GitHub |
 
 > **`SITE_ADMIN_EMAILS` gotcha:** its value can contain commas, which collide with
 > gcloud's `--set-env-vars` delimiter. The deploy workflow sets it with a custom
@@ -169,3 +172,22 @@ pennies per month if per-condition charging begins.
 Runner Node is **22** (matching the `Dockerfile`); the actions are pinned to their
 current majors (`checkout@v7`, `setup-node@v7`, `google-github-actions/auth@v3`,
 `setup-gcloud@v3`), which run on Node 24.
+
+## Mobile release
+
+`.github/workflows/mobile-release.yml` runs via `workflow_run` after **Deploy**
+succeeds on `main` — so the tests and mobile typecheck have passed and the API the
+build talks to is live — and checks out the exact commit Deploy shipped.
+
+1. Reads `expo.version` from `apps/mobile/app.json`.
+2. Asks EAS whether a production iOS build of that version already exists (ignoring
+   errored/cancelled ones). If one does, the job stops — most pushes end here.
+3. Otherwise `eas build --platform ios --profile production --non-interactive
+   --auto-submit --no-wait`: EAS builds (build number auto-incremented), then uploads
+   to App Store Connect itself. The job ends once the build is queued; follow it,
+   and any submit failure, on expo.dev.
+
+**Bumping the version is how you ship** — see
+[store-release.md](store-release.md#submitting). **Run workflow** (Actions tab →
+Mobile release) skips the check, for another build under the same unreleased
+version. Pressing **Submit for Review** in App Store Connect stays manual.

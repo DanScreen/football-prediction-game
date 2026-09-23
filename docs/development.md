@@ -79,6 +79,7 @@ Two workflows:
 |---|---|---|
 | `.github/workflows/ci.yml` | pull requests | `vitest run` + `npm run build`; mobile `tsc --noEmit` in a parallel job |
 | `.github/workflows/deploy.yml` | push to `main` | the same checks as a gate, then migrations and the Cloud Run deploy |
+| `.github/workflows/mobile-release.yml` | Deploy succeeded, or manual | EAS iOS build + auto-submit, only when `expo.version` is new — see [deployment.md](deployment.md#mobile-release) |
 
 Before 2026-09-04 only `deploy.yml` existed, so **nothing gated a pull request** — which
 is how `main` came to carry a mobile app that did not compile for two weeks
