@@ -34,12 +34,17 @@ model User {
   isSiteAdmin  Boolean               @default(false)
   apiKey       String                @unique @default(cuid())
   createdAt    DateTime              @default(now())
+  // Last meaningful presence (login, prediction, mobile refresh). Throttled
+  // writes via touchLastSeen() — see lib/lastSeen.ts. Used for host DAU/WAU/MAU.
+  lastSeenAt   DateTime?
   memberships      LeagueMembership[]
   predictions      Prediction[]
   bonusAwards      BonusAward[]
   resetTokens      PasswordResetToken[]
   mobileRefreshTokens MobileRefreshToken[]
   mobileDeviceTokens  MobileDeviceToken[]
+
+  @@index([lastSeenAt])
 }
 
 // A real-world competition (Premier League, World Cup…) owned by site hosts.

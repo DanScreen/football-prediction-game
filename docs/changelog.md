@@ -6,6 +6,16 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-23 — Host overview: user counts and activity
+
+`/host` is no longer a redirect to Results — it shows platform metrics for site
+hosts: user totals (humans/bots), DAU/WAU/MAU from a throttled `User.lastSeenAt`
+(bumped on web login, prediction upsert, mobile login/refresh), signup and
+prediction volume, mobile reach, and a recent-users table. Counts come from
+Postgres, not a product-analytics SaaS. Commissioners stay on league-scoped pick
+status. See [features.md](features.md#host-area-host--site-hosts-only),
+[data-model.md](data-model.md), and [decisions.md](decisions.md).
+
 ## 2026-09-20 — Cap open gameweeks on mobile (and pick status)
 
 The website Predictions tab already hid anything past the current and next gameweek

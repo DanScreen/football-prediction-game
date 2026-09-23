@@ -12,6 +12,9 @@ vi.mock("@/lib/prisma", () => ({
     league: { findUnique: vi.fn() },
   },
 }))
+vi.mock("@/lib/lastSeen", () => ({
+  touchLastSeen: vi.fn().mockResolvedValue(undefined),
+}))
 vi.mock("@/lib/mobileAuth", async () => {
   const actual = await vi.importActual<typeof import("@/lib/mobileAuth")>("@/lib/mobileAuth")
   return {

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { touchLastSeen } from "@/lib/lastSeen"
 
 /**
  * Upserts the user's prediction for a canonical fixture. Fixtures are shared
@@ -13,7 +14,7 @@ export async function upsertPrediction(
   away: number,
   submittedVia: "WEB" | "API",
 ) {
-  return prisma.prediction.upsert({
+  const saved = await prisma.prediction.upsert({
     where: { userId_fixtureId: { userId, fixtureId } },
     create: {
       userId,
@@ -24,4 +25,6 @@ export async function upsertPrediction(
     },
     update: { predictedHomeScore: home, predictedAwayScore: away },
   })
+  await touchLastSeen(userId)
+  return saved
 }

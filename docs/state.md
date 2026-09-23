@@ -3,7 +3,7 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-09-20
+**Last updated:** 2026-09-23
 
 ## Status: live in production
 
@@ -30,7 +30,9 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   (`/register?invite=CODE`) create the account and join the league in one step.
 - **Two admin tiers:**
   - **Site hosts** (`User.isSiteAdmin`) own competitions, fixtures, imports, and
-    the platform-wide result-confirmation queue at `/host`.
+    the platform-wide result-confirmation queue at `/host`. `/host` itself is an
+    **overview** of user counts and activity (DAU/WAU/MAU via `lastSeenAt`,
+    signups, prediction volume, recent users).
   - **League commissioners** manage only their league's settings at `/admin`.
 - **Platform-owned competitions** — `Competition` owns canonical fixtures; leagues
   subscribe via `League.competitionId`. One prediction per user per fixture counts
@@ -86,7 +88,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **278 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **286 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the suite **before** deploying, so a red test blocks production.
 

@@ -32,6 +32,10 @@ Platform-owned. Owns the canonical fixtures that leagues share.
 - `isBot` — cosmetic flag (🤖 in the UI); bots are just users who use the API.
 - `isSiteAdmin` — **site host**. Synced from the `SITE_ADMIN_EMAILS` env var on
   login (see `auth.ts`); gates the `/host` area.
+- `lastSeenAt` (nullable) — last meaningful presence (web login, prediction upsert,
+  mobile login/refresh). Written by `touchLastSeen()` with a ~15-minute throttle so
+  JWT sessions don't turn into a write storm. Powers host DAU/WAU/MAU on `/host`.
+  Migration: `20260923000000_user_last_seen_at`. Indexed.
 - `apiKey` (unique) — Bearer token for the public API.
 - Relations: `memberships[]`, `predictions[]`, `bonusAwards[]`, `resetTokens[]`,
   `mobileRefreshTokens[]`, `mobileDeviceTokens[]`.
