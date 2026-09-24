@@ -34,6 +34,11 @@ If you finished a task and touched no docs, check that mapping — usually one a
 - Commit after each completed phase or meaningful sub-task, with a clear message. For
   outward-facing or destructive actions (pushing to `main`, running a destructive
   migration on prod), confirm with the user first.
+- **After a PR merges, delete its branch.** GitHub deletes the remote branch
+  automatically (the repo's "delete head branch" setting is on). Delete the local copy
+  yourself with `git branch -d <branch>`. If a worktree still has the branch checked
+  out, switch the worktree away first, or remove it. Details:
+  [docs/development.md](docs/development.md#branches).
 - If you make a product decision the docs don't cover, make a sensible choice, record it
   in [docs/decisions.md](docs/decisions.md), and keep going.
 - If you get blocked on something external (a missing credential, etc.), note it in

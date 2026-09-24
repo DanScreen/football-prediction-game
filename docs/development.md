@@ -214,6 +214,31 @@ verified exactly this way before shipping. See [decisions.md](decisions.md) and
 - Import the Prisma client from `@/app/generated/prisma/client`.
 - Match the surrounding code's style; keep comment density and naming consistent.
 
+## Branches
+
+Work on a branch, open a pull request into `main`, and merge once CI is green.
+Don't leave branches behind after merging:
+
+- **Remote:** the repo has **Automatically delete head branches** turned on (GitHub
+  → Settings → General, turned on 2026-09-24). Merging a PR on GitHub deletes its
+  branch. If you merge some other way, run `git push origin --delete <branch>`.
+- **Local:** delete it yourself, and prune the gone remote-tracking refs:
+
+  ```bash
+  git fetch --prune origin
+  git branch -d <branch>
+  ```
+
+  Use `-d`, not `-D`. It refuses a branch with commits that aren't on `main`, and
+  that refusal is a useful warning. The one exception is a **squash** merge: its
+  commits don't look merged, so check the PR really merged
+  (`gh pr list --state merged --head <branch>`) before forcing with `-D`.
+- **Worktrees:** git won't delete a branch that a worktree has checked out. Switch
+  that worktree to another branch, or remove it (`git worktree remove <path>`), then
+  delete the branch.
+- **A branch whose PR was closed without merging:** leave it alone. Ask before
+  deleting it, because it may hold the only copy of that work.
+
 ## Deploying
 
 Push to `main` → GitHub Actions runs migrations then builds & deploys to Cloud Run.
