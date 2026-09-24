@@ -25,7 +25,7 @@ The images it refers to are in `store-assets/promo/` (upload these) and
 | Export compliance | ✅ `ITSAppUsesNonExemptEncryption: false` in `app.json` |
 | On-device testing before submission | ✅ Expo Go, `npm run start:go` (no Apple account needed) |
 | Apple Developer Program membership | ✅ active — team `MB86PHVDWH` (individual) |
-| `eas login` / `eas build` / submission | ✅ **1.0.0** reviewed and live on the App Store. **1.0.1 (8)** (email-verification screen) uploaded 2026-09-23 and the 1.0.1 version is created in App Store Connect — once Apple finishes processing, select the build and press **Submit for Review** |
+| `eas login` / `eas build` / submission | ✅ **1.0.1 (8)** (email-verification screen) reviewed and live on the App Store, 2026-09-24. The next version is **1.0.2** |
 | Production demo account for the reviewer | ✅ done (2026-09-04) — see `app-store-listing.md` |
 | iPad screenshots **or** `supportsTablet: false` | ✅ `supportsTablet: false` (2026-09-04) — iPhone only, no iPad set needed |
 
@@ -34,8 +34,8 @@ The images it refers to are in `store-assets/promo/` (upload these) and
 > no verify screen: an unverified user of the live app gets an error on every tab
 > until they click the emailed link. The demo account is backfilled as verified by
 > the migration, so signing in with it still works on any build — but Apple does
-> test sign-up. Build **1.0.1 (8)** includes `app/verify-email.tsx` and is the one
-> to submit.
+> test sign-up. Build **1.0.1 (8)** includes `app/verify-email.tsx` and went live
+> on 2026-09-24; players still on 1.0.0 need to update from the App Store.
 
 Submitting for review is a button in App Store Connect — see
 [Submitting](#submitting) below.
@@ -194,7 +194,7 @@ Log of uploaded builds:
 
 | Build | Commit | Uploaded | Notes |
 |---|---|---|---|
-| 1.0.1 (8) | `8f43628` | 2026-09-23 | First 1.0.1 build: email-verification screen and sign-up format check. **Submit this one.** |
+| 1.0.1 (8) | `8f43628` | 2026-09-23 | First 1.0.1 build: email-verification screen and sign-up format check. **Approved and live 2026-09-24.** |
 | 1.0.0 (7) | `2b5080e` | 2026-09-23 | Same app code as (8), but still versioned 1.0.0 after 1.0.0 was approved — rejected by App Store Connect (ITMS-90186 / ITMS-90062). |
 | 1.0.0 (6) | `28ee059` | 2026-09-06 | Podium medals go by rank and skip zero-point rounds. No email-verification screen. 1.0.0 has since been approved and is live; 1.0.1 follows. |
 | 1.0.0 (5) | `5a4f483` | 2026-09-06 | Gameweek leaderboards in the app; Results tab scrolling fixed. Superseded by (6), which fixes the medals shown on an unconfirmed gameweek. |
