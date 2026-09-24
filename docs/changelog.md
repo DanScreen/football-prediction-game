@@ -6,6 +6,12 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-24 — iOS 1.0.1 live on the App Store
+
+Build **1.0.1 (8)** passed review and is live, so App Store users now get the
+email-verification screen. 1.0.1's version train is closed: the next iOS release
+bumps `expo.version` to **1.0.2** (or 1.1.0). See [store-release.md](store-release.md).
+
 ## 2026-09-23 — iOS builds ship from CI
 
 New workflow `.github/workflows/mobile-release.yml`: after Deploy succeeds on
