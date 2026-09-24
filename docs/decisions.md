@@ -5,6 +5,35 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## 2026-09-24 — Playwright E2E suite: real server, real DB, fake mail only
+Several shipped bugs lived where unit tests mock things out:
+
+- `/forgot-password` and the bot API were redirected to `/login` by `proxy.ts`;
+- every fresh sign-in bounced to `/leagues` because no cookie was set.
+
+So the suite mocks as little as possible:
+
+- **A production build (`next start`), not `next dev`.** It is what ships, and pages
+  don't compile on first hit, which would make timings flaky.
+- **A real Postgres database, reset and migrated from scratch each run.** It's named
+  `football_prediction_e2e`, and `prepare-db.mjs` refuses to wipe any database whose
+  name doesn't end in `_e2e`.
+- **Email is the one fake.** A small HTTP sink stands in for Resend, reached through a
+  new `RESEND_API_URL` override. Tests click the real links in real emails, so the
+  verification and reset flows are covered for real. The alternative of reading tokens
+  from the database would skip the email template and the URL building.
+- **Each test creates its own uniquely named data** rather than sharing a seed. Tests
+  run in parallel and can't interfere, and there's no fixture file to keep in step
+  with the schema.
+- **The test helpers use raw SQL (`pg`) instead of Prisma.** Prisma 7's generated
+  client doesn't load under Playwright's TypeScript loader.
+- **Port 3217, not 3000 or 3100.** It avoids a running dev server and other local
+  projects. The port is overridable.
+- **Chromium only, for now.** The bugs worth catching are in the server and routing,
+  not browser quirks.
+- **A separate CI job, on pull requests only.** It adds a build and a browser install,
+  and `deploy.yml` still gates on unit tests alone.
+
 ## 2026-09-23 — CI ships the iOS app only when its version changes
 `mobile-release.yml` builds and uploads to App Store Connect after Deploy succeeds,
 but only when no production build of `expo.version` exists on EAS yet.

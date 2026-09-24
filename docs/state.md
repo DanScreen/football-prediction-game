@@ -95,8 +95,14 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 ## Test & build health
 
 - **351 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **30 end-to-end tests** (Playwright, real browser + Postgres; `npm run e2e`) — all
+  passing, and stable across repeated runs. They cover the golden path (invite, sign
+  up, verify, predict with a banker, kickoff lock, host confirms, leaderboard), public
+  vs protected routing, nav with a fresh session, the bot API over HTTP, and password
+  reset. They gate pull requests in CI.
 - Production build is clean (`npm run build`, type-checked).
-- CI runs the suite **before** deploying, so a red test blocks production.
+- CI runs the unit suite **before** deploying, so a red test blocks production. The E2E
+  suite runs on pull requests only.
 
 ## Known rough edges
 

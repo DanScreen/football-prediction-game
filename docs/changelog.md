@@ -6,6 +6,31 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-24 — End-to-end tests with Playwright
+
+A Playwright suite (`e2e/`, `npm run e2e`) runs a real browser against a production
+build, a real Postgres database and a fake email service. It has 30 tests:
+
+- **The golden path:** follow an invite, sign up, click the verification email,
+  predict with a banker, the pick locks at kickoff, the host confirms the result, and
+  the leaderboard ranks the player first.
+- **Routing:** which pages are public and which are protected, plus nav for a
+  freshly signed-in member.
+- **The bot API** over real HTTP.
+- **Password reset**, using the emailed link.
+
+These are the kinds of bugs that previously shipped past the unit tests. A new CI job
+runs the suite on every pull request.
+
+Small app changes made along the way:
+
+- The login form no longer clears the email after a wrong password. The test found it.
+- Fixture cards are labelled groups ("Home v Away").
+- The host's result form links its labels to its inputs.
+- `lib/email.ts` accepts `RESEND_API_URL`, so tests can capture mail.
+
+Detail: [development.md](development.md#end-to-end-tests).
+
 ## 2026-09-24 — iOS 1.0.1 live on the App Store
 
 Build **1.0.1 (8)** passed review and is live, so App Store users now get the

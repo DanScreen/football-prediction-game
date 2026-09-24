@@ -15,6 +15,16 @@ Nothing is currently blocking, and the core product is live. Candidate next work
 - **Staging environment** — a second Cloud Run service + DB from a `staging` branch,
   to review changes before they hit the live site instead of pushing straight to prod.
   Now the only remaining safety gap in the pipeline (CI does gate on tests).
+- **More E2E coverage** — the suite (see [development.md](development.md#end-to-end-tests))
+  doesn't yet cover:
+  - commissioner tools at `/admin` (settings, removing a member);
+  - creating and joining leagues through the UI;
+  - the Results tab;
+  - account deletion;
+  - the mobile API (`/api/mobile/v1`).
+
+  The mobile API is the highest-value gap: the native app depends on it and nothing
+  exercises it over HTTP.
 - **Wider accessibility audit** — the polish pass fixed the form strip and `ink-faint`
   contrast; nothing has systematically checked focus order or screen-reader flow.
 

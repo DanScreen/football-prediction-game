@@ -90,6 +90,10 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" \
 | `SITE_ADMIN_EMAILS` | Comma-separated emails granted the host role on login |
 | `EXPO_TOKEN` | Expo robot/personal access token for `mobile-release.yml` (expo.dev → account settings → Access tokens). The Apple distribution cert and App Store Connect API key live on EAS, so no Apple secrets are needed in GitHub |
 
+`RESEND_API_URL` also exists, but **leave it unset in production**. It overrides the
+Resend base URL so the E2E suite can capture email
+([development.md](development.md#end-to-end-tests)).
+
 > **`SITE_ADMIN_EMAILS` gotcha:** its value can contain commas, which collide with
 > gcloud's `--set-env-vars` delimiter. The deploy workflow sets it with a custom
 > `^\|^` delimiter so commas survive:
@@ -155,7 +159,8 @@ pennies per month if per-condition charging begins.
 
 ## Deploy pipeline
 
-1. **Tests gate the deploy** — `npx prisma generate` then `npx vitest run`. A red suite
+1. **Tests gate the deploy** — `npx prisma generate` then `npx vitest run`. (The
+   Playwright suite gates *pull requests* in `ci.yml`, not this workflow.) A red suite
    fails the job before anything touches Cloud SQL or Cloud Run. (The generate step is
    required: several tests import types from `app/generated/prisma/client`.)
 2. Cloud SQL Auth Proxy tunnels to Cloud SQL so migrations run in CI

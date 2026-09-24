@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
     "mobile:typecheck": "npm --prefix apps/mobile run typecheck",
     "brand:assets": "node scripts/generate-brand-assets.mjs",
     "store:seed": "tsx scripts/seed-store-demo.ts",
@@ -33,6 +35,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",

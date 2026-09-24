@@ -434,6 +434,10 @@ the token is stored. There's a 5-minute per-user cooldown. Unlike reminders, thi
 it isn't. Completing a reset also marks an unverified email as verified — the link
 proved the mailbox. See `lib/passwordReset.ts`.
 
+The login form keeps the typed email after a failed sign-in. React resets a form once
+its action returns, so `loginUser` echoes the email back as the field's
+`defaultValue`. Until 2026-09-24 a wrong password also cleared the email.
+
 ## Account deletion (`/profile`)
 
 The profile page carries a **Delete account** section, collapsed behind a
