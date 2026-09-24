@@ -16,6 +16,14 @@ docs as your task needs them.
 session.** The full mapping is in
 [docs/README.md](docs/README.md#3-the-golden-rule-update-the-docs-with-every-change).
 
+## Branches
+
+- **After a PR merges, delete its branch.** GitHub deletes the remote branch
+  automatically (the repo's "delete head branch" setting is on). Delete the local copy
+  yourself with `git branch -d <branch>`. If a worktree still has the branch checked
+  out, switch the worktree away first, or remove it. Details:
+  [docs/development.md](docs/development.md#branches).
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
