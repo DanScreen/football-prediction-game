@@ -9,8 +9,8 @@
 
 Nothing is currently blocking, and the core product is live. Candidate next work:
 
-- **Mobile Phase 5 — store release** — iOS 1.0.0 is live; **1.0.1 (8)** (email
-  verification screen) is uploaded and waiting to be submitted for review. Google Play still to do.
+- **Mobile Phase 5 — store release** — iOS **1.0.1 (8)** (email
+  verification screen) is live on the App Store. Google Play still to do.
   Checklist: [store-release.md](store-release.md).
 - **Staging environment** — a second Cloud Run service + DB from a `staging` branch,
   to review changes before they hit the live site instead of pushing straight to prod.

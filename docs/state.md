@@ -3,7 +3,7 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-09-23
+**Last updated:** 2026-09-24
 
 ## Status: live in production
 
@@ -13,10 +13,10 @@ platform-owned competitions model (the big refactor) is complete and live.
 **Native apps:** Phases 1–4 complete (`apps/mobile` + `/api/mobile/v1`). Phase 5
 is **prepared**: the app now matches the website visually, in-app account
 deletion, a real privacy policy and a support page are shipped, and the listing copy and
-screenshots are generated (`store-assets/`, `npm run store:shots`). **iOS 1.0.0
-is reviewed and live on the App Store.** It has no email-verification screen, so
-**1.0.1 (8)** carries it and was uploaded 2026-09-23 — it just needs selecting
-under the 1.0.1 version in App Store Connect and **Submit for Review**. From now on
+screenshots are generated (`store-assets/`, `npm run store:shots`). **iOS 1.0.1
+(8) is live on the App Store** (2026-09-24) — the release with the
+email-verification screen. Google Play is still to do. The next iOS release must
+be **1.0.2** or higher (1.0.1's version train is now closed). From now on
 iOS builds ship from CI: bumping `expo.version` and merging to `main` builds on EAS
 and uploads to App Store Connect (`mobile-release.yml`, see
 [deployment.md](deployment.md#mobile-release)). The app itself can be tried on a phone today
@@ -31,8 +31,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 - **Auth** — open email/password registration (email format checked), login, JWT
   sessions, profile page with API-key generation, forgot-password / reset via email.
-  **Email verification is required** (branch `feature/email-verification`, 2026-09-23,
-  not yet deployed): every account — existing ones included — is held at
+  **Email verification is required** (live 2026-09-23): every account — existing ones included — is held at
   `/verify-email` (web) / the verify screen (app) until it clicks the emailed link. **Invite links**
   (`/register?invite=CODE`) create the account and join the league in one step.
 - **Two admin tiers:**
