@@ -34,6 +34,8 @@ export default function OpenFixtureCard({
 
   return (
     <div
+      role="group"
+      aria-label={`${homeTeam} v ${awayTeam}`}
       className={`bg-surface rounded-xl border shadow-card overflow-hidden border-l-4 ${
         hasPrediction ? "border-line border-l-pitch/40" : "border-clock-line border-l-clock"
       }`}

@@ -17,7 +17,10 @@ export async function sendEmail({ to, subject, html }: SendEmailArgs): Promise<v
     throw new Error("RESEND_API_KEY / EMAIL_FROM must be configured to send email.")
   }
 
-  const res = await fetch("https://api.resend.com/emails", {
+  // Overridable so the Playwright suite can point sends at its local mail sink
+  // (e2e/mail-sink.mjs) and follow the links in real emails. Unset in prod.
+  const baseUrl = process.env.RESEND_API_URL || "https://api.resend.com"
+  const res = await fetch(`${baseUrl}/emails`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ from, to, subject, html }),

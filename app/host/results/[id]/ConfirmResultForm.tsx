@@ -56,8 +56,11 @@ export default function ConfirmResultForm({
           <input type="hidden" name="source" value="MANUAL" />
           <div className="flex items-end gap-3 mb-4">
             <div className="flex-1">
-              <label className="block text-xs text-ink-muted mb-1 truncate">{homeTeam}</label>
+              <label htmlFor="homeScore" className="block text-xs text-ink-muted mb-1 truncate">
+                {homeTeam}
+              </label>
               <input
+                id="homeScore"
                 type="number"
                 name="homeScore"
                 min={0}
@@ -68,8 +71,11 @@ export default function ConfirmResultForm({
             </div>
             <span className="text-ink-faint font-bold pb-2">–</span>
             <div className="flex-1">
-              <label className="block text-xs text-ink-muted mb-1 truncate">{awayTeam}</label>
+              <label htmlFor="awayScore" className="block text-xs text-ink-muted mb-1 truncate">
+                {awayTeam}
+              </label>
               <input
+                id="awayScore"
                 type="number"
                 name="awayScore"
                 min={0}

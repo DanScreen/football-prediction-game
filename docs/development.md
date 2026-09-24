@@ -50,6 +50,8 @@ Cloud SQL. Use the same container to verify risky migrations before pushing
 | `npm run lint` | ESLint |
 | `npx vitest run` | Full test suite (prisma/fetch mocked) |
 | `npx vitest run <path>` | One test file |
+| `npm run e2e` | Playwright end-to-end suite (needs Docker Postgres) — see [below](#end-to-end-tests) |
+| `npm run e2e:ui` | The same in Playwright's UI mode, for watching or debugging a test |
 | `npm run mobile:typecheck` | Typecheck the Expo app in `apps/mobile` |
 | `cd apps/mobile && npm start` | Expo dev server (see `apps/mobile/README.md`) |
 | `npx prisma generate` | Regenerate the client after schema edits (→ `app/generated/prisma`) |
@@ -70,6 +72,69 @@ Test users from the seed (password `password123`): `host@football.test` (site ad
   considering a change done; run `npm run build` to catch type errors across pages.
 - **If you touched `apps/mobile`, run `npm run mobile:typecheck` too.** It has its own
   lockfile and its own `tsc`, so neither the root build nor the test suite sees it.
+- **If you touched routing, auth, forms or a user journey, run `npm run e2e`.** Unit
+  tests mock the seams (cookies, `proxy.ts`, the DB) where this app's worst shipped
+  bugs lived.
+
+### End-to-end tests
+
+Playwright drives Chromium against a **production build** (`next build` + `next start`)
+on port **3217**, backed by a real Postgres database and a fake email service.
+Specs live in `e2e/`, and Vitest ignores that folder.
+
+```bash
+docker compose up -d        # the same Postgres as local dev, on 55432
+npm run e2e                 # build, reset the DB, run everything (~1 min)
+E2E_SKIP_BUILD=1 npm run e2e   # reuse the last build when only tests changed
+npx playwright test e2e/golden-path.spec.ts   # one file
+npx playwright show-trace test-results/<test>/trace.zip   # after a failure
+```
+
+What `playwright.config.ts` starts, in order:
+
+1. **`e2e/mail-sink.mjs`** (port 4025) stands in for Resend. The app sends to it
+   because `RESEND_API_URL` points there. Tests read what was "sent" with
+   `linkFromLatestEmail()` and follow the real links: verify email, password reset.
+2. **`e2e/prepare-db.mjs`** drops and re-migrates `football_prediction_e2e` on every
+   run. It refuses any database whose name doesn't end in `_e2e`. Your dev database is
+   never touched, and each run also proves the migration history still builds.
+3. **`next start`** runs with every env var set explicitly in `e2e/env.ts`. Your real
+   Resend or football-data.org keys in `.env.local` can't leak in.
+
+Overrides:
+
+| Variable | Default |
+|---|---|
+| `E2E_SKIP_BUILD` | unset: build first |
+| `E2E_APP_PORT` | `3217` |
+| `MAIL_SINK_PORT` | `4025` |
+| `E2E_DATABASE_URL` | `postgresql://postgres:localdev@localhost:55432/football_prediction_e2e` |
+
+Each test **creates its own data** with the helpers in `e2e/support/db.ts`: a league
+with unique team names, users, and picks. Tests then run in parallel on one database
+without seeing each other. Arrange state in the DB, but **act and assert through the UI**.
+The DB is only for things a player can't do, like moving the clock past kickoff.
+`host@e2e.test` is the only site host (`SITE_ADMIN_EMAILS`), and every password is
+`password123`.
+
+Gotchas the suite already works around:
+
+- **The helpers use raw SQL (`pg`), not Prisma.** The generated client uses
+  `import.meta`, which Playwright's loader can't handle. Quote model and column names
+  (`"LeagueMembership"`), and supply `id` and `updatedAt` yourself.
+- **Timestamps are UTC in `timestamp without time zone` columns.** `pg` would write
+  and read them in the machine's local time, which made a kickoff set "2 hours ago"
+  land 1 hour ago during British Summer Time. `e2e/support/db.ts` forces UTC both
+  ways, so keep using its pool.
+- **Clicking a server-action button right after `goto` can lose the refresh.** If the
+  click lands before React hydrates, the action still runs but the page doesn't
+  re-render. Retry an idempotent click with `expect(async () => { … }).toPass()`, as in
+  the golden path's "Check for Updates".
+- **After a client-side navigation, wait for the new page's heading before filling
+  fields.** `/login` and `/forgot-password` both have an "Email" field, so a fill can
+  land on the old page.
+- **Locate by role and label**, not CSS. The fixture cards are
+  `role="group"` named "Home v Away", which scopes the score inputs to one card.
 
 ## Continuous integration
 
@@ -77,13 +142,18 @@ Two workflows:
 
 | Workflow | Runs on | Does |
 |---|---|---|
-| `.github/workflows/ci.yml` | pull requests | `vitest run` + `npm run build`; mobile `tsc --noEmit` in a parallel job |
+| `.github/workflows/ci.yml` | pull requests | `vitest run` + `npm run build`; the Playwright suite against a Postgres service; mobile `tsc --noEmit` — three parallel jobs |
 | `.github/workflows/deploy.yml` | push to `main` | the same checks as a gate, then migrations and the Cloud Run deploy |
 | `.github/workflows/mobile-release.yml` | Deploy succeeded, or manual | EAS iOS build + auto-submit, only when `expo.version` is new — see [deployment.md](deployment.md#mobile-release) |
 
 Before 2026-09-04 only `deploy.yml` existed, so **nothing gated a pull request** — which
 is how `main` came to carry a mobile app that did not compile for two weeks
 (`results.tsx` passed an `onSave` prop that autosave had removed).
+
+The E2E job uploads `playwright-report/` and `test-results/` (with traces) as an
+artifact when it fails. Download it from the run page, then run `npx playwright
+show-report <dir>`. It runs on pull requests only. `deploy.yml` doesn't repeat it, so
+a push straight to `main` skips it.
 
 `npx eslint app lib` is **not** in CI yet: it exits 1 on two pre-existing errors
 (`lib/mobileAuth.test.ts:76` uses `require()`, and `app/host/results/actions.ts:7`

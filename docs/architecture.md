@@ -14,7 +14,8 @@ How the system fits together and where to find things in the code.
 | Email | Resend (deadline reminders + password reset) |
 | Hosting | GCP Cloud Run + Cloud SQL (europe-west2) |
 | Infra | Terraform (`terraform/`) |
-| CI/CD | GitHub Actions (`.github/workflows/deploy.yml`; iOS builds via EAS in `mobile-release.yml`) |
+| CI/CD | GitHub Actions (PR checks in `ci.yml`, deploys in `deploy.yml`, iOS builds via EAS in `mobile-release.yml`) |
+| Testing | Vitest unit tests beside the code; Playwright end-to-end tests in `e2e/` ([development.md](development.md#testing)) |
 | Domain | Cloudflare Worker proxy → Cloud Run (`cloudflare/worker.js`) |
 | Mobile | Expo app in `apps/mobile/` (Phases 1–4) — [mobile.md](mobile.md); store submit [store-release.md](store-release.md) |
 
@@ -113,6 +114,8 @@ streak bonus fans out per subscribing league. Full schema in
   `app/generated/prisma/client` (import from there, **not** `@prisma/client`).
 - `prisma/migrations/` — SQL migrations, applied by CI.
 - `prisma/seed.ts` — local/dev seed (competitions, host + members, fixtures).
+- `e2e/` — Playwright suite: `*.spec.ts`, the `support/` helpers (DB, mail,
+  sign-in), the mail sink and the DB reset script. Config is `playwright.config.ts`.
 - `terraform/` — GCP infra. `cloudflare/worker.js` — the domain proxy.
 - `auth.ts` / `auth.config.ts` — NextAuth config; `auth.ts` syncs `isSiteAdmin` from
   `SITE_ADMIN_EMAILS` on login.

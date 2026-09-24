@@ -29,7 +29,8 @@ If you finished a task and touched no docs, check that mapping — usually one a
 ## Working agreement
 
 - Work in phases; run `npm run build` and `npx vitest run` before calling a change done,
-  and fix issues before moving on.
+  and fix issues before moving on. If the change touches routing, auth, forms or a user
+  journey, also run `npm run e2e` (Playwright; needs `docker compose up -d`).
 - Commit after each completed phase or meaningful sub-task, with a clear message. For
   outward-facing or destructive actions (pushing to `main`, running a destructive
   migration on prod), confirm with the user first.

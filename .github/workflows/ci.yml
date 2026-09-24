@@ -36,6 +36,53 @@ jobs:
       # app/host/results/actions.ts). Add the step once those are cleared.
       - run: npm run build
 
+  e2e:
+    name: Web — end-to-end tests
+    runs-on: ubuntu-latest
+    # Same Postgres as docker-compose.yml, on the same port, so e2e/env.ts's
+    # default database URL works unchanged. The suite creates and resets its own
+    # `football_prediction_e2e` database — see e2e/prepare-db.mjs.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: localdev
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Builds the app, migrates a fresh database and starts the server and
+      # mail sink itself (playwright.config.ts `webServer`).
+      - run: npx playwright test
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
   mobile:
     name: Mobile — typecheck
     runs-on: ubuntu-latest
