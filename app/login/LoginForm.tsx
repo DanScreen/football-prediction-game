@@ -47,6 +47,7 @@ export default function LoginForm({
           type="email"
           required
           autoComplete="email"
+          defaultValue={state.email}
           className="w-full rounded-lg border border-line-strong px-3 py-2 text-sm shadow-card focus:border-pitch focus:outline-none focus:ring-1 focus:ring-pitch"
           placeholder="you@example.com"
         />
