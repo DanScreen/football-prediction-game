@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { authenticateMobileAccess } from "@/lib/mobileAuth"
 import { jsonError, readJsonBody } from "@/lib/mobileHttp"
 import { deleteUserAccount } from "@/lib/accountDeletion"
-import { changeUnverifiedEmail } from "@/lib/emailVerification"
+import { changeUnverifiedEmail, ensureVerificationEmailSent } from "@/lib/emailVerification"
 
 // Not gated on email verification: this is how the app learns the account is
 // unverified (and, after the link is clicked, that it now is).
@@ -10,6 +10,10 @@ import { changeUnverifiedEmail } from "@/lib/emailVerification"
 export async function GET(request: Request) {
   const user = await authenticateMobileAccess(request)
   if (!user) return jsonError("Unauthorized", 401)
+
+  // The app's verify screen says "tap the link we emailed" without asking for
+  // one, and this fetch is what puts the app on that screen — so make it true.
+  if (!user.emailVerified) await ensureVerificationEmailSent(user.id)
 
   const memberships = await prisma.leagueMembership.findMany({
     where: { userId: user.id },

@@ -6,6 +6,17 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-25 — Verification emails are sent without being asked for
+
+Fixes reports of verification emails not arriving. Accounts from before verification,
+and anyone whose sign-up send failed or whose link expired, were held on a "check your
+inbox" screen that had never emailed them. The web `/verify-email` page and the app's
+`GET /me` now send a link whenever no live one is out
+([decision](decisions.md#2026-09-25--send-the-verification-link-automatically-where-users-are-held)).
+There's a new E2E test for it, so the suite now has 31.
+
+---
+
 ## 2026-09-24 — End-to-end tests with Playwright
 
 A Playwright suite (`e2e/`, `npm run e2e`) runs a real browser against a production

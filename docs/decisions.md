@@ -5,6 +5,23 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## 2026-09-25 — Send the verification link automatically where users are held
+Players reported that verification emails never arrived. The sending code and
+production config were fine. The gap was that nothing sent the *first* link to an
+account that existed before verification (2026-09-23). The web page waited for a
+"Send verification email" press under the words "We'll send you a link", and the app's
+screen said "tap the link we emailed" for an email that was never sent. A failed
+sign-up send left the same hole.
+**Decision:** landing on the gate sends the link. `ensureVerificationEmailSent` runs
+on the web `/verify-email` render and on mobile `GET /me` for unverified users, and
+sends only when no live link to the current address exists. So a reload or a
+foreground refresh doesn't send again, and an expired link is replaced without asking.
+**Why on page view and not at login:** web JWT sessions outlive the launch, so many
+held users never log in again. The verify page and `/me` are the places every held
+user is guaranteed to reach, on either client, with no app release needed.
+
+---
+
 ## 2026-09-24 — Playwright E2E suite: real server, real DB, fake mail only
 Several shipped bugs lived where unit tests mock things out:
 

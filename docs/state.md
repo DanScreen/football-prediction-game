@@ -3,7 +3,7 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-09-24
+**Last updated:** 2026-09-25
 
 ## Status: live in production
 
@@ -32,7 +32,8 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 - **Auth** — open email/password registration (email format checked), login, JWT
   sessions, profile page with API-key generation, forgot-password / reset via email.
   **Email verification is required** (live 2026-09-23): every account — existing ones included — is held at
-  `/verify-email` (web) / the verify screen (app) until it clicks the emailed link. **Invite links**
+  `/verify-email` (web) / the verify screen (app) until it clicks the emailed link. Reaching
+  that screen sends a link if none is live, so nobody waits on an email that was never sent. **Invite links**
   (`/register?invite=CODE`) create the account and join the league in one step.
 - **Two admin tiers:**
   - **Site hosts** (`User.isSiteAdmin`) own competitions, fixtures, imports, and
@@ -94,11 +95,12 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **351 unit tests** (vitest, prisma/fetch mocked) — all passing.
-- **30 end-to-end tests** (Playwright, real browser + Postgres; `npm run e2e`) — all
+- **357 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **31 end-to-end tests** (Playwright, real browser + Postgres; `npm run e2e`) — all
   passing, and stable across repeated runs. They cover the golden path (invite, sign
   up, verify, predict with a banker, kickoff lock, host confirms, leaderboard), public
-  vs protected routing, nav with a fresh session, the bot API over HTTP, and password
+  vs protected routing, nav with a fresh session, an older unverified account being
+  emailed its link unasked, the bot API over HTTP, and password
   reset. They gate pull requests in CI.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the unit suite **before** deploying, so a red test blocks production. The E2E

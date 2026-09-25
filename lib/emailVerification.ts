@@ -78,6 +78,37 @@ export async function sendVerificationEmail(userId: string): Promise<SendVerific
   return { status: "sent" }
 }
 
+/**
+ * Makes sure an unverified user has a working link in their inbox, sending one
+ * if not. Called wherever an unverified user is held (the web verify page, the
+ * app's profile fetch), because otherwise nobody sends it: accounts from before
+ * verification existed were never mailed, a failed sign-up send leaves nothing
+ * behind, and a link older than a day is dead. Never throws — resolves to
+ * whether a live link to the current address is out.
+ */
+export async function ensureVerificationEmailSent(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, emailVerifiedAt: true },
+  })
+  if (!user || user.emailVerifiedAt) return false
+
+  const live = await prisma.emailVerificationToken.findFirst({
+    where: { userId, email: user.email, usedAt: null, expiresAt: { gt: new Date() } },
+    select: { id: true },
+  })
+  if (live) return true
+
+  try {
+    // "cooldown" here means a concurrent request is sending one right now.
+    const result = await sendVerificationEmail(userId)
+    return result.status !== "already-verified"
+  } catch (err) {
+    console.error("Automatic verification email failed", err)
+    return false
+  }
+}
+
 export type VerifyTokenResult = "verified" | "invalid"
 
 /**

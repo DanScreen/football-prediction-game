@@ -392,6 +392,12 @@ every account that existed before this shipped (2026-09-23).
 - **Sign-up** sends a single-use link (`/verify-email/<token>`, 24 h, SHA-256 hash
   stored only) and lands the user on **`/verify-email`**, signed in. A failed send
   doesn't fail the sign-up — the page's button re-sends (60 s cooldown).
+- **Nobody has to ask for the first link.** Whenever an unverified user reaches the
+  verify page (web) or the app fetches `GET /me`, `ensureVerificationEmailSent` mails
+  a link unless a live one (unused, unexpired, to the current address) is already out.
+  That covers accounts from before verification existed, a failed sign-up send, and a
+  link that expired. If that send fails, the web page says so and the button
+  retries.
 - **The gate (web):** `proxy.ts` redirects any signed-in, unverified session to
   `/verify-email`; the header hides the nav for them. The JWT carries
   `hasVerifiedEmail`, and **the `jwt` callback re-reads it from the DB on every request
