@@ -2,17 +2,21 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { GET, PATCH } from "./route"
 import { prisma } from "@/lib/prisma"
 import { authenticateMobileAccess } from "@/lib/mobileAuth"
-import { changeUnverifiedEmail } from "@/lib/emailVerification"
+import { changeUnverifiedEmail, ensureVerificationEmailSent } from "@/lib/emailVerification"
 
 vi.mock("@/lib/prisma", () => ({
   prisma: { leagueMembership: { findMany: vi.fn() } },
 }))
 vi.mock("@/lib/mobileAuth", () => ({ authenticateMobileAccess: vi.fn() }))
 vi.mock("@/lib/accountDeletion", () => ({ deleteUserAccount: vi.fn() }))
-vi.mock("@/lib/emailVerification", () => ({ changeUnverifiedEmail: vi.fn() }))
+vi.mock("@/lib/emailVerification", () => ({
+  changeUnverifiedEmail: vi.fn(),
+  ensureVerificationEmailSent: vi.fn(),
+}))
 
 const authMock = vi.mocked(authenticateMobileAccess)
 const changeMock = vi.mocked(changeUnverifiedEmail)
+const ensureMock = vi.mocked(ensureVerificationEmailSent)
 
 const unverified = { id: "u1", email: "a@b.co", displayName: "A", isBot: false, emailVerified: false }
 
@@ -35,6 +39,17 @@ describe("GET /api/mobile/v1/me", () => {
     const res = await GET(new Request("http://t/api/mobile/v1/me"))
     expect(res.status).toBe(200)
     expect((await res.json()).emailVerified).toBe(false)
+  })
+
+  it("makes sure an unverified user has a link in their inbox", async () => {
+    await GET(new Request("http://t/api/mobile/v1/me"))
+    expect(ensureMock).toHaveBeenCalledWith("u1")
+  })
+
+  it("doesn't touch email for a verified user", async () => {
+    authMock.mockResolvedValue({ ...unverified, emailVerified: true })
+    await GET(new Request("http://t/api/mobile/v1/me"))
+    expect(ensureMock).not.toHaveBeenCalled()
   })
 })
 

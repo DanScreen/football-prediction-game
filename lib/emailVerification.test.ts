@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import crypto from "node:crypto"
 import {
   sendVerificationEmail,
+  ensureVerificationEmailSent,
   verifyEmailToken,
   changeUnverifiedEmail,
   isEmailVerified,
@@ -110,6 +111,44 @@ describe("sendVerificationEmail", () => {
     await expect(sendVerificationEmail("u1")).rejects.toThrow("Resend down")
     // Otherwise the page would say "we sent a link" and the retry would be in cooldown
     expect(tokenDelete).toHaveBeenCalledWith({ where: { id: "t1" } })
+  })
+})
+
+describe("ensureVerificationEmailSent", () => {
+  it("sends a link to an account that has never been sent one", async () => {
+    userFindUnique.mockResolvedValue(unverified as never)
+    tokenFindFirst.mockResolvedValue(null)
+
+    expect(await ensureVerificationEmailSent("u1")).toBe(true)
+    expect(sendEmailMock).toHaveBeenCalledTimes(1)
+    expect(sendEmailMock.mock.calls[0][0].to).toBe("alice@test.com")
+  })
+
+  it("leaves a live link to the current address alone", async () => {
+    userFindUnique.mockResolvedValue(unverified as never)
+    tokenFindFirst.mockResolvedValueOnce({ id: "t0" } as never)
+
+    expect(await ensureVerificationEmailSent("u1")).toBe(true)
+    expect(tokenFindFirst.mock.calls[0][0]).toMatchObject({
+      where: { userId: "u1", email: "alice@test.com", usedAt: null },
+    })
+    expect(sendEmailMock).not.toHaveBeenCalled()
+  })
+
+  it("does nothing for a verified account", async () => {
+    userFindUnique.mockResolvedValue({ ...unverified, emailVerifiedAt: new Date() } as never)
+    expect(await ensureVerificationEmailSent("u1")).toBe(false)
+    expect(tokenFindFirst).not.toHaveBeenCalled()
+    expect(sendEmailMock).not.toHaveBeenCalled()
+  })
+
+  it("reports a failed send instead of throwing", async () => {
+    userFindUnique.mockResolvedValue(unverified as never)
+    tokenFindFirst.mockResolvedValue(null)
+    sendEmailMock.mockRejectedValue(new Error("Resend down"))
+    vi.spyOn(console, "error").mockImplementation(() => {})
+
+    expect(await ensureVerificationEmailSent("u1")).toBe(false)
   })
 })
 

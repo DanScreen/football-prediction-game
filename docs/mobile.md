@@ -192,6 +192,10 @@ later.
 #### `GET /api/mobile/v1/me`
 
 Response: `{ id, email, displayName, isBot, emailVerified }` plus membership summary.
+For an unverified user it also sends a verification link if no live one is out
+(`ensureVerificationEmailSent`). The app's verify screen says "tap the link we
+emailed" without ever requesting one, so this is what makes that true for older
+accounts and after a failed sign-up send.
 Deliberately not gated on verification — it's how the app learns the account's state:
 
 ```json

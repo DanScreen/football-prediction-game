@@ -26,8 +26,8 @@ function Notice({ state }: { state: VerifyEmailState }) {
 
 /**
  * The controls under "check your inbox". `hasSent` flips the primary button's
- * wording: an account from before verification existed has never been sent a
- * link, so "Resend" would be confusing.
+ * wording: if the page's automatic send failed, nothing has gone out, so
+ * "Resend" would be confusing.
  */
 export default function VerifyEmailActions({ hasSent }: { hasSent: boolean }) {
   const [resendState, resendAction, resendPending] = useActionState(resendVerification, initial)

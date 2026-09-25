@@ -2,6 +2,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { ensureVerificationEmailSent } from "@/lib/emailVerification"
 import VerifyEmailActions from "./VerifyEmailActions"
 
 export const metadata = { title: "Verify your email" }
@@ -22,13 +23,10 @@ export default async function VerifyEmailPage() {
   if (!user) redirect("/login")
   if (user.emailVerifiedAt) redirect("/")
 
-  // Only a link to the *current* address counts — one sent before a change of
-  // address can't be clicked into verifying this one.
-  const lastSent = await prisma.emailVerificationToken.findFirst({
-    where: { userId: session.user.id, email: user.email },
-    select: { id: true },
-  })
-  const hasSent = !!lastSent
+  // Landing here is the moment to send a link if none is live — nothing else
+  // mails an account that predates verification, or one whose sign-up send
+  // failed. False only when that send just failed; the button retries it.
+  const hasSent = await ensureVerificationEmailSent(session.user.id)
 
   return (
     <div className="flex min-h-[calc(100vh-60px)] items-center justify-center px-4 py-12">
@@ -39,11 +37,11 @@ export default async function VerifyEmailPage() {
             {hasSent ? "Check your inbox" : "Verify your email"}
           </h1>
           <p className="mt-2 text-ink-muted text-sm">
-            {hasSent ? "We sent a link to " : "Before you carry on, confirm that "}
+            {hasSent ? "We sent a link to " : "We couldn't email a link to "}
             <span className="font-semibold text-ink-mid break-all">{user.email}</span>
             {hasSent
               ? ". Click it to finish setting up your account."
-              : " is your email address. We'll send you a link to click."}
+              : " just now. Send one below to confirm it's your address."}
           </p>
         </div>
 
