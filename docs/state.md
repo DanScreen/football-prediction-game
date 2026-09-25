@@ -31,6 +31,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 - **Auth** — open email/password registration (email format checked), login, JWT
   sessions, profile page with API-key generation, forgot-password / reset via email.
+  Every email (verification, reset, reminders) is branded via one template module.
   **Email verification is required** (live 2026-09-23): every account — existing ones included — is held at
   `/verify-email` (web) / the verify screen (app) until it clicks the emailed link. Reaching
   that screen sends a link if none is live, so nobody waits on an email that was never sent. **Invite links**

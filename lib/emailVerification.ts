@@ -1,6 +1,7 @@
 import crypto from "node:crypto"
 import { prisma } from "@/lib/prisma"
 import { sendEmail } from "@/lib/email"
+import { verificationEmail } from "@/lib/emailTemplates"
 import { INVALID_EMAIL_MESSAGE, isValidEmail, normaliseEmail } from "@/lib/emailAddress"
 
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours — sign-up mail often sits unread for a while
@@ -9,14 +10,6 @@ export const RESEND_COOLDOWN_MS = 60 * 1000
 
 function hashToken(rawToken: string): string {
   return crypto.createHash("sha256").update(rawToken).digest("hex")
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
 }
 
 export type SendVerificationResult =
@@ -60,14 +53,7 @@ export async function sendVerificationEmail(userId: string): Promise<SendVerific
 
   const link = `${process.env.AUTH_URL ?? ""}/verify-email/${rawToken}`
   try {
-    await sendEmail({
-      to: user.email,
-      subject: "Confirm your email for Scorers",
-      html: `<p>Hi ${escapeHtml(user.displayName)},</p>
-<p>Confirm this is your email address to finish setting up your Scorers account.</p>
-<p><a href="${link}">Confirm my email address</a></p>
-<p>The link works once and expires in 24 hours. If you didn't sign up for Scorers, you can ignore this email.</p>`,
-    })
+    await sendEmail({ to: user.email, ...verificationEmail({ displayName: user.displayName, link }) })
   } catch (err) {
     // A token nobody was sent would claim "we sent a link" on the verify page
     // and hold the resend button in its cooldown — drop it so a retry is free.

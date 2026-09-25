@@ -12,6 +12,7 @@
     "e2e:ui": "playwright test --ui",
     "mobile:typecheck": "npm --prefix apps/mobile run typecheck",
     "brand:assets": "node scripts/generate-brand-assets.mjs",
+    "email:preview": "tsx scripts/preview-emails.ts",
     "store:seed": "tsx scripts/seed-store-demo.ts",
     "store:proxy": "node scripts/serve-store-proxy.mjs",
     "store:capture": "node scripts/capture-store-shots.mjs",

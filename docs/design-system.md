@@ -91,7 +91,7 @@ true. The mark keeps its pitch green in both themes, the way an app icon does.
 ### Regenerating the assets
 
 ```bash
-npm run brand:assets   # rewrites all ten PNGs from lib/mark.ts
+npm run brand:assets   # rewrites all eleven PNGs from lib/mark.ts
 ```
 
 | Asset | Notes |
@@ -102,9 +102,19 @@ npm run brand:assets   # rewrites all ten PNGs from lib/mark.ts
 | `android-icon-{foreground,background,monochrome}.png` | Three adaptive layers. Foreground and monochrome are inset to the safe area (`MARK_SAFE_AREA_SCALE`) because launchers crop to the device's shape; monochrome collapses the gold dash into one colour so the launcher can tint it |
 | `splash-icon.png` | Padded, because Expo's `contain` scales the image to fill |
 | `apps/mobile/…/mark.png` | The in-app `BrandMark` lockup — a PNG because the Expo app has no SVG renderer |
+| `public/brand/email-logo.png` | Email header logo. It's in `public/` because email clients need a plain absolute URL |
 
 Change the mark, run the script, commit the PNGs together. They're committed rather than
 built on demand, so nothing regenerates them behind your back.
+
+## Email
+
+Emails use the light palette with one scoreboard moment: the deep-green `board` header
+with the mark, a `board-gold` rule, and deep-green fixture cards. Amber still means
+deadline. Emails can't use CSS variables, so `lib/emailLayout.ts` holds literal hex
+copies of the tokens (`EMAIL_COLORS`). Update them if a light-theme token changes.
+Layout is tables with inline styles only, for Outlook and Gmail. Details are in
+[features.md](features.md#email-design-every-email-is-branded).
 
 ## Type
 

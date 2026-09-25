@@ -80,6 +80,9 @@ async function main() {
   await emit("app/icon.png", await raster({}, 512))
   await emit("app/apple-icon.png", await raster({ radius: 0 }, 180))
   await emit("app/opengraph-image.png", await openGraph())
+  // Email header (lib/emailLayout.ts) — shown at 44px, so 3x for retina. Served
+  // from public/ because email clients need a plain absolute image URL.
+  await emit("public/brand/email-logo.png", await raster({}, 132))
 
   // --- iOS -----------------------------------------------------------------
   // Square and fully opaque: a transparent or pre-rounded iOS icon is rejected.

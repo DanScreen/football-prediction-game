@@ -11,7 +11,7 @@ How the system fits together and where to find things in the code.
 | Database | PostgreSQL via Prisma 7 (Cloud SQL in prod) |
 | Auth | NextAuth.js v5 beta — credentials provider, JWT (stateless) sessions |
 | Fixtures & results | football-data.org v4 REST API (free tier: Premier League + World Cup) |
-| Email | Resend (deadline reminders + password reset) |
+| Email | Resend (verification, password reset, deadline reminders), all rendered via `lib/emailTemplates.ts` |
 | Hosting | GCP Cloud Run + Cloud SQL (europe-west2) |
 | Infra | Terraform (`terraform/`) |
 | CI/CD | GitHub Actions (PR checks in `ci.yml`, deploys in `deploy.yml`, iOS builds via EAS in `mobile-release.yml`) |
@@ -100,6 +100,7 @@ streak bonus fans out per subscribing league. Full schema in
 | `lib/banker.ts` | `setBanker` — one double-points pick per (user, competition, round) |
 | `lib/reminders.ts` | Deadline reminder email fan-out |
 | `lib/passwordReset.ts` / `lib/email.ts` | Password reset flow + Resend send helper |
+| `lib/emailLayout.ts` / `lib/emailTemplates.ts` | Branded email shell + every email template (see [features](features.md#email-design-every-email-is-branded)) |
 | `lib/adminAuth.ts` | `requireSiteAdmin` / `requireCommissioner` |
 | `lib/apiAuth.ts` | API-key auth + league/competition resolution |
 | `lib/mobileAuth.ts` | Mobile access JWT + refresh-token issue/rotate/revoke |

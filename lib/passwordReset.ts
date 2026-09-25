@@ -2,6 +2,7 @@ import crypto from "node:crypto"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { sendEmail } from "@/lib/email"
+import { passwordResetEmail } from "@/lib/emailTemplates"
 
 const TOKEN_TTL_MS = 60 * 60 * 1000 // 1 hour
 const RESEND_COOLDOWN_MS = 5 * 60 * 1000 // suppress re-issuing a token within 5 min of the last one
@@ -47,11 +48,7 @@ export async function sendPasswordResetEmail(userId: string): Promise<SendResetR
   const appUrl = process.env.AUTH_URL ?? ""
   await sendEmail({
     to: user.email,
-    subject: "Reset your Football Prediction App password",
-    html: `<p>Hi ${user.displayName},</p>
-<p>Click the link below to choose a new password. This link expires in 1 hour and can only be used once.</p>
-<p><a href="${appUrl}/reset-password/${rawToken}">Reset your password</a></p>
-<p>If you didn't request this, you can safely ignore this email.</p>`,
+    ...passwordResetEmail({ displayName: user.displayName, link: `${appUrl}/reset-password/${rawToken}` }),
   })
   return { status: "sent" }
 }
