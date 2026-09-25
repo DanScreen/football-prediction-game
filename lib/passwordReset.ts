@@ -10,19 +10,30 @@ function hashToken(rawToken: string): string {
   return crypto.createHash("sha256").update(rawToken).digest("hex")
 }
 
+export type SendResetResult = { status: "sent" } | { status: "cooldown"; retryInSeconds: number }
+
 /**
- * Issues a password reset token and emails the link. Always resolves without
- * error whether or not the email is registered, and is silently rate-limited
- * per user, so it can't be used to enumerate accounts or spam a mailbox.
+ * Issues a password reset token for a known user and emails the link, unless
+ * one went out in the last few minutes. Throws if the email can't be sent.
+ * The public form goes through `requestPasswordReset`; site hosts call this
+ * directly so they're told when the cooldown held the email back.
  */
-export async function requestPasswordReset(email: string): Promise<void> {
-  const user = await prisma.user.findUnique({ where: { email } })
-  if (!user) return
+export async function sendPasswordResetEmail(userId: string): Promise<SendResetResult> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true, displayName: true },
+  })
+  if (!user) throw new Error("User not found")
 
   const recent = await prisma.passwordResetToken.findFirst({
     where: { userId: user.id, createdAt: { gt: new Date(Date.now() - RESEND_COOLDOWN_MS) } },
+    orderBy: { createdAt: "desc" },
+    select: { createdAt: true },
   })
-  if (recent) return
+  if (recent) {
+    const waitMs = recent.createdAt.getTime() + RESEND_COOLDOWN_MS - Date.now()
+    return { status: "cooldown", retryInSeconds: Math.max(1, Math.ceil(waitMs / 1000)) }
+  }
 
   const rawToken = crypto.randomBytes(32).toString("hex")
   await prisma.passwordResetToken.create({
@@ -42,6 +53,18 @@ export async function requestPasswordReset(email: string): Promise<void> {
 <p><a href="${appUrl}/reset-password/${rawToken}">Reset your password</a></p>
 <p>If you didn't request this, you can safely ignore this email.</p>`,
   })
+  return { status: "sent" }
+}
+
+/**
+ * The public "forgot password" request. Always resolves without error whether
+ * or not the email is registered, and is silently rate-limited per user, so it
+ * can't be used to enumerate accounts or spam a mailbox.
+ */
+export async function requestPasswordReset(email: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { email }, select: { id: true } })
+  if (!user) return
+  await sendPasswordResetEmail(user.id)
 }
 
 /** Validates a raw reset token without consuming it, for rendering the reset form. */

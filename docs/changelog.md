@@ -6,6 +6,16 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-25 — Host user list with verification and reset links
+
+`/host/users` lists every account with its verification status, searchable and split
+into All / Unverified / Verified tabs. Hosts can send a verification link, send a
+password reset link, or fix a mistyped address on an unverified account
+([details](features.md#host-user-management)). There are 3 new E2E tests, so the suite now
+has 34.
+
+---
+
 ## 2026-09-25 — Verification emails are sent without being asked for
 
 Fixes reports of verification emails not arriving. Accounts from before verification,
