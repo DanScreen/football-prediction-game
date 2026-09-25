@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { requestPasswordReset, isResetTokenValid, resetPassword } from "./passwordReset"
+import {
+  requestPasswordReset,
+  sendPasswordResetEmail,
+  isResetTokenValid,
+  resetPassword,
+} from "./passwordReset"
 import { prisma } from "@/lib/prisma"
 import { sendEmail } from "@/lib/email"
 
@@ -64,12 +69,41 @@ describe("requestPasswordReset", () => {
 
   it("skips issuing a second token within the cooldown window", async () => {
     userFindUnique.mockResolvedValue({ id: "u1", email: "alice@test.com", displayName: "Alice" } as never)
-    tokenFindFirst.mockResolvedValue({ id: "t1" } as never)
+    tokenFindFirst.mockResolvedValue({ createdAt: new Date() } as never)
 
     await requestPasswordReset("alice@test.com")
 
     expect(tokenCreate).not.toHaveBeenCalled()
     expect(sendEmailMock).not.toHaveBeenCalled()
+  })
+})
+
+describe("sendPasswordResetEmail", () => {
+  const alice = { id: "u1", email: "alice@test.com", displayName: "Alice" }
+
+  it("emails a reset link and says so", async () => {
+    userFindUnique.mockResolvedValue(alice as never)
+    tokenFindFirst.mockResolvedValue(null)
+
+    expect(await sendPasswordResetEmail("u1")).toEqual({ status: "sent" })
+    expect(sendEmailMock.mock.calls[0][0].to).toBe("alice@test.com")
+  })
+
+  it("reports the cooldown instead of silently skipping", async () => {
+    userFindUnique.mockResolvedValue(alice as never)
+    tokenFindFirst.mockResolvedValue({ createdAt: new Date(Date.now() - 60_000) } as never)
+
+    const result = await sendPasswordResetEmail("u1")
+
+    expect(result.status).toBe("cooldown")
+    // 5-minute window, one minute gone
+    expect(result.status === "cooldown" && result.retryInSeconds).toBeGreaterThan(200)
+    expect(sendEmailMock).not.toHaveBeenCalled()
+  })
+
+  it("throws for an unknown user", async () => {
+    userFindUnique.mockResolvedValue(null)
+    await expect(sendPasswordResetEmail("nope")).rejects.toThrow("User not found")
   })
 })
 

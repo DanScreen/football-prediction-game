@@ -71,7 +71,7 @@ streak bonus fans out per subscribing league. Full schema in
 | `app/leaderboard/` | Standings table + form strip |
 | `app/leagues/` | Create/join/switch leagues; competition picker |
 | `app/profile/` | API key management |
-| `app/host/` | **Site-host area** (isSiteAdmin): overview metrics, competitions, fixtures, import, results |
+| `app/host/` | **Site-host area** (isSiteAdmin): overview metrics, users (verification/reset links), competitions, fixtures, import, results |
 | `app/admin/` | **League commissioner area**: settings only |
 | `app/api/v1/` | Public bot API (fixtures, predictions, leaderboard) |
 | `app/api/mobile/v1/` | Native-app API (access/refresh auth + player endpoints) — [mobile.md](mobile.md) |
@@ -88,6 +88,7 @@ streak bonus fans out per subscribing league. Full schema in
 |------|----------------|
 | `lib/lastSeen.ts` | Throttled `User.lastSeenAt` bumps for host DAU/WAU/MAU |
 | `lib/hostMetrics.ts` | Aggregates for the `/host` overview page |
+| `lib/hostUsers.ts` | The `/host/users` list: filter, search, pagination, last link times |
 | `lib/scoring.ts` | Pure scoring: `scoreOnePrediction`, `awardedPoints` (banker multiplier), `streakPoints` (bonus tiers) |
 | `lib/results.ts` | `confirmFixtureResult` (score once + streak-bonus fan-out), `acceptAllProposed` |
 | `lib/provisional.ts` | Read-time provisional score/points helpers (never stored) |

@@ -39,7 +39,9 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   - **Site hosts** (`User.isSiteAdmin`) own competitions, fixtures, imports, and
     the platform-wide result-confirmation queue at `/host`. `/host` itself is an
     **overview** of user counts and activity (DAU/WAU/MAU via `lastSeenAt`,
-    signups, prediction volume, recent users).
+    signups, prediction volume, recent users). **`/host/users`** lists every account
+    with its verification status and lets a host send a verification link, a password
+    reset link, or fix a mistyped unverified address.
   - **League commissioners** manage only their league's settings at `/admin`.
 - **Platform-owned competitions** — `Competition` owns canonical fixtures; leagues
   subscribe via `League.competitionId`. One prediction per user per fixture counts
@@ -95,12 +97,13 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **357 unit tests** (vitest, prisma/fetch mocked) — all passing.
-- **31 end-to-end tests** (Playwright, real browser + Postgres; `npm run e2e`) — all
+- **377 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **34 end-to-end tests** (Playwright, real browser + Postgres; `npm run e2e`) — all
   passing, and stable across repeated runs. They cover the golden path (invite, sign
   up, verify, predict with a banker, kickoff lock, host confirms, leaderboard), public
   vs protected routing, nav with a fresh session, an older unverified account being
-  emailed its link unasked, the bot API over HTTP, and password
+  emailed its link unasked, a host sending verification and reset links from
+  `/host/users`, the bot API over HTTP, and password
   reset. They gate pull requests in CI.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the unit suite **before** deploying, so a red test blocks production. The E2E

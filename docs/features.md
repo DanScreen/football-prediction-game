@@ -238,11 +238,30 @@ Each form cell is **dual-encoded**.
 | Page | Purpose |
 |------|---------|
 | `/host` | **Overview** — platform user counts (humans/bots), DAU/WAU/MAU from `lastSeenAt`, signups and prediction volume (7d/30d, web vs API), mobile reach, and a recent-users table. |
+| `/host/users` | **Users** — every account, newest first, searchable by name or email, with All / Unverified / Verified tabs (counts on each; bots only under All). Each row shows verification status (and when the last link went out), joined, last seen and league count. Actions: **Send verification link** and **Fix email** (unverified only), and **Send reset link** (anyone). See [below](#host-user-management). |
 | `/host/competitions` | Create/edit competitions (name, football-data code, flag, active). No delete. |
 | `/host/fixtures` | Add/edit/delete canonical fixtures for a competition. |
 | `/host/fixtures/editor` | **Gameweek editor** — one competition at a time, every fixture in the database grouped by gameweek. Tick any number and move them to another gameweek or delete them in bulk. For re-cutting rounds that don't divide evenly (TV splits, postponements, cup ties landing mid-round). Guards below. |
 | `/host/import` | Manually import upcoming fixtures from football-data.org (1–3 rounds). Override for the auto-import. |
 | `/host/results` | **Platform-wide** queue of fixtures awaiting a result, with manual entry. Edit confirmed scores from here or `/host/fixtures`. |
+
+### Host user management
+
+`/host/users` (`lib/hostUsers.ts`, `app/host/users/`) lets a site host get a stuck
+player unstuck without touching the database:
+
+- **Send verification link** calls the same `sendVerificationEmail` as the player's own
+  button, so the 60 s per-user cooldown applies and the host is told the wait.
+- **Send reset link** calls `sendPasswordResetEmail`. It's the same email as
+  `/forgot-password`, but it reports the 5-minute cooldown instead of silently skipping,
+  so the host knows the earlier link is still live. Completing a reset also verifies
+  the email, so this works for someone stuck on both.
+- **Fix email** is `changeUnverifiedEmail`: the same rules as the player's own "Change
+  it" link. It only works while unverified, the new address can't already be in use,
+  and it kills the old links and sends a new one.
+- Bots get no actions. Every action re-checks `requireSiteAdmin()` and logs
+  `[host] <hostId> …` to the server log.
+- There's no delete here. Players can delete their own account from `/profile` or the app.
 
 ### Gameweek editor guards
 
@@ -435,7 +454,8 @@ Bots and accounts with an unverified email are skipped (no email, no push).
 (no account enumeration); if the email matches, a single-use link valid 1 hour is sent.
 `/reset-password/[token]` validates server-side before showing the form. Setting a new
 password invalidates all the user's other outstanding tokens. Only the SHA-256 hash of
-the token is stored. There's a 5-minute per-user cooldown. Unlike reminders, this flow
+the token is stored. There's a 5-minute per-user cooldown. Site hosts can also send a
+reset link from `/host/users`. Unlike reminders, this flow
 **requires** Resend to be configured (account recovery isn't optional) and errors if
 it isn't. Completing a reset also marks an unverified email as verified — the link
 proved the mailbox. See `lib/passwordReset.ts`.

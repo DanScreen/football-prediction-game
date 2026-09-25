@@ -5,6 +5,23 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## 2026-09-25 — Host user management reuses the player flows, cooldowns included
+Hosts needed to see who's verified and push links to stuck players, modelled on the
+Tiki Acca (`the-syndicate`) admin "Unconfirmed accounts" page. It lives at `/host/users`
+(site hosts), not `/admin` (league commissioners): it covers every account on the
+platform, and a commissioner shouldn't see other leagues' members' emails.
+**Every action goes through the function the player's own button uses**
+(`sendVerificationEmail`, `sendPasswordResetEmail`, `changeUnverifiedEmail`), so the
+rules can't drift. The per-user cooldowns (60 s verification, 5 min reset) still apply
+to hosts. A host double-clicking shouldn't double-mail a player, and within the window
+the earlier link still works. The difference is that hosts are *told* about the
+cooldown, which the public forgot-password form deliberately hides.
+**Left out from Tiki Acca:** the "Remove" button and the DNS "domain can't receive mail"
+check. Nobody asked for deletion, and players can already delete their own account.
+The domain check can come later if junk addresses pile up.
+
+---
+
 ## 2026-09-25 — Send the verification link automatically where users are held
 Players reported that verification emails never arrived. The sending code and
 production config were fine. The gap was that nothing sent the *first* link to an
