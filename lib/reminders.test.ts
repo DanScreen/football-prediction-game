@@ -106,7 +106,7 @@ describe("sendDeadlineReminders", () => {
     expect(emailCalls).toHaveLength(1)
     const body = JSON.parse(emailCalls[0]![1].body)
     expect(body.to).toBe("bob@test.com")
-    expect(body.html).toContain("Arsenal vs Chelsea")
+    expect(body.text).toContain("Arsenal vs Chelsea")
   })
 
   it("skips members whose email isn't verified — no email and no push", async () => {
@@ -157,7 +157,7 @@ describe("sendDeadlineReminders", () => {
       .map((c) => JSON.parse(c[1].body))
     const aliceEmails = bodies.filter((b) => b.to === "alice@test.com")
     expect(aliceEmails).toHaveLength(1)
-    expect(aliceEmails[0].html.match(/Arsenal vs Chelsea/g)).toHaveLength(1)
+    expect(aliceEmails[0].text.match(/Arsenal vs Chelsea/g)).toHaveLength(1)
   })
 
   it("sends one email per user covering all their open fixtures", async () => {
@@ -171,8 +171,9 @@ describe("sendDeadlineReminders", () => {
     const emailCalls = fetchMock.mock.calls.filter((c) => c[0] === "https://api.resend.com/emails")
     expect(emailCalls).toHaveLength(2)
     const firstBody = JSON.parse(emailCalls[0]![1].body)
-    expect(firstBody.html).toContain("Arsenal vs Chelsea")
-    expect(firstBody.html).toContain("Liverpool vs Everton")
+    expect(firstBody.text).toContain("Arsenal vs Chelsea")
+    expect(firstBody.text).toContain("Liverpool vs Everton")
+    expect(firstBody.html).toContain("Liverpool")
     expect(firstBody.subject).toContain("2 predictions")
   })
 
@@ -185,7 +186,7 @@ describe("sendDeadlineReminders", () => {
 
   it("counts only successful sends", async () => {
     fixtureFindMany.mockResolvedValue([dueFixture()] as never)
-    fetchMock.mockResolvedValue({ ok: false })
+    fetchMock.mockResolvedValue({ ok: false, status: 422, text: async () => "invalid address" })
     expect((await sendDeadlineReminders()).sent).toBe(0)
   })
 

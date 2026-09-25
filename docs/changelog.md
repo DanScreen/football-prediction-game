@@ -6,6 +6,17 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-09-25 — Branded emails
+
+Every email now uses the Scorers theme: a scoreboard-green header with the logo and
+wordmark, a card with a clear button, and a plain-text alternative. Previously they
+were bare HTML, and the reset email still said "Football Prediction App". Deadline
+reminders show each fixture as a mini scoreboard with an amber "Locks" chip. There's
+one template module for every email, and `npm run email:preview` renders them
+([details](features.md#email-design-every-email-is-branded)).
+
+---
+
 ## 2026-09-25 — Host user list with verification and reset links
 
 `/host/users` lists every account with its verification status, searchable and split

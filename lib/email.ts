@@ -2,6 +2,7 @@ type SendEmailArgs = {
   to: string
   subject: string
   html: string
+  text?: string
 }
 
 /**
@@ -9,8 +10,11 @@ type SendEmailArgs = {
  * aren't configured or the send fails — unlike the optional deadline-reminder
  * sweep, callers of this helper (e.g. password reset) depend on the email
  * actually going out.
+ *
+ * Build `subject`/`html`/`text` with a template from `lib/emailTemplates.ts` so
+ * every email carries the Scorers branding.
  */
-export async function sendEmail({ to, subject, html }: SendEmailArgs): Promise<void> {
+export async function sendEmail({ to, subject, html, text }: SendEmailArgs): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.EMAIL_FROM
   if (!apiKey || !from) {
@@ -23,7 +27,7 @@ export async function sendEmail({ to, subject, html }: SendEmailArgs): Promise<v
   const res = await fetch(`${baseUrl}/emails`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from, to, subject, html }),
+    body: JSON.stringify({ from, to, subject, html, ...(text ? { text } : {}) }),
   })
 
   if (!res.ok) {

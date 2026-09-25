@@ -5,6 +5,18 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## 2026-09-25 — One email template module; emails stay light-themed
+Every email is built by a function in `lib/emailTemplates.ts` and rendered through
+`renderEmail` (`lib/emailLayout.ts`). The earlier emails were each hand-written at their
+call site, which is how one ended up branded "Football Prediction App" and another
+didn't escape the display name. We use plain template strings rather than React Email
+or MJML. There are three emails, and a dependency plus a build step isn't worth it
+until there are many more. The emails declare a light colour scheme, not dark: client
+dark-mode support is patchy, and a forced inversion of a dark design is worse than a
+light one being darkened. The deadline sweep now sends through `sendEmail` like the
+others. So a failed send for one user is logged and skipped rather than aborting the
+sweep, and the E2E mail sink override (`RESEND_API_URL`) applies to reminders too.
+
 ## 2026-09-25 — Host user management reuses the player flows, cooldowns included
 Hosts needed to see who's verified and push links to stuck players, modelled on the
 Tiki Acca (`the-syndicate`) admin "Unconfirmed accounts" page. It lives at `/host/users`

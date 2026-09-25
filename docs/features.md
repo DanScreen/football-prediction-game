@@ -440,6 +440,28 @@ every account that existed before this shipped (2026-09-23).
 
 Code: `lib/emailVerification.ts`, `app/verify-email/`, `proxy.ts`, `auth.config.ts`.
 
+## Email design (every email is branded)
+
+Every email goes out in the Scorers theme. There's a deep-green scoreboard header
+with the mark and wordmark, a gold rule, and a white card holding an eyebrow, a
+title, the body and a pitch-green button. A quiet footer links back to the app.
+Each email also carries a plain-text alternative.
+
+- **`lib/emailLayout.ts`** is the shell (`renderEmail`) plus building blocks:
+  `paragraph`, `mutedNote`, `fixtureCard` (a mini scoreboard with `? – ?` and an
+  amber "Locks …" chip) and `escapeHtml`.
+- **`lib/emailTemplates.ts`** holds every email: `verificationEmail`,
+  `passwordResetEmail` and `deadlineReminderEmail`. Each returns
+  `{ subject, html, text }` to spread into `sendEmail`. **New emails go here.** Don't
+  build HTML at the call site.
+- The header logo is `public/brand/email-logo.png`, loaded from `AUTH_URL`. It comes
+  from `npm run brand:assets`.
+- Verification and reset repeat their link as copyable text under the button. The
+  header isn't a link, so the button is always the first `href`, which is the link
+  the E2E mail helper follows.
+- `npm run email:preview` renders every template with sample data into the
+  git-ignored `.email-previews/`.
+
 ## Deadline reminder emails
 
 The cron sweep emails league members who haven't predicted a fixture kicking off within
@@ -447,6 +469,8 @@ the next 3 hours — one email per user listing their open fixtures (via Resend)
 multi-league user gets a single deduped email. Each fixture triggers one batch only
 (`reminderSentAt` guard). Silently skipped if `RESEND_API_KEY`/`EMAIL_FROM` are unset.
 Bots and accounts with an unverified email are skipped (no email, no push).
+Each open fixture shows as a scoreboard card with its London kickoff time. A send that
+fails for one user is logged and doesn't stop the rest.
 
 ## Forgot password / reset
 
