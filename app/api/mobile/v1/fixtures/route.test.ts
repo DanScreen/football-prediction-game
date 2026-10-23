@@ -23,15 +23,15 @@ const user = { id: "u1", email: "a@b.c", displayName: "Alice", isBot: false, ema
 beforeEach(() => {
   vi.clearAllMocks()
   authMock.mockResolvedValue(user)
-  membershipFindMany.mockImplementation(async (args) => {
+  membershipFindMany.mockImplementation((async (args?: { where?: { userId?: string } }) => {
     if (args?.where?.userId === "u1") {
-      return [{ leagueId: "l1", league: { competitionId: "c1" } }] as never
+      return [{ leagueId: "l1", league: { competitionId: "c1" } }]
     }
     return [
       { leagueId: "l1", userId: "u1" },
       { leagueId: "l1", userId: "u2" },
-    ] as never
-  })
+    ]
+  }) as never)
 })
 
 describe("GET /api/mobile/v1/fixtures", () => {

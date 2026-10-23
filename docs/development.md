@@ -133,6 +133,9 @@ Gotchas the suite already works around:
 - **After a client-side navigation, wait for the new page's heading before filling
   fields.** `/login` and `/forgot-password` both have an "Email" field, so a fill can
   land on the old page.
+- **Don't use `getByText` for a page's heading.** Since Next 16.4 the route announcer
+  (`#__next-route-announcer__`) repeats it after a client-side navigation, so the
+  locator matches twice and fails strict mode. Use `getByRole("heading", { name })`.
 - **Locate by role and label**, not CSS. The fixture cards are
   `role="group"` named "Home v Away", which scopes the score inputs to one card.
 

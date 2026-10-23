@@ -16,7 +16,7 @@ async function botInNewLeague() {
 }
 
 test("calls without a valid key get a JSON 401, not the login page", async ({ request }) => {
-  for (const headers of [{}, { Authorization: "Bearer not-a-real-key" }]) {
+  for (const headers of [{}, { Authorization: "Bearer not-a-real-key" }] as Record<string, string>[]) {
     const res = await request.get("/api/v1/fixtures", { headers, maxRedirects: 0 })
     expect(res.status()).toBe(401)
     expect(await res.json()).toEqual({ error: "Unauthorized" })
