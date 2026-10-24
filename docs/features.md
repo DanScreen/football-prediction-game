@@ -133,7 +133,18 @@ Above them, when picks are outstanding: an amber nudge with the count and the ne
 deadline. It counts only the **next gameweek needing picks in each competition**, not
 everything open — fixtures import a couple of rounds ahead, so counting all of them read
 "20 fixtures still to predict" for deadlines a fortnight out. Later rounds are covered by
-their own gameweek badge. Standing totals (points, exact count, rank) are deliberately *not* here — they
+their own gameweek badge.
+
+Beneath it, when the **nearest open gameweek in a competition has no banker**, a second
+amber nudge: "No banker set for Gameweek N", with a line pointing at the ☆ Banker button
+(`roundsMissingBanker()` in `lib/bankerNudge.ts`). Only the nearest round counts, for the
+same reason as the picks nudge — next week's banker isn't urgent while this week's is
+sorted. With several competitions it names each round with its competition. It goes away
+as soon as a banker is set. The player's bankers are looked up per round **including
+finished fixtures**, so a banker on Friday's match still counts on Saturday, after that
+fixture has left the page — the gameweek header's "no banker yet" uses the same lookup.
+
+Standing totals (points, exact count, rank) are deliberately *not* here — they
 belong to the Leaderboard, where they can be read per league and against other people.
 
 Whose picks show under Kicked Off: everyone who shares a league with you **on that

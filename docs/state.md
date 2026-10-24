@@ -54,7 +54,8 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 - **Predictions** (`/`) — one page for open fixtures, kicked-off picks and settled
   results. Scoped by competition, not league: a pick counts in every league you're in.
 - **Banker** — one fixture per gameweek scores double. Always on (it can't be a
-  per-league toggle; see [decisions.md](decisions.md)), locked at kickoff.
+  per-league toggle; see [decisions.md](decisions.md)), locked at kickoff. The
+  Predictions page warns when the nearest open gameweek has no banker yet.
 - **Result resolution** — cron confirms scores from football-data.org as soon as
   they’re available, then **reconciles** recent AI-confirmed results for 24h after
   kickoff so a later feed correction (disallowed goal, etc.) updates points without

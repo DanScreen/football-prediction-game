@@ -63,10 +63,14 @@ test("invitee signs up, predicts, and tops the table once the host confirms the 
     await card.getByLabel("Away score").fill("1")
     await expect(card.getByRole("status")).toContainText("Saved")
 
+    const noBankerWarning = page.getByText(/no banker set for/i)
+    await expect(noBankerWarning).toBeVisible()
+
     const banker = card.getByRole("button", { name: /banker/i })
     await expect(banker).toHaveAttribute("aria-pressed", "false")
     await banker.click()
     await expect(banker).toHaveAttribute("aria-pressed", "true")
+    await expect(noBankerWarning).toBeHidden()
   })
 
   await test.step("the pick and banker survive a reload", async () => {
