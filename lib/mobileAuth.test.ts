@@ -37,10 +37,10 @@ const transaction = vi.mocked(prisma.$transaction)
 beforeEach(() => {
   vi.clearAllMocks()
   process.env.AUTH_SECRET = "test-secret-for-mobile-jwt"
-  transaction.mockImplementation(async (ops) => {
+  transaction.mockImplementation((async (ops: Promise<unknown>[]) => {
     // Execute the array of promises prisma.$transaction receives in production.
-    return Promise.all(ops as Promise<unknown>[])
-  })
+    return Promise.all(ops)
+  }) as never)
 })
 
 afterEach(() => {

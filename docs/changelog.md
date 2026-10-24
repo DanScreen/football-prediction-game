@@ -16,6 +16,24 @@ reads "no banker yet". The golden-path E2E test checks the nudge appears and cle
 
 ---
 
+## 2026-10-23 — Security dependency updates
+
+Upgrades the packages with known critical advisories:
+
+- `next` 16.2.9 → 16.4.2, fixing a proxy bypass and a Server Actions denial of service.
+- `next-auth` beta.31 → beta.32 (`@auth/core` 0.41.3), fixing an auth check that could
+  fail open, a homoglyph email bypass and a crash on malformed Bearer headers.
+- Prisma 7.8 → 7.10.1, Tailwind 4.3.3, Vitest 4.1.12, plus transitive bumps
+  (`sharp`, `postcss`, `vite`, `mysql2`, `shell-quote`).
+
+The mobile app takes the latest SDK 57 patch releases. Next 16.4 type-checks test files
+during `next build`, so five test mocks got the casts they were missing. The golden-path
+E2E spec now finds "Check your inbox" by heading, because the Next route announcer
+repeats that text. What `npm audit` still reports, and why, is in
+[decisions](decisions.md#2026-10-23--residual-npm-audit-findings-are-build-tooling-with-no-upstream-fix).
+
+---
+
 ## 2026-09-25 — Branded emails
 
 Every email now uses the Scorers theme: a scoreboard-green header with the logo and

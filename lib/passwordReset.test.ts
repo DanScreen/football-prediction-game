@@ -38,7 +38,7 @@ const sendEmailMock = vi.mocked(sendEmail)
 beforeEach(() => {
   vi.clearAllMocks()
   vi.stubEnv("AUTH_URL", "https://example.com")
-  transaction.mockImplementation((ops: unknown[]) => Promise.all(ops) as never)
+  transaction.mockImplementation(((ops: unknown[]) => Promise.all(ops)) as never)
 })
 
 afterEach(() => {
