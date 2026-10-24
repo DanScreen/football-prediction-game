@@ -6,6 +6,16 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-10-24 — Warning when you haven't picked a banker
+
+The Predictions page shows an amber "No banker set for Gameweek N" nudge when the nearest
+open gameweek in a competition has no banker, and it goes away once you set one
+([details](features.md#predictions-)). Bankers are now looked up including finished
+fixtures, so a round whose banker was an earlier match that has already finished no longer
+reads "no banker yet". The golden-path E2E test checks the nudge appears and clears.
+
+---
+
 ## 2026-10-23 — Security dependency updates
 
 Upgrades the packages with known critical advisories:

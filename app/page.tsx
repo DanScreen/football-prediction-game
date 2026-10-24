@@ -8,6 +8,7 @@ import RequestResultButton from "@/app/components/RequestResultButton"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
 import { resolvePeerContext } from "@/lib/peers"
 import ArchivedOnlyNotice from "@/app/components/ArchivedOnlyNotice"
+import { roundsMissingBanker } from "@/lib/bankerNudge"
 import FixtureRoundGroup, {
   groupByRound,
   takeNearestRounds,
@@ -87,14 +88,31 @@ export default async function PredictionsPage() {
   const open = liveFixtures.filter((f) => f.kickoffTime > now)
   const locked = liveFixtures.filter((f) => f.kickoffTime <= now)
 
+  // Looked up separately rather than read off `liveFixtures`: a banker on a
+  // fixture that has already finished (Friday's match, by Saturday) still counts
+  // for the round, but finished fixtures aren't in that list — reading it there
+  // would show "no banker" and warn about a round that's already bankered.
+  const myBankers = await prisma.prediction.findMany({
+    where: {
+      userId,
+      isBanker: true,
+      fixture: {
+        competitionId: { in: competitionIds },
+        round: { in: [...new Set(liveFixtures.map((f) => f.round))] },
+      },
+    },
+    select: {
+      fixture: {
+        select: { competitionId: true, round: true, homeTeam: true, awayTeam: true },
+      },
+    },
+  })
   const bankerByRound = new Map<string, { homeTeam: string; awayTeam: string }>()
-  for (const f of liveFixtures) {
-    if (f.predictions.some((p) => p.userId === userId && p.isBanker)) {
-      bankerByRound.set(`${f.competitionId}·${f.round}`, {
-        homeTeam: f.homeTeam,
-        awayTeam: f.awayTeam,
-      })
-    }
+  for (const { fixture: f } of myBankers) {
+    bankerByRound.set(`${f.competitionId}·${f.round}`, {
+      homeTeam: f.homeTeam,
+      awayTeam: f.awayTeam,
+    })
   }
   const bankerOf = (group: { key: string }) => bankerByRound.get(group.key) ?? null
 
@@ -122,6 +140,8 @@ export default async function PredictionsPage() {
     null,
   )
 
+  const noBanker = roundsMissingBanker(openRounds, new Set(bankerByRound.keys()))
+
   const firstUnfinishedRound = openRounds.findIndex((g) =>
     g.fixtures.some((f) => !f.predictions.some((p) => p.userId === userId)),
   )
@@ -145,22 +165,51 @@ export default async function PredictionsPage() {
           : memberships[0].league.competition.name}
       </p>
 
-      {missing.length > 0 && nextDeadline && (
-        <div className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-clock-line bg-clock-tint px-4 py-3">
-          <p className="text-sm font-semibold text-clock">
-            {missing.length} fixture{missing.length !== 1 ? "s" : ""} to predict in{" "}
-            {nudgeRounds.length === 1 ? nudgeRounds[0].round : "your next gameweeks"}
-          </p>
-          <p className="text-xs text-clock/90">
-            Next deadline{" "}
-            {new Date(nextDeadline).toLocaleString("en-GB", {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
+      {((missing.length > 0 && nextDeadline) || noBanker.length > 0) && (
+        <div className="mb-8 space-y-3">
+          {missing.length > 0 && nextDeadline && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-clock-line bg-clock-tint px-4 py-3">
+              <p className="text-sm font-semibold text-clock">
+                {missing.length} fixture{missing.length !== 1 ? "s" : ""} to predict in{" "}
+                {nudgeRounds.length === 1 ? nudgeRounds[0].round : "your next gameweeks"}
+              </p>
+              <p className="text-xs text-clock/90">
+                Next deadline{" "}
+                {new Date(nextDeadline).toLocaleString("en-GB", {
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
+          )}
+
+          {noBanker.length > 0 && (
+            <div
+              role="status"
+              className="flex items-start gap-3 rounded-xl border border-clock-line bg-clock-tint px-4 py-3"
+            >
+              <span aria-hidden="true" className="text-lg leading-tight text-clock">
+                ☆
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-clock">
+                  No banker set for{" "}
+                  {noBanker
+                    .map((g) =>
+                      multipleCompetitions ? `${g.round} (${g.competitionName})` : g.round,
+                    )
+                    .join(" and ")}
+                </p>
+                <p className="text-xs text-clock/90">
+                  Use ☆ Banker on your most confident pick to double its points — before it
+                  kicks off.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
