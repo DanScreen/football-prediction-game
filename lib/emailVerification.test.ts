@@ -53,7 +53,7 @@ const unverified = {
 beforeEach(() => {
   vi.resetAllMocks()
   vi.stubEnv("AUTH_URL", "https://example.com")
-  transaction.mockImplementation((ops: unknown[]) => Promise.all(ops) as never)
+  transaction.mockImplementation(((ops: unknown[]) => Promise.all(ops)) as never)
   tokenCreate.mockResolvedValue({ id: "t1" } as never)
   tokenDelete.mockResolvedValue({} as never)
 })

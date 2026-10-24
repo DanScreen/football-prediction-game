@@ -40,7 +40,7 @@ test("invitee signs up, predicts, and tops the table once the host confirms the 
     await page.getByRole("button", { name: "Create Account" }).click()
 
     await expect(page).toHaveURL(/\/verify-email$/)
-    await expect(page.getByText("Check your inbox")).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Check your inbox" })).toBeVisible()
   })
 
   await test.step("the app is gated until the email is verified", async () => {

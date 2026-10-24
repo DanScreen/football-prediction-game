@@ -5,6 +5,23 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## 2026-10-23 — Residual `npm audit` findings are build tooling with no upstream fix
+After the 2026-10-23 upgrade, `npm audit` still reports high findings in two places.
+On the web side they're in `eslint-config-next`. On mobile they're in the
+Expo/Metro/React Native toolchain. They all trace back to three packages:
+
+- `braces` (through `micromatch`/`fast-glob`): every published version is affected.
+- `node-forge` (through `@expo/code-signing-certificates`): same.
+- `decode-uri-component` 0.2 (through `expo-router`'s `query-string` 7): the fixed
+  0.5 line is a breaking major, and `expo-router` only moves to it in SDK 58.
+
+The first two run on a developer's machine or in CI, at lint or bundle time, and never
+handle user input in production. The third is a client-side DoS in URL decoding.
+**We don't `overrides`-pin around them, and we don't take `npm audit fix --force`**:
+it proposes downgrading to Expo 44 and React Native 0.72. The real fix is the Expo
+SDK 58 upgrade, which is its own piece of work because it needs a native rebuild and a
+store release. Re-check `npm audit` when `braces` or `node-forge` publish a fix.
+
 ## 2026-09-25 — One email template module; emails stay light-themed
 Every email is built by a function in `lib/emailTemplates.ts` and rendered through
 `renderEmail` (`lib/emailLayout.ts`). The earlier emails were each hand-written at their
