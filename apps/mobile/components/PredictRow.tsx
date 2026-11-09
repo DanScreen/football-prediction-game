@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { Pressable, Text, View } from "react-native"
 import { Countdown, scoreDigits } from "@/components/scoreboard"
 import { TeamChip } from "@/components/TeamChip"
@@ -22,6 +23,24 @@ function parseScore(raw: string): number | null {
   const n = Number(raw)
   if (!Number.isInteger(n) || n < 0) return null
   return n
+}
+
+function kickoffSoon(kickoffTime: string): boolean {
+  return new Date(kickoffTime).getTime() - Date.now() < COUNTDOWN_WINDOW_MS
+}
+
+/**
+ * True inside the last 24 hours before kickoff. Amber is reserved for urgency,
+ * so the countdown pill only appears then; re-checked each minute so a row
+ * crossing the line picks it up without a reload.
+ */
+function useKickoffSoon(kickoffTime: string): boolean {
+  const [soon, setSoon] = useState(() => kickoffSoon(kickoffTime))
+  useEffect(() => {
+    const id = setInterval(() => setSoon(kickoffSoon(kickoffTime)), 60_000)
+    return () => clearInterval(id)
+  }, [kickoffTime])
+  return soon
 }
 
 /** One compact card per fixture: kickoff + status, banker toggle, two steppers. */
@@ -58,8 +77,7 @@ export function PredictRow({
   const showSavedStyle = bothValid && (matchesSaved || saving || justSaved)
   const hasPrediction = pred != null || (justSaved && bothValid)
 
-  const msUntilKickoff = new Date(fixture.kickoffTime).getTime() - Date.now()
-  const showCountdown = msUntilKickoff < COUNTDOWN_WINDOW_MS
+  const showCountdown = useKickoffSoon(fixture.kickoffTime)
 
   return (
     <View

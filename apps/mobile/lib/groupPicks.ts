@@ -1,10 +1,21 @@
-import type { FixturePrediction } from "@/lib/api"
+/**
+ * The fields grouping needs, declared structurally rather than imported from
+ * `@/lib/api`: this file is also type-checked by the web build (its unit test
+ * lives at the repo root), where `@/` resolves to a different tree.
+ */
+export type PickLike = {
+  homeScore: number
+  awayScore: number
+  isBanker: boolean
+  pointsAwarded: number | null
+  provisionalPoints: number | null
+}
 
-export type PickGroup = {
+export type PickGroup<P extends PickLike = PickLike> = {
   homeScore: number
   awayScore: number
   /** Everyone who picked this scoreline, in the order they arrived. */
-  picks: FixturePrediction[]
+  picks: P[]
   /** Points for this scoreline BEFORE any banker doubling, or null if unsettled. */
   basePoints: number | null
 }
@@ -14,7 +25,7 @@ function undoBanker(points: number, isBanker: boolean): number {
   return isBanker ? points / 2 : points
 }
 
-function groupBasePoints(picks: FixturePrediction[]): number | null {
+function groupBasePoints(picks: PickLike[]): number | null {
   const settled = picks.find((p) => p.pointsAwarded != null)
   if (settled) return undoBanker(settled.pointsAwarded as number, settled.isBanker)
   const provisional = picks.find((p) => p.provisionalPoints != null)
@@ -27,8 +38,8 @@ function groupBasePoints(picks: FixturePrediction[]): number | null {
  * base points (highest first, unsettled last), then by how many people picked
  * them, then by scoreline, so the order is stable across renders.
  */
-export function groupPicksByScore(peers: FixturePrediction[]): PickGroup[] {
-  const byKey = new Map<string, PickGroup>()
+export function groupPicksByScore<P extends PickLike>(peers: P[]): PickGroup<P>[] {
+  const byKey = new Map<string, PickGroup<P>>()
   for (const p of peers) {
     const key = `${p.homeScore}-${p.awayScore}`
     let group = byKey.get(key)

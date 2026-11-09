@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest"
-import { groupPicksByScore } from "../apps/mobile/lib/groupPicks"
-import type { FixturePrediction } from "../apps/mobile/lib/api"
+import { groupPicksByScore, type PickLike } from "../apps/mobile/lib/groupPicks"
+
+// Not imported from the app's `lib/api`: the web build type-checks this file and
+// cannot resolve that module's `@/` imports. The shape below is what the API sends.
+type FixturePrediction = PickLike & { userId: string; displayName: string; isBot: boolean }
 
 function pick(
   displayName: string,

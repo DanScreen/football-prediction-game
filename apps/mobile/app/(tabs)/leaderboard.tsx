@@ -38,7 +38,8 @@ const BREAKDOWN: Array<{
   { key: "close", short: "close", tone: (t) => t.info },
   { key: "exact", short: "exact", tone: (t) => t.good },
   { key: "banker", short: "banker", tone: (t) => t.clock },
-  { key: "streak", short: "streak", tone: (t) => t.clock },
+  // Not amber like the banker: the two sit side by side in the stacked bar.
+  { key: "streak", short: "streak", tone: (t) => t.pitch },
 ]
 
 type BreakdownPart = (typeof BREAKDOWN)[number] & { value: number }

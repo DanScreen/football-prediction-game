@@ -133,6 +133,18 @@ export default function PredictionsScreen() {
       const next = await fetchLiveFixtures()
       setData(next)
       setDrafts((prev) => {
+        // Steppers make it easy to tap again while this save is in flight. Only
+        // drop the draft if it is still the one just saved — otherwise the row
+        // would snap back to the saved score and the newer taps would be lost.
+        const current = prev[f.id]
+        if (
+          current &&
+          (current.home !== draft.home ||
+            current.away !== draft.away ||
+            current.isBanker !== draft.isBanker)
+        ) {
+          return prev
+        }
         const copy = { ...prev }
         delete copy[f.id]
         return copy
@@ -241,18 +253,7 @@ export default function PredictionsScreen() {
         key={f.id}
         fixture={f}
         viewerUserId={user?.id}
-        editable={false}
         hideRoundMeta
-        home=""
-        away=""
-        isBanker={false}
-        saving={false}
-        justSaved={false}
-        saveError={null}
-        onChangeHome={() => {}}
-        onChangeAway={() => {}}
-        onToggleBanker={() => {}}
-        onBlurScores={() => {}}
       />
     )
   }
