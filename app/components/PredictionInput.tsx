@@ -23,6 +23,7 @@ function parseScore(raw: string): number | null {
 /**
  * Score inputs that auto-save once both sides are valid integers.
  * Debounces typing (~450ms) and also saves on blur when both are filled.
+ * The − / + steppers either side adjust the score by one and share the same save path.
  */
 export default function PredictionInput({ fixtureId, savedHome, savedAway, onSaved }: Props) {
   const [home, setHome] = useState(savedHome !== undefined ? String(savedHome) : "")
@@ -39,7 +40,9 @@ export default function PredictionInput({ fixtureId, savedHome, savedAway, onSav
   const savedFlashRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Always call the latest drafts from timers without re-binding.
   const draftRef = useRef({ home, away })
-  draftRef.current = { home, away }
+  useEffect(() => {
+    draftRef.current = { home, away }
+  }, [home, away])
 
   const homeScore = parseScore(home)
   const awayScore = parseScore(away)
@@ -87,6 +90,25 @@ export default function PredictionInput({ fixtureId, savedHome, savedAway, onSav
     scheduleSave()
   }
 
+  function handleStep(side: "home" | "away", delta: 1 | -1) {
+    const current = side === "home" ? draftRef.current.home : draftRef.current.away
+    const other = side === "home" ? draftRef.current.away : draftRef.current.home
+    const stepped =
+      current === "" ? (delta > 0 ? 1 : 0) : Math.min(20, Math.max(0, Number(current) + delta))
+    const nextOther = other === "" ? "0" : other
+    const next =
+      side === "home"
+        ? { home: String(stepped), away: nextOther }
+        : { home: nextOther, away: String(stepped) }
+    // Refresh the ref now: the debounced save reads it before the next render.
+    draftRef.current = next
+    setHome(next.home)
+    setAway(next.away)
+    setError(null)
+    setShowSaved(false)
+    scheduleSave()
+  }
+
   function handleBlur() {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current)
@@ -106,26 +128,42 @@ export default function PredictionInput({ fixtureId, savedHome, savedAway, onSav
   }, [])
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-1.5">
-        <ScoreInput
-          value={home}
-          onChange={(v) => handleChange("home", v)}
-          onBlur={handleBlur}
-          saved={optimisticSaved}
-          label="Home score"
-        />
+    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+      <div className="flex items-center gap-1 sm:gap-1.5">
+        <div className="flex items-center gap-0.5 sm:gap-1.5">
+          <StepButton label="Home goals down" onClick={() => handleStep("home", -1)}>
+            −
+          </StepButton>
+          <ScoreInput
+            value={home}
+            onChange={(v) => handleChange("home", v)}
+            onBlur={handleBlur}
+            saved={optimisticSaved}
+            label="Home score"
+          />
+          <StepButton label="Home goals up" onClick={() => handleStep("home", 1)}>
+            +
+          </StepButton>
+        </div>
         <span className="text-ink-faint font-bold">–</span>
-        <ScoreInput
-          value={away}
-          onChange={(v) => handleChange("away", v)}
-          onBlur={handleBlur}
-          saved={optimisticSaved}
-          label="Away score"
-        />
+        <div className="flex items-center gap-0.5 sm:gap-1.5">
+          <StepButton label="Away goals down" onClick={() => handleStep("away", -1)}>
+            −
+          </StepButton>
+          <ScoreInput
+            value={away}
+            onChange={(v) => handleChange("away", v)}
+            onBlur={handleBlur}
+            saved={optimisticSaved}
+            label="Away score"
+          />
+          <StepButton label="Away goals up" onClick={() => handleStep("away", 1)}>
+            +
+          </StepButton>
+        </div>
       </div>
 
-      {/* Fixed-width status slot so feedback doesn't shove the inputs. */}
+      {/* Fixed-width status slot so feedback doesn't shove the inputs. Wraps below on narrow screens. */}
       <span className="w-16 shrink-0 text-xs leading-tight" role="status" aria-live="polite">
         {error ? (
           <span className="text-bad">{error}</span>
@@ -142,6 +180,29 @@ export default function PredictionInput({ fixtureId, savedHome, savedAway, onSav
         ) : null}
       </span>
     </div>
+  )
+}
+
+function StepButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      // Keep focus where it was so pressing a stepper doesn't blur the input and fire a second save.
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      className="h-11 w-8 sm:w-9 shrink-0 rounded-lg border border-line-strong bg-chip text-lg font-semibold text-ink-muted transition-colors hover:border-pitch hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-pitch"
+    >
+      {children}
+    </button>
   )
 }
 
