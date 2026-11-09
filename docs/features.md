@@ -3,6 +3,21 @@
 How each part of the app behaves, from the user's side and the code's. **Update this
 when behaviour changes.** For the public bot API see [api.md](api.md).
 
+## Homepage (`/` when signed out)
+
+A signed-out visitor to `/` sees a public homepage (`app/welcome/`) instead of the login
+form. `proxy.ts` **rewrites** `/` to `/welcome` when there is no session, so the address
+stays `/`; signed-in users get Predictions at `/` as before. `/welcome` is in
+`PUBLIC_PATHS`.
+
+The page is one deep-green scoreboard band: the headline, "Start a league" (→
+`/register`), "Sign in", an invite-code box (→ `/register?invite=CODE`), and a **playable
+demo** (`ScoreDemo.tsx`). The visitor sets a score for an example fixture with − / +,
+optionally makes it their banker, and blows the full-time whistle; the demo shows the
+points and where that puts them in an example five-player table. It scores with the real
+`scoreOnePrediction` and `BANKER_MULTIPLIER` from `lib/scoring.ts`, so it can never
+disagree with the game. The fixture, result and table are fixed examples and labelled so.
+
 ## Navigation & shell
 
 **Five destinations, one job each:** Predictions (`/`), Results (`/results`), Leaderboard,
@@ -150,6 +165,21 @@ belong to the Leaderboard, where they can be read per league and against other p
 Whose picks show under Kicked Off: everyone who shares a league with you **on that
 competition**. A league-mate on the World Cup doesn't surface on your Premier League
 fixtures.
+
+**Score entry.** Each score box has a − and a + button beside it (`PredictionInput.tsx`),
+so a pick needs no keyboard. Pressing either on an empty side sets it (+ gives 1, − gives
+0) and fills the other side with 0, so one press makes a complete pick; steps clamp to
+0–20. Typing still works, and both routes share the same debounced auto-save. In the app
+the steppers replace the text fields (`components/PredictRow.tsx`), with a light haptic
+tick per step.
+
+**Countdowns are neutral until the last 24 hours** before kickoff, then amber. In the app
+the countdown pill only appears inside that window. Unpicked fixtures keep their amber
+edge (web) or dashed amber border (app).
+
+**Club colour chips.** Team names carry a small two-tone chip from a hand-kept table
+(`lib/teamColours.ts`, mirrored at `apps/mobile/lib/teamColours.ts`; a unit test keeps the
+two identical). A team that isn't in the table gets a neutral chip.
 
 ## Results (`/results`)
 

@@ -89,7 +89,7 @@ export default function WelcomePage() {
           <ScoreDemo displayClassName={display.className} />
         </div>
 
-        <div className="relative border-t border-board-fore/10">
+        <div className="relative border-t border-board-fore/10 bg-board">
           <div className="mx-auto grid max-w-6xl grid-cols-1 sm:grid-cols-3">
             <div className="border-b border-board-fore/10 px-4 py-5 sm:border-r sm:border-b-0 sm:px-7 sm:last:border-r-0">
               <h2 className={`${display.className} text-2xl font-bold tracking-[0.02em] uppercase`}>

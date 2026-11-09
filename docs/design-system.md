@@ -32,6 +32,8 @@ you find yourself reaching for a numbered Tailwind colour, add or reuse a token 
   The dark-mode amber is a *bright* `#e8a33d`, so white labels on it fail contrast
   badly — `text-white` on a filled `clock` background is always wrong.
 
+- **Amber is for urgency, so countdowns earn it.** A countdown is neutral
+  (`chip` / `ink-muted`) until the last 24 hours before kickoff.
 - **Amber (`clock`) means "provisional / awaiting"** throughout — provisional scores,
   provisional points badges (`+X prov.`), "awaiting confirmation". Keep this consistent.
   It carries one extra job: the **banker** (★ ×2), which is amber because it shares the
@@ -120,6 +122,20 @@ Layout is tables with inline styles only, for Outlook and Gmail. Details are in
 
 All-Inter (Nunito was dropped in the redesign). Headings get `text-wrap: balance`;
 uppercase labels get letter-spacing.
+
+## Team colour chips
+
+The one place besides the logo where literal hexes are allowed: club colours are data,
+not theme. `TeamChip` (web and app) draws a small two-tone circle from
+`lib/teamColours.ts` with its own hairline border, so a white chip still reads on a white
+card. Unknown teams get a neutral token chip.
+
+## Homepage
+
+`app/welcome/` is the scoreboard palette at full strength: a full-width `board` band,
+`board-panel` for the demo card, `board-gold` for the accent and the primary button. Its
+headline, team names and strip headings use **Big Shoulders** (loaded with
+`next/font/google` on that page only); nothing else in the product does.
 
 ## Moments
 

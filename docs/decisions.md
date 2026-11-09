@@ -5,6 +5,44 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## 2026-11-09 — The homepage is a rewrite of `/`, and the demo uses the real scorer
+
+Signed-out visitors used to land on a login form headed "Welcome back", so nothing on
+the domain explained the game. The homepage lives at `app/welcome/` and `proxy.ts`
+rewrites a signed-out `/` to it. A rewrite rather than a redirect keeps the address at
+the bare domain, and keeping Predictions at `/` for signed-in users means no existing
+link, bookmark or test for the app itself moves. The demo imports `scoreOnePrediction`
+instead of restating the rules, so a scoring change can't leave the front door wrong.
+
+## 2026-11-09 — Steppers for scores; the app drops the text fields, the web keeps them
+
+Entering a gameweek meant opening a number pad twenty times. − / + buttons need no
+keyboard and work one-handed. One press fills both sides (the other defaults to 0)
+because a half-entered pick can't be saved anyway. The app replaces its text fields
+outright; the web keeps the inputs beside the buttons, since a desktop keyboard is still
+the fastest way there and the end-to-end tests drive them.
+
+## 2026-11-09 — Club colours are a hand-kept table, not crests
+
+Crest images come with licensing questions; a pair of hex values doesn't. The table is
+keyed by normalised name with the football-data short names as aliases, and an unknown
+team gets a neutral chip — never a guessed colour. The app can't import from the web's
+`lib/`, so the file is mirrored and a unit test fails if the two drift.
+
+## 2026-11-09 — App leaderboard: one line per player, breakdown on tap
+
+Each row carried up to nine figures in five colours, and "exact" appeared twice with two
+meanings (points, and a count). Rows now show rank, name, form and points; the breakdown
+is a stacked bar opened by tapping, and the count reads "N exact scores". Form is drawn
+as bars whose height is the points scored that gameweek, which removed the printed key.
+Movement arrows (up/down since last gameweek) were left out: the API has no previous
+rank, and it needs a server change to add one.
+
+## 2026-11-09 — Rules left the app's tab bar
+
+A fifth of the navigation went to a page people read once. It is now a stack screen
+opened from Account. The web keeps its Rules nav link, where space isn't scarce.
+
 ## 2026-10-23 — Residual `npm audit` findings are build tooling with no upstream fix
 After the 2026-10-23 upgrade, `npm audit` still reports high findings in two places.
 On the web side they're in `eslint-config-next`. On mobile they're in the

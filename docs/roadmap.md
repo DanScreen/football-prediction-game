@@ -3,7 +3,7 @@
 > What's planned, known gaps, and parked ideas. When you ship something from here,
 > move it to [changelog.md](changelog.md) and update [state.md](state.md).
 
-**Last updated:** 2026-09-24
+**Last updated:** 2026-11-09
 
 ## Known gaps / near-term
 
@@ -25,6 +25,14 @@ Nothing is currently blocking, and the core product is live. Candidate next work
 
   The mobile API is the highest-value gap: the native app depends on it and nothing
   exercises it over HTTP.
+- **Finish the UI refresh on the web** — bring the app's 2026-11-09 Results (grouped
+  picks, reason text), Leaderboard (breakdown on tap) and Leagues (position on the card)
+  redesigns to the web pages, closing the parity gap noted in the changelog.
+- **Leaderboard movement arrows** — up/down since the last gameweek. Needs a previous
+  rank from the leaderboard API.
+- **Full-time push notification** — "Nailed it: Arsenal 1–1 Chelsea, +6" when a result
+  confirms. The push plumbing exists for reminders (`lib/expoPush.ts`).
+- **Regenerate store screenshots** after the next app release (`npm run store:shots`).
 - **Wider accessibility audit** — the polish pass fixed the form strip and `ink-faint`
   contrast; nothing has systematically checked focus order or screen-reader flow.
 

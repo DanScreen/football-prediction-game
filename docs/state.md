@@ -3,7 +3,7 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-09-25
+**Last updated:** 2026-11-09
 
 ## Status: live in production
 
@@ -77,6 +77,13 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 - **Design** — "Quiet Product" system with broadcast-scoreboard moments (see
   [design-system.md](design-system.md)), fully tokenised with a **dark theme** that
   follows the OS setting.
+- **Homepage** — signed-out visitors to `/` get a public page with a playable scoring
+  demo; signed-in users get Predictions there as before.
+- **UI refresh (2026-11-09)** — score steppers and club colour chips on both clients;
+  the app's Predictions, Results, Leaderboard and Leagues screens were redesigned and
+  Rules moved out of its tab bar. **The app half is merged but not released**: it needs
+  a new store build (version 1.0.2+). The web Results, Leaderboard and Leagues pages
+  have not had the matching redesign yet.
 - **Mobile** — bottom tab bar; skeleton loading states, an error boundary and a 404 page.
 - **Account deletion** — irreversible, in-app on both platforms, one shared
   implementation (`lib/accountDeletion.ts`). Leagues outlive the member who leaves.
@@ -99,7 +106,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **377 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **395 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - **34 end-to-end tests** (Playwright, real browser + Postgres; `npm run e2e`) — all
   passing, and stable across repeated runs. They cover the golden path (invite, sign
   up, verify, predict with a banker, kickoff lock, host confirms, leaderboard), public
