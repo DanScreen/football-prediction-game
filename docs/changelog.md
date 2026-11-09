@@ -6,6 +6,32 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-11-09 — UI refresh: homepage, faster score entry, simpler app screens
+
+- **Public homepage** at `/` for signed-out visitors, with a playable scoring demo
+  ([details](features.md#homepage--when-signed-out)).
+- **Score steppers** on web and app; one press makes a complete pick. Countdowns are
+  neutral until the last 24 hours. Club colour chips beside team names.
+- **App Predictions:** a gameweek header with a picked-progress bar replaces the
+  greeting; open fixtures are compact rows, six to a screen instead of four.
+- **App Results:** the scoreline is the headline, your points come with a reason, and
+  league-mates' picks are grouped by scoreline.
+- **App Leaderboard:** a podium, one line per player, breakdown on tap, form as bars.
+- **App Leagues:** cards show your position and the gap above; join and create sit behind
+  one button. **Rules** moved from the tab bar to Account (four tabs).
+- Disabled buttons in the app are readable in dark mode.
+
+**Parity gap, on purpose:** the Results, Leaderboard and Leagues redesigns are app-only
+in this change. The web versions of those pages are unchanged and are next.
+
+**The app changes need a new store build** — `expo-haptics` is a native module. Nothing
+reaches phones until `expo.version` is bumped (1.0.2 or higher) and merged.
+
+Store screenshots in `store-assets/` predate this and need regenerating before the next
+listing update (`npm run store:shots`).
+
+---
+
 ## 2026-10-24 — Warning when you haven't picked a banker
 
 The Predictions page shows an amber "No banker set for Gameweek N" nudge when the nearest

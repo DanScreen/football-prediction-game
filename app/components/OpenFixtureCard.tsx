@@ -4,6 +4,7 @@ import { useState } from "react"
 import Countdown from "@/app/components/Countdown"
 import PredictionInput from "@/app/components/PredictionInput"
 import BankerButton from "@/app/components/BankerButton"
+import TeamChip from "@/app/components/TeamChip"
 
 /**
  * Open fixture card: auto-saving score inputs + banker. Client-owned so the
@@ -48,8 +49,9 @@ export default function OpenFixtureCard({
       </div>
 
       <div className="flex flex-wrap items-center gap-3 px-5 py-4">
-        <p className="order-1 min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">
-          {homeTeam}
+        <p className="order-1 flex min-w-0 flex-1 items-center gap-2 text-[15px] font-semibold text-ink">
+          <TeamChip team={homeTeam} />
+          <span className="truncate">{homeTeam}</span>
         </p>
         <div className="order-3 flex w-full justify-center sm:order-2 sm:w-auto">
           <PredictionInput
@@ -59,8 +61,9 @@ export default function OpenFixtureCard({
             onSaved={() => setHasPrediction(true)}
           />
         </div>
-        <p className="order-2 min-w-0 flex-1 truncate text-right text-[15px] font-semibold text-ink sm:order-3">
-          {awayTeam}
+        <p className="order-2 flex min-w-0 flex-1 items-center justify-end gap-2 text-right text-[15px] font-semibold text-ink sm:order-3">
+          <span className="truncate">{awayTeam}</span>
+          <TeamChip team={awayTeam} />
         </p>
       </div>
 

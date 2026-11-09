@@ -100,19 +100,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="rules"
-        options={{
-          title: "Rules",
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{ ios: "book", android: "menu_book", web: "menu_book" }}
-              tintColor={color}
-              size={26}
-            />
-          ),
-        }}
-      />
     </Tabs>
   )
 }

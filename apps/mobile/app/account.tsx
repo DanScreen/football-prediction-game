@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Linking, Pressable, ScrollView, Text, View } from "react-native"
+import { router } from "expo-router"
 import { ErrorBanner, Field, PrimaryButton, Screen, screenPadding } from "@/components/ui"
 import { ApiError } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
@@ -53,6 +54,14 @@ export default function AccountScreen() {
           <Row label="Display name" value={user?.displayName ?? "—"} />
           <Row label="Email" value={user?.email ?? "—"} />
         </View>
+
+        <Pressable
+          onPress={() => router.push("/rules")}
+          style={{ paddingVertical: 4 }}
+          accessibilityRole="button"
+        >
+          <Text style={{ color: t.pitch, fontWeight: "700" }}>How scoring works →</Text>
+        </Pressable>
 
         <Pressable
           onPress={() => void Linking.openURL(`${API_BASE_URL}/profile`)}

@@ -65,18 +65,7 @@ export default function ResultsScreen() {
         key={f.id}
         fixture={f}
         viewerUserId={user?.id}
-        editable={false}
         hideRoundMeta
-        home=""
-        away=""
-        isBanker={false}
-        saving={false}
-        justSaved={false}
-        saveError={null}
-        onChangeHome={() => {}}
-        onChangeAway={() => {}}
-        onToggleBanker={() => {}}
-        onBlurScores={() => {}}
       />
     )
   }

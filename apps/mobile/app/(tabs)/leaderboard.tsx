@@ -38,22 +38,27 @@ const BREAKDOWN: Array<{
   { key: "close", short: "close", tone: (t) => t.info },
   { key: "exact", short: "exact", tone: (t) => t.good },
   { key: "banker", short: "banker", tone: (t) => t.clock },
-  { key: "streak", short: "streak", tone: (t) => t.clock },
+  // Not amber like the banker: the two sit side by side in the stacked bar.
+  { key: "streak", short: "streak", tone: (t) => t.pitch },
 ]
 
+type BreakdownPart = (typeof BREAKDOWN)[number] & { value: number }
+
 /**
- * Form cells are dual-encoded — glyph as well as colour — because colour alone
- * left colour-blind players unable to read their own form, and there is no
- * hover tooltip to fall back on when the surface is a touchscreen.
+ * Form cells are drawn as bars: height carries how much each round scored,
+ * colour carries the tier. The label stays on each cell for screen readers.
  */
-const FORM_TIERS: Record<
-  FormTier,
-  { glyph: string; label: string; fg: (t: Tokens) => string; bg: (t: Tokens) => string; line: (t: Tokens) => string }
-> = {
-  strong: { glyph: "▲", label: "Strong", fg: (t) => t.good, bg: (t) => t.goodTint, line: (t) => t.goodLine },
-  mixed: { glyph: "■", label: "Mixed", fg: (t) => t.clock, bg: (t) => t.clockTint, line: (t) => t.clockLine },
-  poor: { glyph: "▼", label: "Poor", fg: (t) => t.bad, bg: (t) => t.badTint, line: (t) => t.badLine },
-  none: { glyph: "·", label: "No picks", fg: (t) => t.inkFaint, bg: (t) => t.chip, line: (t) => t.line },
+const FORM_TIERS: Record<FormTier, { label: string; fg: (t: Tokens) => string }> = {
+  strong: { label: "Strong", fg: (t) => t.good },
+  mixed: { label: "Mixed", fg: (t) => t.clock },
+  poor: { label: "Poor", fg: (t) => t.bad },
+  none: { label: "No picks", fg: (t) => t.inkFaint },
+}
+
+const PODIUM_LABELS: Record<1 | 2 | 3, string> = { 1: "1ST", 2: "2ND", 3: "3RD" }
+
+function capitalise(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1)
 }
 
 export default function LeaderboardScreen() {
@@ -101,6 +106,8 @@ function LeagueBoard({ block, youId }: { block: LeaderboardBlock; youId?: string
   const [roundCache, setRoundCache] = useState<Record<string, LeaderboardEntry[]>>({})
   const [roundError, setRoundError] = useState<string | null>(null)
   const [roundLoading, setRoundLoading] = useState(false)
+  // Only one row is open at a time. The viewer's own row starts open.
+  const [expandedId, setExpandedId] = useState<string | null>(youId ?? null)
 
   // A server older than the gameweek endpoints omits this entirely, so the tab
   // falls back to the overall table instead of throwing on undefined.
@@ -134,6 +141,7 @@ function LeagueBoard({ block, youId }: { block: LeaderboardBlock; youId?: string
 
   const standings = mode === "overall" ? block.standings : (cached ?? [])
   const showForm = mode === "overall" && block.formRounds.length > 0
+  const showPodium = standings.length >= 3 && standings[0].totalPoints > 0
 
   return (
     <View style={{ gap: 0, marginBottom: 12 }}>
@@ -223,11 +231,16 @@ function LeagueBoard({ block, youId }: { block: LeaderboardBlock; youId?: string
           </View>
         ) : null}
 
+        {showPodium ? <Podium standings={standings} /> : null}
+
         {standings.map((row, i) => (
           <StandingRow
             key={row.id}
             row={row}
             isYou={row.id === youId}
+            showForm={showForm}
+            expanded={expandedId === row.id}
+            onToggle={() => setExpandedId((cur) => (cur === row.id ? null : row.id))}
             last={i === standings.length - 1}
           />
         ))}
@@ -241,8 +254,6 @@ function LeagueBoard({ block, youId }: { block: LeaderboardBlock; youId?: string
           </View>
         ) : null}
       </View>
-
-      {showForm ? <FormLegend /> : null}
     </View>
   )
 }
@@ -349,65 +360,136 @@ function StepArrow({
   )
 }
 
+/**
+ * The top three as a podium, left → right 2nd, 1st, 3rd so the leader sits on
+ * the tallest step. The rows below repeat the same data, so this is hidden from
+ * assistive tech rather than read out twice.
+ */
+function Podium({ standings }: { standings: LeaderboardEntry[] }) {
+  const t = useTokens()
+  const columns: Array<{ row: LeaderboardEntry; position: 1 | 2 | 3; paddingBottom: number }> = [
+    { row: standings[1], position: 2, paddingBottom: 18 },
+    { row: standings[0], position: 1, paddingBottom: 30 },
+    { row: standings[2], position: 3, paddingBottom: 10 },
+  ]
+
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{
+        flexDirection: "row",
+        alignItems: "flex-end",
+        gap: 6,
+        paddingHorizontal: 14,
+        paddingTop: 12,
+        backgroundColor: t.surface,
+        borderBottomWidth: 1,
+        borderBottomColor: t.lineSoft,
+      }}
+    >
+      {columns.map(({ row, position, paddingBottom }) => {
+        // Ties share a place: two players level on the top points both read "1ST".
+        const place = (podiumRank(row) || position) as 1 | 2 | 3
+        return (
+          <View
+            key={position}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              alignItems: "center",
+              gap: 1,
+              borderTopLeftRadius: 9,
+              borderTopRightRadius: 9,
+              paddingTop: 8,
+              paddingHorizontal: 4,
+              paddingBottom,
+              backgroundColor: position === 1 ? t.boardPanel : t.board,
+            }}
+          >
+            <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1, color: t.boardGold }}>
+              {PODIUM_LABELS[place]}
+            </Text>
+            <Text
+              style={{ fontSize: 13, fontWeight: "700", color: t.boardFore }}
+              numberOfLines={1}
+            >
+              {row.displayName}
+            </Text>
+            <Text style={{ fontSize: 17, fontWeight: "700", color: t.boardFore, ...scoreDigits }}>
+              {formatPoints(row.totalPoints)}
+            </Text>
+          </View>
+        )
+      })}
+    </View>
+  )
+}
+
 function StandingRow({
   row,
   isYou,
+  showForm,
+  expanded,
+  onToggle,
   last,
 }: {
   row: LeaderboardEntry
   isYou: boolean
+  showForm: boolean
+  expanded: boolean
+  onToggle: () => void
   last: boolean
 }) {
   const t = useTokens()
-  const chips = BREAKDOWN.filter((col) => row.pointsBreakdown[col.key] > 0)
-
-  // Podium rows fade from a gold-ish tint down to the plain surface, matching
-  // the web's `rowBg` ramp. Everything else sits on the surface token.
-  const podium = podiumRank(row)
-  const bg = podium === 1 ? t.clockTint : podium === 2 ? t.chip : t.surface
+  const parts: BreakdownPart[] = BREAKDOWN.flatMap((col) => {
+    const value = row.pointsBreakdown[col.key]
+    return value > 0 ? [{ ...col, value }] : []
+  })
 
   return (
     <View
       style={{
-        backgroundColor: bg,
+        backgroundColor: isYou ? t.pitchTint : t.surface,
         borderBottomWidth: last ? 0 : 1,
         borderBottomColor: t.lineSoft,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        gap: 8,
       }}
     >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <Text
-          style={{ width: 26, fontWeight: "700", color: t.inkMuted, fontSize: 15, ...scoreDigits }}
-        >
-          {podium === 1 ? "🥇" : podium === 2 ? "🥈" : podium === 3 ? "🥉" : row.rank}
+      <Pressable
+        onPress={onToggle}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityHint="Shows the points breakdown"
+        style={({ pressed }) => ({
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 10,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          opacity: pressed ? 0.7 : 1,
+        })}
+      >
+        <Text style={{ width: 22, fontWeight: "700", color: t.inkMuted, fontSize: 14, ...scoreDigits }}>
+          {row.rank}
         </Text>
 
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text numberOfLines={1}>
             <Text style={{ fontWeight: "700", color: t.ink }}>{row.displayName}</Text>
-            {row.isBot ? <Text style={{ color: t.inkFaint, fontSize: 12 }}> 🤖</Text> : null}
+            {row.isBot ? (
+              <Text style={{ fontSize: 10, fontWeight: "700", color: t.inkFaint, letterSpacing: 0.6 }}>
+                {" "}BOT
+              </Text>
+            ) : null}
             {isYou ? (
               <Text style={{ color: t.pitch, fontSize: 12, fontWeight: "600" }}> (you)</Text>
             ) : null}
           </Text>
-
-          {chips.length > 0 ? (
-            <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 8, marginTop: 2 }}>
-              {chips.map((col) => (
-                <Text key={col.key} style={{ fontSize: 11, color: col.tone(t) }}>
-                  <Text style={{ fontWeight: "700", ...scoreDigits }}>
-                    {formatPoints(row.pointsBreakdown[col.key])}
-                  </Text>{" "}
-                  {col.short}
-                </Text>
-              ))}
-            </View>
-          ) : null}
         </View>
 
-        <View style={{ alignItems: "flex-end", minWidth: 52 }}>
+        {showForm && row.form.length > 0 ? <FormStrip form={row.form} /> : null}
+
+        <View style={{ alignItems: "flex-end", minWidth: 48 }}>
           <Text style={{ fontWeight: "700", color: t.ink, fontSize: 16, ...scoreDigits }}>
             {formatPoints(row.totalPoints)}
             {row.provisionalPoints > 0 ? (
@@ -417,95 +499,91 @@ function StandingRow({
               </Text>
             ) : null}
           </Text>
-          {row.exactCount > 0 ? (
-            <Text style={{ color: t.good, fontSize: 11 }}>
-              {row.exactCount} exact
-            </Text>
-          ) : null}
         </View>
-      </View>
+      </Pressable>
 
-      {row.form.length > 0 ? <FormStrip form={row.form} /> : null}
+      {expanded ? <BreakdownDetail row={row} parts={parts} /> : null}
     </View>
   )
 }
 
-function FormStrip({ form }: { form: FormCell[] }) {
+/**
+ * The points breakdown behind a collapsed row: a stacked bar showing each
+ * bucket's share, a legend with the points, and the exact-score count. The
+ * count is spelled out as "exact scores" so it cannot be mistaken for exact
+ * points.
+ */
+function BreakdownDetail({ row, parts }: { row: LeaderboardEntry; parts: BreakdownPart[] }) {
   const t = useTokens()
   return (
-    <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 4 }}>
+    <View style={{ paddingHorizontal: 14, paddingBottom: 12, gap: 6 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          height: 8,
+          borderRadius: 4,
+          overflow: "hidden",
+          backgroundColor: t.chip,
+        }}
+      >
+        {parts.map((p) => (
+          <View key={p.key} style={{ flex: p.value, backgroundColor: p.tone(t) }} />
+        ))}
+      </View>
+
+      {parts.length > 0 ? (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 12, rowGap: 2 }}>
+          {parts.map((p) => (
+            <View key={p.key} style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+              <View style={{ width: 7, height: 7, borderRadius: 2, backgroundColor: p.tone(t) }} />
+              <Text style={{ fontSize: 11, color: t.inkMid }}>
+                {capitalise(p.short)}{" "}
+                <Text style={{ fontWeight: "700", ...scoreDigits }}>{formatPoints(p.value)}</Text>
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <Text style={{ fontSize: 12, color: t.inkFaint }}>No points yet.</Text>
+      )}
+
+      {row.exactCount > 0 ? (
+        <Text style={{ fontSize: 11, color: t.inkMuted }}>
+          {row.exactCount} exact score{row.exactCount === 1 ? "" : "s"}
+        </Text>
+      ) : null}
+    </View>
+  )
+}
+
+/**
+ * One bar per gameweek, oldest → newest. Height is how much that round scored,
+ * relative to the player's best round; a round with no picks is a short stub.
+ */
+function FormStrip({ form }: { form: FormCell[] }) {
+  const t = useTokens()
+  const top = Math.max(0, ...form.map((cell) => cell.scored))
+  const max = top > 0 ? top : 1
+  return (
+    <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 3, height: 20 }}>
       {form.map((cell) => {
         const tier = FORM_TIERS[cell.tier]
+        const none = cell.tier === "none"
         return (
           <View
             key={cell.round}
             accessibilityLabel={
-              cell.tier === "none"
+              none
                 ? `${cell.round}: no predictions`
                 : `${cell.round}: ${formatPoints(cell.scored)} points, ${tier.label.toLowerCase()}`
             }
             style={{
-              width: 20,
-              height: 20,
-              borderRadius: 4,
-              borderWidth: 1,
-              borderColor: tier.line(t),
-              backgroundColor: tier.bg(t),
-              alignItems: "center",
-              justifyContent: "center",
+              width: 6,
+              height: none ? 3 : 4 + Math.round(16 * (cell.scored / max)),
+              borderRadius: 2,
+              backgroundColor: none ? t.lineStrong : tier.fg(t),
             }}
-          >
-            <Text style={{ fontSize: 9, color: tier.fg(t) }}>{tier.glyph}</Text>
-          </View>
-        )
-      })}
-    </View>
-  )
-}
-
-function FormLegend() {
-  const t = useTokens()
-  const items: Array<[FormTier, string]> = [
-    ["strong", ">40% of pts"],
-    ["mixed", "21–40%"],
-    ["poor", "≤20%"],
-    ["none", "No picks"],
-  ]
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        flexWrap: "wrap",
-        alignItems: "center",
-        columnGap: 12,
-        rowGap: 4,
-        marginTop: 8,
-        paddingHorizontal: 2,
-      }}
-    >
-      <Text style={{ fontSize: 11, fontWeight: "700", color: t.inkMid }}>
-        Form key <Text style={{ fontWeight: "400" }}>(oldest → newest)</Text>:
-      </Text>
-      {items.map(([tier, label]) => {
-        const spec = FORM_TIERS[tier]
-        return (
-          <View key={tier} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-            <View
-              style={{
-                width: 16,
-                height: 16,
-                borderRadius: 3,
-                borderWidth: 1,
-                borderColor: spec.line(t),
-                backgroundColor: spec.bg(t),
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text style={{ fontSize: 8, color: spec.fg(t) }}>{spec.glyph}</Text>
-            </View>
-            <Text style={{ fontSize: 11, color: t.inkMuted }}>{label}</Text>
-          </View>
+          />
         )
       })}
     </View>

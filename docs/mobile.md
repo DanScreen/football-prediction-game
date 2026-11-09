@@ -449,11 +449,14 @@ Still out of native scope: host/commissioner endpoints; API-key management in-ap
 | `app/(auth)/login\|register` | Auth (+ forgot password via API) |
 | `app/join` | Deep-link join (`scorers://join?code=`) |
 | `app/verify-email` | Held here until the email is verified: continue / resend / change address / account / sign out |
-| `app/(tabs)/index` | Predictions — Open + Kicked off; scores auto-save |
-| `app/(tabs)/results` | Settled fixtures with every league-mate's pick — flat sections, newest round first, per-round subtotal (mirrors web `/results`) |
-| `app/(tabs)/leaderboard` | Stacked standings |
-| `app/(tabs)/leagues` | List (live + finished) / create / join / share |
-| `app/(tabs)/rules` | Scoring constants from API |
+| `app/(tabs)/index` | Predictions — a gameweek header (name, picked-progress bar, first kick-off) above Open + Kicked off. Open fixtures are compact `PredictRow`s with − / + steppers; scores auto-save |
+| `app/(tabs)/results` | Settled fixtures, newest round first, per-round subtotal. Each card leads with the scoreline, then your pick and why it scored ("One goal out", "Wrong result"), then everyone else **grouped by scoreline** (`lib/groupPicks.ts`, a mirror of the root `lib/groupPicks.ts`, which is where it is unit-tested) |
+| `app/(tabs)/leaderboard` | Stacked standings: a podium, then one line per player (rank, name, form bars, points). Tapping a row opens its points breakdown; your own row starts open |
+| `app/(tabs)/leagues` | League cards with your position, points and the gap to the player above; "Open table" and "Invite". Join and create sit behind one button (shown directly when you have no leagues) |
+| `app/rules` | Scoring constants from API. A stack screen opened from Account ("How scoring works") — it left the tab bar on 2026-11-09, leaving four tabs |
+| `components/PredictRow`, `FixtureCard` | Editable open fixture / read-only kicked-off or settled fixture |
+| `components/TeamChip`, `lib/teamColours.ts` | Club colour chip; the table mirrors the web's `lib/teamColours.ts` |
+| `lib/haptics.ts` | `expo-haptics` wrappers (no-op on web). A native module, so it needs a new store build |
 | `lib/api.ts` | Client with refresh |
 | `lib/notifications.ts` | Expo push registration |
 

@@ -105,6 +105,9 @@ export function PrimaryButton({
 }) {
   const t = useTokens()
   const inactive = disabled || loading
+  // Disabled gets its own readable look (the old near-black-on-near-black was
+  // unreadable in dark mode). Loading keeps its existing appearance.
+  const off = !!disabled && !loading
   return (
     <Pressable
       onPress={onPress}
@@ -114,13 +117,22 @@ export function PrimaryButton({
         borderRadius: 10,
         paddingVertical: 14,
         alignItems: "center",
-        opacity: inactive ? 0.7 : 1,
+        opacity: loading ? 0.7 : 1,
+        ...(off ? { borderWidth: 1, borderColor: t.line } : {}),
       })}
     >
       {loading ? (
         <ActivityIndicator color={t.pitchOn} />
       ) : (
-        <Text style={{ color: t.pitchOn, fontSize: 16, fontWeight: "700" }}>{label}</Text>
+        <Text
+          style={{
+            color: off ? t.inkMuted : t.pitchOn,
+            fontSize: 16,
+            fontWeight: "700",
+          }}
+        >
+          {label}
+        </Text>
       )}
     </Pressable>
   )
