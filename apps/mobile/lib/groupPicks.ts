@@ -1,7 +1,12 @@
 /**
- * The fields grouping needs, declared structurally rather than imported from
- * `@/lib/api`: this file is also type-checked by the web build (its unit test
- * lives at the repo root), where `@/` resolves to a different tree.
+ * Grouping league-mates' picks by scoreline, for the app's Results cards.
+ *
+ * MIRROR of the repo root's `lib/groupPicks.ts`; this is the copy the app runs.
+ * The root one exists so the logic can be unit-tested: the root vitest can't
+ * transform files under `apps/mobile` in CI, where the app's dependencies (and
+ * the Expo tsconfig that directory extends) aren't installed. A test checks the
+ * two stay identical. The fields are declared structurally so neither copy
+ * imports anything.
  */
 export type PickLike = {
   homeScore: number

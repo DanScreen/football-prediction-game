@@ -1,8 +1,7 @@
 import { describe, it, expect } from "vitest"
-import { groupPicksByScore, type PickLike } from "../apps/mobile/lib/groupPicks"
+import { readFileSync } from "node:fs"
+import { groupPicksByScore, type PickLike } from "./groupPicks"
 
-// Not imported from the app's `lib/api`: the web build type-checks this file and
-// cannot resolve that module's `@/` imports. The shape below is what the API sends.
 type FixturePrediction = PickLike & { userId: string; displayName: string; isBot: boolean }
 
 function pick(
@@ -74,5 +73,10 @@ describe("groupPicksByScore", () => {
       pick("Ann", 1, 0, { isBanker: true, provisionalPoints: 6 }),
     ])
     expect(groups[0].basePoints).toBe(3)
+  })
+
+  it("stays in step with the copy the app runs", () => {
+    const body = (p: string) => readFileSync(p, "utf8").split("export type PickLike")[1]
+    expect(body("apps/mobile/lib/groupPicks.ts")).toBe(body("lib/groupPicks.ts"))
   })
 })

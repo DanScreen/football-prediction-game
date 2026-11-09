@@ -106,7 +106,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **395 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **396 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - **34 end-to-end tests** (Playwright, real browser + Postgres; `npm run e2e`) — all
   passing, and stable across repeated runs. They cover the golden path (invite, sign
   up, verify, predict with a banker, kickoff lock, host confirms, leaderboard), public
