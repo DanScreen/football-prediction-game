@@ -8,6 +8,7 @@ import {
   scoreDigits,
 } from "@/components/scoreboard"
 import { useTokens } from "@/lib/theme"
+import { groupPicksByScore } from "@/lib/groupPicks"
 import type { FixturePrediction, MobileFixture } from "@/lib/api"
 
 function formatKickoff(iso: string): string {
@@ -105,6 +106,17 @@ export function FixtureCard({
             ? t.clock
             : t.lineStrong
 
+  // Read-only: the headline score. Settled → final, provisional → live, else a dot.
+  const headline = settled
+    ? { text: `${fixture.actualHomeScore} – ${fixture.actualAwayScore}`, color: t.ink }
+    : hasProv
+      ? { text: `${fixture.provisionalHomeScore} – ${fixture.provisionalAwayScore}`, color: t.clock }
+      : { text: "· – ·", color: t.inkFaint }
+
+  // Everyone else's picks, collapsed to one row per scoreline.
+  const others = peers.filter((p) => p.userId !== viewerUserId)
+  const groups = groupPicksByScore(others)
+
   return (
     <View
       style={{
@@ -127,10 +139,12 @@ export function FixtureCard({
         {editable ? <Countdown kickoffTime={fixture.kickoffTime} /> : null}
       </View>
 
-      <Text style={{ fontSize: 16, fontWeight: "700", color: t.ink }}>
-        {fixture.homeTeam} <Text style={{ color: t.inkFaint, fontWeight: "400" }}>vs</Text>{" "}
-        {fixture.awayTeam}
-      </Text>
+      {editable ? (
+        <Text style={{ fontSize: 16, fontWeight: "700", color: t.ink }}>
+          {fixture.homeTeam} <Text style={{ color: t.inkFaint, fontWeight: "400" }}>vs</Text>{" "}
+          {fixture.awayTeam}
+        </Text>
+      ) : null}
 
       {editable ? (
         <View style={{ gap: 8 }}>
@@ -195,113 +209,148 @@ export function FixtureCard({
         </View>
       ) : (
         <View style={{ gap: 10 }}>
-          <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 20 }}>
-            <Column label="Result">
-              {settled ? (
-                <Text style={{ fontSize: 18, fontWeight: "700", color: t.ink, ...scoreDigits }}>
-                  {fixture.actualHomeScore} – {fixture.actualAwayScore}
-                </Text>
-              ) : hasProv ? (
-                <>
-                  <Text style={{ fontSize: 18, fontWeight: "700", color: t.clock, ...scoreDigits }}>
-                    {fixture.provisionalHomeScore} – {fixture.provisionalAwayScore}
-                  </Text>
-                  <Text
-                    style={{ color: t.clock, fontSize: 10, fontWeight: "700", letterSpacing: 0.6 }}
-                  >
-                    PROVISIONAL
-                  </Text>
-                </>
-              ) : (
-                <Text style={{ color: t.inkFaint, fontStyle: "italic" }}>Pending</Text>
-              )}
-            </Column>
-
-            <Column label="Your pts">
-              {tone !== null && pred?.pointsAwarded != null ? (
-                <View style={{ gap: 4, alignItems: "flex-start" }}>
-                  <PointsBadge points={pred.pointsAwarded} tone={tone} />
-                  {tone === 3 ? <NailedIt /> : null}
-                </View>
-              ) : pred?.provisionalPoints != null ? (
-                <Text style={{ color: t.clock, fontWeight: "700", ...scoreDigits }}>
-                  {formatPoints(pred.provisionalPoints)} prov.
-                </Text>
-              ) : (
-                <Text style={{ color: t.inkFaint }}>–</Text>
-              )}
-            </Column>
-          </View>
-
-          {/* Everyone's picks, unlocked at kickoff — the reason the tab is worth
-              opening once you can no longer change anything. */}
-          {peers.length > 0 ? (
-            <View style={{ borderTopWidth: 1, borderTopColor: t.lineSoft, paddingTop: 8, gap: 6 }}>
-              {peers.map((p) => (
-                <PeerRow key={p.userId} peer={p} settled={settled} isYou={p.userId === viewerUserId} />
-              ))}
-            </View>
-          ) : (
-            <View style={{ borderTopWidth: 1, borderTopColor: t.lineSoft, paddingTop: 8 }}>
-              <Text style={{ color: t.inkFaint, fontSize: 13, fontStyle: "italic" }}>
-                {pred ? "No one else in your leagues predicted this one." : "You didn't predict this one."}
+          {/* Score line: the final score is the headline, teams either side. */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Text
+              style={{ flex: 1, textAlign: "right", fontSize: 15, fontWeight: "700", color: t.ink }}
+              numberOfLines={1}
+            >
+              {fixture.homeTeam}
+            </Text>
+            <View
+              style={{
+                backgroundColor: t.ground,
+                borderRadius: 8,
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{ fontSize: 22, fontWeight: "700", color: headline.color, ...scoreDigits }}
+              >
+                {headline.text}
               </Text>
             </View>
+            <Text
+              style={{ flex: 1, textAlign: "left", fontSize: 15, fontWeight: "700", color: t.ink }}
+              numberOfLines={1}
+            >
+              {fixture.awayTeam}
+            </Text>
+          </View>
+          {settled ? null : hasProv ? (
+            <Text
+              style={{
+                color: t.clock,
+                fontSize: 10,
+                fontWeight: "700",
+                letterSpacing: 0.6,
+                textAlign: "center",
+              }}
+            >
+              PROVISIONAL
+            </Text>
+          ) : (
+            <Text
+              style={{
+                color: t.inkFaint,
+                fontSize: 10,
+                fontWeight: "700",
+                letterSpacing: 0.6,
+                textAlign: "center",
+              }}
+            >
+              AWAITING RESULT
+            </Text>
           )}
+
+          {/* Your line: your pick, and why it scored what it did. */}
+          <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+            {pred ? (
+              <>
+                <Text style={{ color: t.pitch, fontWeight: "700" }}>You</Text>
+                <Text style={{ fontWeight: "700", color: t.ink, ...scoreDigits }}>
+                  {formatPick(pred)}
+                </Text>
+                {pred.isBanker ? <BankerTag /> : null}
+                {tone !== null && pred.pointsAwarded != null ? (
+                  <>
+                    <PointsBadge points={pred.pointsAwarded} tone={tone} />
+                    {tone === 3 ? <NailedIt /> : null}
+                    {tone === 1.5 ? (
+                      <Text style={{ color: t.info, fontSize: 12, fontWeight: "600" }}>
+                        One goal out
+                      </Text>
+                    ) : null}
+                    {tone === 1 ? (
+                      <Text style={{ color: t.inkMuted, fontSize: 12, fontWeight: "600" }}>
+                        Right result
+                      </Text>
+                    ) : null}
+                    {tone === 0 ? (
+                      <Text style={{ color: t.inkMuted, fontSize: 12, fontWeight: "600" }}>
+                        Wrong result
+                      </Text>
+                    ) : null}
+                  </>
+                ) : pred.provisionalPoints != null ? (
+                  <Text style={{ color: t.clock, fontWeight: "700", ...scoreDigits }}>
+                    {formatPoints(pred.provisionalPoints)} prov.
+                  </Text>
+                ) : null}
+              </>
+            ) : (
+              <Text style={{ fontStyle: "italic", color: t.inkFaint, fontSize: 13 }}>
+                You didn&apos;t predict this one.
+              </Text>
+            )}
+          </View>
+
+          {/* Everyone else, grouped by scoreline. */}
+          {groups.length > 0 ? (
+            <View style={{ borderTopWidth: 1, borderTopColor: t.lineSoft, paddingTop: 8, gap: 6 }}>
+              {groups.map((g) => {
+                const names = g.picks
+                  .map((p) => `${p.isBot ? "🤖 " : ""}${p.displayName}${p.isBanker ? " ★" : ""}`)
+                  .join(", ")
+                const plainNames = g.picks.map((p) => p.displayName).join(", ")
+                return (
+                  <View
+                    key={`${g.homeScore}-${g.awayScore}`}
+                    accessibilityLabel={`${g.homeScore}–${g.awayScore}: ${plainNames}`}
+                    style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}
+                  >
+                    <Text style={{ width: 46, fontWeight: "700", color: t.inkMid, ...scoreDigits }}>
+                      {g.homeScore} – {g.awayScore}
+                    </Text>
+                    <Text style={{ flex: 1, fontSize: 13, color: t.inkMuted, lineHeight: 18 }}>
+                      {names}
+                    </Text>
+                    {g.basePoints !== null ? (
+                      settled ? (
+                        <PointsBadge points={g.basePoints} tone={g.basePoints} />
+                      ) : (
+                        <Text
+                          style={{ color: t.clock, fontSize: 12, fontWeight: "700", ...scoreDigits }}
+                        >
+                          {formatPoints(g.basePoints)} prov.
+                        </Text>
+                      )
+                    ) : null}
+                  </View>
+                )
+              })}
+            </View>
+          ) : pred ? (
+            <View style={{ borderTopWidth: 1, borderTopColor: t.lineSoft, paddingTop: 8 }}>
+              <Text style={{ color: t.inkFaint, fontSize: 13, fontStyle: "italic" }}>
+                No one else in your leagues predicted this one.
+              </Text>
+            </View>
+          ) : null}
         </View>
       )}
-    </View>
-  )
-}
-
-function PeerRow({
-  peer,
-  settled,
-  isYou,
-}: {
-  peer: FixturePrediction
-  settled: boolean
-  isYou: boolean
-}) {
-  const t = useTokens()
-  const tone = peer.pointsAwarded != null ? baseTone(peer.pointsAwarded, peer.isBanker) : null
-
-  return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-      <Text
-        style={{
-          width: 96,
-          color: isYou ? t.pitch : t.inkMuted,
-          fontWeight: isYou ? "700" : "500",
-          fontSize: 14,
-        }}
-        numberOfLines={1}
-      >
-        {isYou ? "You" : `${peer.isBot ? "🤖 " : ""}${peer.displayName}`}
-      </Text>
-      <Text
-        style={{ fontWeight: "700", color: isYou ? t.ink : t.inkMid, ...scoreDigits }}
-      >
-        {formatPick(peer)}
-      </Text>
-      {peer.isBanker ? <BankerTag /> : null}
-      {settled && tone !== null && peer.pointsAwarded != null ? (
-        <PointsBadge points={peer.pointsAwarded} tone={tone} />
-      ) : !settled && peer.provisionalPoints != null ? (
-        <Text style={{ color: t.clock, fontWeight: "700", fontSize: 13, ...scoreDigits }}>
-          {formatPoints(peer.provisionalPoints)} prov.
-        </Text>
-      ) : null}
-    </View>
-  )
-}
-
-function Column({ label, children }: { label: string; children: React.ReactNode }) {
-  const t = useTokens()
-  return (
-    <View style={{ gap: 2, minWidth: 56 }}>
-      <Text style={{ color: t.inkFaint, fontSize: 11 }}>{label}</Text>
-      {children}
     </View>
   )
 }

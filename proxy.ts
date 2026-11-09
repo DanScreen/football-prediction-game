@@ -17,6 +17,7 @@ const PUBLIC_PATHS = [
   "/rules",
   "/privacy",
   "/support",
+  "/welcome",
 ]
 
 export default auth((req) => {
@@ -35,6 +36,12 @@ export default auth((req) => {
     pathname.startsWith("/favicon")
   ) {
     return NextResponse.next()
+  }
+
+  // Signed-out visitors to the root see the public homepage. The rewrite keeps
+  // the browser on `/`; signed-in users fall through to the Predictions page.
+  if (!req.auth && pathname === "/") {
+    return NextResponse.rewrite(new URL("/welcome", req.url))
   }
 
   if (!req.auth) {

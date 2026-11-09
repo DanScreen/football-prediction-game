@@ -26,7 +26,8 @@ for (const { path, heading } of PUBLIC_PAGES) {
   })
 }
 
-const PROTECTED_PAGES = ["/", "/results", "/leaderboard", "/leagues", "/profile", "/admin", "/host"]
+// `/` is not in this list: a signed-out visitor sees the public homepage there.
+const PROTECTED_PAGES = ["/results", "/leaderboard", "/leagues", "/profile", "/admin", "/host"]
 
 for (const path of PROTECTED_PAGES) {
   test(`${path} sends a signed-out visitor to sign in`, async ({ page }) => {
@@ -34,6 +35,15 @@ for (const path of PROTECTED_PAGES) {
     await expect(page).toHaveURL(`/login?callbackUrl=${encodeURIComponent(path)}`)
   })
 }
+
+test("the homepage is public and the scoring demo works signed out", async ({ page }) => {
+  await page.goto("/")
+  await expect(page).toHaveURL("/")
+  await expect(page.getByRole("heading", { level: 1, name: /call the score/i })).toBeVisible()
+
+  await page.getByRole("button", { name: "Blow the full-time whistle" }).click()
+  await expect(page.locator("[aria-live='polite']")).toContainText(/You are \d(st|nd|rd|th) of 5/)
+})
 
 test("the login page links to password reset", async ({ page }) => {
   await page.goto("/login")

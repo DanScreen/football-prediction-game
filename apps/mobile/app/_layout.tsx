@@ -76,6 +76,7 @@ function RootNavigator() {
             can't verify (App Store 5.1.1(v)). */}
         <Stack.Protected guard={!!user}>
           <Stack.Screen name="account" options={{ title: "Account" }} />
+          <Stack.Screen name="rules" options={{ title: "How it works" }} />
         </Stack.Protected>
         <Stack.Screen
           name="join"

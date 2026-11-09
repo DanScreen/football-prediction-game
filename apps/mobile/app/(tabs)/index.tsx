@@ -7,7 +7,9 @@ import {
   View,
 } from "react-native"
 import { FixtureCard } from "@/components/FixtureCard"
+import { PredictRow } from "@/components/PredictRow"
 import { RoundGroup } from "@/components/RoundGroup"
+import { scoreDigits } from "@/components/scoreboard"
 import { ErrorBanner, Screen, screenPadding } from "@/components/ui"
 import {
   ApiError,
@@ -16,7 +18,8 @@ import {
   type MobileFixture,
 } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
-import { groupByRound, takeNearestRounds } from "@/lib/groupByRound"
+import { groupByRound, takeNearestRounds, type FixtureRound } from "@/lib/groupByRound"
+import { tapLight, tapSuccess } from "@/lib/haptics"
 import { useTokens } from "@/lib/theme"
 import { useAsyncData } from "@/lib/useAsyncData"
 
@@ -165,14 +168,6 @@ export default function PredictionsScreen() {
     }, DEBOUNCE_MS)
   }
 
-  function flushSave(f: MobileFixture) {
-    if (debounceTimers.current[f.id]) {
-      clearTimeout(debounceTimers.current[f.id])
-      delete debounceTimers.current[f.id]
-    }
-    void persist(f, getDraft(f))
-  }
-
   function patchDraft(f: MobileFixture, patch: Partial<Draft>, autosaveScores = true) {
     setDrafts((prev) => {
       const next = { ...draftFrom(f), ...prev[f.id], ...patch }
@@ -186,9 +181,25 @@ export default function PredictionsScreen() {
     })
   }
 
+  /** One tap on +/− sets a score; an empty side starts at 0 so the pick is complete. */
+  function stepScore(f: MobileFixture, side: "home" | "away", delta: 1 | -1) {
+    const d = getDraft(f)
+    const cur = parseScore(d[side])
+    const next = cur === null ? (delta > 0 ? 1 : 0) : Math.max(0, Math.min(20, cur + delta))
+    const otherValue = side === "home" ? d.away : d.home
+    const filledOther = otherValue === "" ? "0" : otherValue
+    const patch: Partial<Draft> =
+      side === "home"
+        ? { home: String(next), away: filledOther }
+        : { away: String(next), home: filledOther }
+    patchDraft(f, patch)
+    tapLight()
+  }
+
   async function toggleBanker(f: MobileFixture) {
     const d = getDraft(f)
     const nextBanker = !d.isBanker
+    if (nextBanker) tapSuccess()
     const homeScore = parseScore(d.home)
     const awayScore = parseScore(d.away)
 
@@ -209,22 +220,17 @@ export default function PredictionsScreen() {
   function renderEditable(f: MobileFixture) {
     const d = getDraft(f)
     return (
-      <FixtureCard
+      <PredictRow
         key={f.id}
         fixture={f}
-        viewerUserId={user?.id}
-        editable
-        hideRoundMeta
         home={d.home}
         away={d.away}
         isBanker={d.isBanker}
+        onStep={(side, delta) => stepScore(f, side, delta)}
+        onToggleBanker={() => void toggleBanker(f)}
         saving={Boolean(savingIds[f.id])}
         justSaved={Boolean(justSavedIds[f.id])}
         saveError={saveErrors[f.id] ?? null}
-        onChangeHome={(home) => patchDraft(f, { home })}
-        onChangeAway={(away) => patchDraft(f, { away })}
-        onToggleBanker={() => void toggleBanker(f)}
-        onBlurScores={() => flushSave(f)}
       />
     )
   }
@@ -265,7 +271,7 @@ export default function PredictionsScreen() {
           />
         }
       >
-        <Text style={{ fontSize: 15, color: t.inkMuted }}>Hi {user?.displayName}</Text>
+        {openRounds[0] ? <GameweekHeader group={openRounds[0]} /> : null}
         <ErrorBanner message={error} />
 
         {loading && !data ? <ActivityIndicator color={t.pitch} /> : null}
@@ -305,6 +311,64 @@ export default function PredictionsScreen() {
 
       </ScrollView>
     </Screen>
+  )
+}
+
+/** Headline for the next gameweek: name, a segmented picked-progress bar, and first kick-off. */
+function GameweekHeader({ group }: { group: FixtureRound }) {
+  const t = useTokens()
+  const total = group.fixtures.length
+  const picked = group.fixtures.filter((f) => f.prediction != null).length
+  const complete = picked === total
+  // Predicted segments first; the stable sort keeps kick-off order within each set.
+  const segments = [...group.fixtures].sort(
+    (a, b) => Number(b.prediction != null) - Number(a.prediction != null),
+  )
+
+  return (
+    <View style={{ gap: 10, marginBottom: 20 }}>
+      <View style={{ gap: 2 }}>
+        <Text style={{ fontSize: 12, color: t.inkMuted }}>{group.competitionName}</Text>
+        <Text style={{ fontSize: 24, fontWeight: "800", color: t.ink }}>{group.round}</Text>
+      </View>
+
+      <View
+        accessibilityLabel={`${picked} of ${total} fixtures predicted`}
+        style={{ flexDirection: "row", gap: 4 }}
+      >
+        {segments.map((f) => (
+          <View
+            key={f.id}
+            style={{
+              flex: 1,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: f.prediction != null ? t.pitch : t.lineStrong,
+            }}
+          />
+        ))}
+      </View>
+
+      <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}>
+        <Text
+          style={{
+            fontSize: 12,
+            color: complete ? t.pitch : t.inkMid,
+            fontWeight: complete ? "700" : "400",
+          }}
+        >
+          {complete ? `All ${total} picked ✓` : `${picked} of ${total} picked`}
+        </Text>
+        <Text style={{ fontSize: 12, color: t.inkMid, ...scoreDigits }}>
+          First kick-off{" "}
+          {group.kickoff.toLocaleString("en-GB", {
+            weekday: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </Text>
+      </View>
+    </View>
   )
 }
 
