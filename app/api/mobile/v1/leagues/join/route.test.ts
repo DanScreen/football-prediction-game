@@ -34,6 +34,7 @@ beforeEach(() => {
     displayName: "A",
     isBot: false,
     emailVerified: true,
+    avatarUrl: null,
   })
 })
 

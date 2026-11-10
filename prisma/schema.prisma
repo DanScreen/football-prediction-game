@@ -41,6 +41,11 @@ model User {
   // Last meaningful presence (login, prediction, mobile refresh). Throttled
   // writes via touchLastSeen() — see lib/lastSeen.ts. Used for host DAU/WAU/MAU.
   lastSeenAt   DateTime?
+  // Random, unguessable id of the current profile picture, used as its URL
+  // (/api/avatars/<key>). Null = no picture; the UI shows initials instead.
+  // A new key on every upload, so the URL can be cached forever.
+  avatarKey    String?               @unique
+  avatar           UserAvatar?
   memberships      LeagueMembership[]
   predictions      Prediction[]
   bonusAwards      BonusAward[]
@@ -216,4 +221,14 @@ model Prediction {
   fixture            Fixture   @relation(fields: [fixtureId], references: [id])
 
   @@unique([userId, fixtureId])
+}
+
+// A user's profile picture: a 256×256 WebP, re-encoded on upload (which also
+// strips EXIF/GPS metadata). Kept off the User row so the bytes never load with
+// ordinary user queries. Served by /api/avatars/[key] — see lib/avatar.ts.
+model UserAvatar {
+  userId    String   @id
+  image     Bytes
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
 }

@@ -80,7 +80,14 @@ describe("POST /api/mobile/v1/auth/login", () => {
     expect(userFindUnique).toHaveBeenCalledWith({ where: { email: "a@b.c" } })
     const json = await res.json()
     expect(json).toEqual({
-      user: { id: "u1", email: "a@b.c", displayName: "A", isBot: false, emailVerified: true },
+      user: {
+        id: "u1",
+        email: "a@b.c",
+        displayName: "A",
+        isBot: false,
+        emailVerified: true,
+        avatarUrl: null,
+      },
       accessToken: "access",
       refreshToken: "refresh",
     })

@@ -2,6 +2,7 @@ import { scoreOnePrediction, awardedPoints } from "@/lib/scoring"
 import { FixtureStatus } from "@/app/generated/prisma/client"
 import BankerTag from "@/app/components/BankerTag"
 import PickGroups from "@/app/components/PickGroups"
+import { avatarPath } from "@/lib/avatar"
 import PointsBadge from "@/app/components/PointsBadge"
 import TeamChip from "@/app/components/TeamChip"
 
@@ -25,7 +26,7 @@ export type HistoryPredictionRow = {
   predictedAwayScore: number
   isBanker: boolean
   pointsAwarded: number | null
-  user: { id: string; displayName: string; isBot: boolean }
+  user: { id: string; displayName: string; isBot: boolean; avatarKey: string | null }
 }
 
 export type HistoryFixture = Fixture & {
@@ -149,7 +150,9 @@ export default function PredictionHistory({
                   .filter((p) => p.userId !== userId)
                   .map((p) => ({
                     id: p.id,
+                    userId: p.userId,
                     displayName: p.user.displayName,
+                    avatarUrl: avatarPath(p.user.avatarKey),
                     isBot: p.user.isBot,
                     isBanker: p.isBanker,
                     homeScore: p.predictedHomeScore,

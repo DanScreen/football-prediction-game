@@ -30,7 +30,8 @@ capped at the current and next gameweek per competition.
 Everything through **phase 23** (see [changelog.md](changelog.md) for the phase list):
 
 - **Auth** — open email/password registration (email format checked), login, JWT
-  sessions, profile page with API-key generation, forgot-password / reset via email.
+  sessions, profile page with API-key generation and a profile picture (initials until
+  one is uploaded, web and app), forgot-password / reset via email.
   Every email (verification, reset, reminders) is branded via one template module.
   **Email verification is required** (live 2026-09-23): every account — existing ones included — is held at
   `/verify-email` (web) / the verify screen (app) until it clicks the emailed link. Reaching

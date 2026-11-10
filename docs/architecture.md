@@ -70,7 +70,8 @@ streak bonus fans out per subscribing league. Full schema in
 | `app/predictions/` | `actions.ts` (the prediction server action) + a permanent redirect to `/` |
 | `app/leaderboard/` | Standings table + form strip |
 | `app/leagues/` | Create/join/switch leagues; competition picker |
-| `app/profile/` | API key management |
+| `app/profile/` | Profile picture, API key management, account deletion |
+| `app/api/avatars/[key]/` | Serves profile pictures by their unguessable key (public, cached forever) |
 | `app/host/` | **Site-host area** (isSiteAdmin): overview metrics, users (verification/reset links), competitions, fixtures, import, results |
 | `app/admin/` | **League commissioner area**: settings only |
 | `app/api/v1/` | Public bot API (fixtures, predictions, leaderboard) |
@@ -86,6 +87,7 @@ streak bonus fans out per subscribing league. Full schema in
 
 | File | Responsibility |
 |------|----------------|
+| `lib/avatar.ts` / `lib/avatarUpload.ts` | Initials, tone and URL helpers (client-safe, mirrored in the app) / re-encode and store uploads with `sharp` |
 | `lib/lastSeen.ts` | Throttled `User.lastSeenAt` bumps for host DAU/WAU/MAU |
 | `lib/hostMetrics.ts` | Aggregates for the `/host` overview page |
 | `lib/hostUsers.ts` | The `/host/users` list: filter, search, pagination, last link times |

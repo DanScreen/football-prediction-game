@@ -1,7 +1,14 @@
+import Avatar from "@/app/components/Avatar"
 import PointsBadge from "@/app/components/PointsBadge"
 import { groupPicksByScore, type PickLike } from "@/lib/groupPicks"
 
-export type GroupablePick = PickLike & { id: string; displayName: string; isBot: boolean }
+export type GroupablePick = PickLike & {
+  id: string
+  userId: string
+  displayName: string
+  isBot: boolean
+  avatarUrl: string | null
+}
 
 /**
  * League-mates' picks collapsed to one row per scoreline — "1–1: Bob, Marcus,
@@ -32,8 +39,15 @@ export default function PickGroups({
           </span>
           <span className="min-w-0 flex-1 text-ink-muted">
             {g.picks.map((p, i) => (
-              <span key={p.id}>
-                {i > 0 && ", "}
+              <span key={p.id} className="inline-flex items-center align-top">
+                {i > 0 && <span className="mr-1.5">,</span>}
+                <Avatar
+                  userId={p.userId}
+                  displayName={p.displayName}
+                  avatarUrl={p.avatarUrl}
+                  size="xs"
+                  className="mr-1"
+                />
                 {p.isBot && (
                   <span className="mr-1 text-[10px] font-bold tracking-wider text-ink-faint">BOT</span>
                 )}

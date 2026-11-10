@@ -1,8 +1,10 @@
 import { useState } from "react"
 import { Linking, Pressable, ScrollView, Text, View } from "react-native"
 import { router } from "expo-router"
+import * as ImagePicker from "expo-image-picker"
+import { Avatar } from "@/components/Avatar"
 import { ErrorBanner, Field, PrimaryButton, Screen, screenPadding } from "@/components/ui"
-import { ApiError } from "@/lib/api"
+import { ApiError, removeAvatar, uploadAvatar } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { API_BASE_URL } from "@/lib/config"
 import { useTokens } from "@/lib/theme"
@@ -12,7 +14,7 @@ import { useTokens } from "@/lib/theme"
  *
  * Its reason for existing is account deletion: App Store guideline 5.1.1(v)
  * requires an app that creates accounts to let people delete them from inside
- * the app. API-key management stays on the website — bots are a desktop
+ * the app. It is also where players set their profile picture. API-key management stays on the website — bots are a desktop
  * activity and the key is not something to expose on a phone screen.
  */
 export default function AccountScreen() {
@@ -41,6 +43,8 @@ export default function AccountScreen() {
   return (
     <Screen>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={screenPadding.scrollContent}>
+        <ProfilePicture />
+
         <View
           style={{
             backgroundColor: t.surface,
@@ -181,6 +185,90 @@ function Row({ label, value }: { label: string; value: string }) {
       <Text style={{ color: t.ink, fontSize: 14, fontWeight: "600", flexShrink: 1 }} numberOfLines={1}>
         {value}
       </Text>
+    </View>
+  )
+}
+
+/**
+ * Pick a photo from the library, square-cropped by the system picker, and
+ * upload it. The server does the real resize and strips the photo's metadata;
+ * the picker's crop and compression just keep the upload small.
+ */
+function ProfilePicture() {
+  const t = useTokens()
+  const { user, setAvatarUrl } = useAuth()
+  // The just-picked photo, shown while it uploads.
+  const [preview, setPreview] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  if (!user) return null
+
+  async function onChange() {
+    setError(null)
+    const picked = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: true,
+    })
+    const asset = picked.canceled ? null : picked.assets[0]
+    if (!asset?.base64) return
+
+    setPreview(asset.uri)
+    setBusy(true)
+    try {
+      const { avatarUrl } = await uploadAvatar(asset.base64)
+      setAvatarUrl(avatarUrl)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not upload that picture.")
+    } finally {
+      setPreview(null)
+      setBusy(false)
+    }
+  }
+
+  async function onRemove() {
+    setError(null)
+    setBusy(true)
+    try {
+      await removeAvatar()
+      setAvatarUrl(null)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not remove your picture.")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <View style={{ alignItems: "center", gap: 10, paddingVertical: 4 }}>
+      <View style={{ opacity: busy ? 0.6 : 1 }}>
+        <Avatar
+          userId={user.id}
+          displayName={user.displayName}
+          avatarUrl={preview ?? user.avatarUrl}
+          size={88}
+        />
+      </View>
+      <View style={{ flexDirection: "row", gap: 20 }}>
+        <Pressable
+          onPress={() => void onChange()}
+          disabled={busy}
+          accessibilityRole="button"
+          hitSlop={8}
+        >
+          <Text style={{ color: t.pitch, fontWeight: "700" }}>
+            {busy ? "Saving…" : user.avatarUrl ? "Change picture" : "Add a picture"}
+          </Text>
+        </Pressable>
+        {user.avatarUrl && !busy ? (
+          <Pressable onPress={() => void onRemove()} accessibilityRole="button" hitSlop={8}>
+            <Text style={{ color: t.inkMuted, fontWeight: "600" }}>Remove</Text>
+          </Pressable>
+        ) : null}
+      </View>
+      <ErrorBanner message={error} />
     </View>
   )
 }

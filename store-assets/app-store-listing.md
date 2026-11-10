@@ -132,6 +132,7 @@ A faster, clearer Scorers.
 • A simpler leaderboard. A podium for the top three, one line per player, and a tap to see where the points came from.
 • Leagues at a glance. Each league shows your position and how far you are behind the player above.
 • Club colours beside team names, and a gentle tap you can feel when you set a score.
+• Profile pictures. Add a photo from your account screen and league-mates see it on the leaderboard and beside your picks. Until you do, your initials show instead.
 
 The rules have moved to your account screen.
 ```
@@ -210,6 +211,7 @@ nothing else. Every one is **linked to the user** and **not used for tracking**.
 | Name (display name) | Contact Info | App Functionality | Yes | No |
 | User ID | Identifiers | App Functionality | Yes | No |
 | Other User Content (predictions) | User Content | App Functionality | Yes | No |
+| Photos or Videos (optional profile picture) | User Content | App Functionality | Yes | No |
 | Device ID (Expo push token) | Identifiers | App Functionality | Yes | No |
 
 Declare **no** advertising data, **no** usage data, **no** diagnostics, **no**
@@ -229,9 +231,12 @@ Set in `apps/mobile/app.json` under `expo.ios.infoPlist` when the plugin needs t
 | Permission | String |
 |---|---|
 | Notifications | `Scorers sends reminders when fixtures you have not predicted are about to kick off.` |
+| Photo library | `Scorers uses your photo library so you can choose a profile picture.` (set by the `expo-image-picker` plugin) |
 
 No other permission is requested. The app does not use the camera, microphone,
-photo library, contacts, location, calendar, Bluetooth or the local network.
+contacts, location, calendar, Bluetooth or the local network. The photo library
+is opened only when the player taps "Add a picture"; the system picker means
+the app sees just the one photo they choose.
 
 ---
 

@@ -18,7 +18,7 @@ const authMock = vi.mocked(authenticateMobileAccess)
 const membershipFindMany = vi.mocked(prisma.leagueMembership.findMany)
 const fixtureFindMany = vi.mocked(prisma.fixture.findMany)
 
-const user = { id: "u1", email: "a@b.c", displayName: "Alice", isBot: false, emailVerified: true }
+const user = { id: "u1", email: "a@b.c", displayName: "Alice", isBot: false, emailVerified: true, avatarUrl: null }
 
 beforeEach(() => {
   vi.clearAllMocks()

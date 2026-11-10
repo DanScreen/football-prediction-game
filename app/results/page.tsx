@@ -65,7 +65,7 @@ export default async function ResultsPage() {
         competition: { select: { name: true } },
         predictions: {
           where: { userId: { in: allPeerIds } },
-          include: { user: { select: { id: true, displayName: true, isBot: true } } },
+          include: { user: { select: { id: true, displayName: true, isBot: true, avatarKey: true } } },
         },
       },
     }),

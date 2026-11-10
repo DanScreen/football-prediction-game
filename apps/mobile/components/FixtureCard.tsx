@@ -10,6 +10,7 @@ import { TeamChip } from "@/components/TeamChip"
 import { useTokens } from "@/lib/theme"
 import { groupPicksByScore } from "@/lib/groupPicks"
 import type { FixturePrediction, MobileFixture } from "@/lib/api"
+import { Avatar } from "@/components/Avatar"
 
 function formatKickoff(iso: string): string {
   const d = new Date(iso)
@@ -204,9 +205,6 @@ export function FixtureCard({
       {groups.length > 0 ? (
         <View style={{ borderTopWidth: 1, borderTopColor: t.lineSoft, paddingTop: 8, gap: 6 }}>
           {groups.map((g) => {
-            const names = g.picks
-              .map((p) => `${p.isBot ? "🤖 " : ""}${p.displayName}${p.isBanker ? " ★" : ""}`)
-              .join(", ")
             const plainNames = g.picks.map((p) => p.displayName).join(", ")
             return (
               <View
@@ -217,9 +215,26 @@ export function FixtureCard({
                 <Text style={{ width: 46, fontWeight: "700", color: t.inkMid, ...scoreDigits }}>
                   {g.homeScore} – {g.awayScore}
                 </Text>
-                <Text style={{ flex: 1, fontSize: 13, color: t.inkMuted, lineHeight: 18 }}>
-                  {names}
-                </Text>
+                <View
+                  style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", columnGap: 10, rowGap: 4 }}
+                >
+                  {g.picks.map((p) => (
+                    <View
+                      key={p.userId}
+                      style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+                    >
+                      <Avatar
+                        userId={p.userId}
+                        displayName={p.displayName}
+                        avatarUrl={p.avatarUrl}
+                        size={18}
+                      />
+                      <Text style={{ fontSize: 13, color: t.inkMuted, lineHeight: 18 }}>
+                        {`${p.isBot ? "🤖 " : ""}${p.displayName}${p.isBanker ? " ★" : ""}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
                 {g.basePoints !== null ? (
                   settled ? (
                     <PointsBadge points={g.basePoints} tone={g.basePoints} />

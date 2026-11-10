@@ -109,10 +109,18 @@ describe("authenticateMobileAccess", () => {
       displayName: "A",
       isBot: false,
       emailVerified: true,
+      avatarUrl: null,
     })
     expect(userFindUnique).toHaveBeenCalledWith({
       where: { id: "u1" },
-      select: { id: true, email: true, displayName: true, isBot: true, emailVerifiedAt: true },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        isBot: true,
+        emailVerifiedAt: true,
+        avatarKey: true,
+      },
     })
   })
 

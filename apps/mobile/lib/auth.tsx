@@ -44,6 +44,8 @@ type AuthContextValue = {
    * address changed but the new link couldn't be sent.
    */
   changeEmail: (email: string) => Promise<string | undefined>
+  /** Record a new (or removed) profile picture after the server accepted it. */
+  setAvatarUrl: (avatarUrl: string | null) => void
 }
 
 function toUser(profile: MeResponse): MobileUser {
@@ -53,6 +55,7 @@ function toUser(profile: MeResponse): MobileUser {
     displayName: profile.displayName,
     isBot: profile.isBot,
     emailVerified: profile.emailVerified,
+    avatarUrl: profile.avatarUrl,
   }
 }
 
@@ -170,6 +173,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return result.warning
   }, [])
 
+  const setAvatarUrl = useCallback((avatarUrl: string | null) => {
+    setUser((u) => (u ? { ...u, avatarUrl } : u))
+    setMe((m) => (m ? { ...m, avatarUrl } : m))
+  }, [])
+
   const value = useMemo(
     () => ({
       user,
@@ -182,6 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshProfile,
       resendVerification,
       changeEmail,
+      setAvatarUrl,
     }),
     [
       user,
@@ -194,6 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshProfile,
       resendVerification,
       changeEmail,
+      setAvatarUrl,
     ],
   )
 

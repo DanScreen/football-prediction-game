@@ -547,6 +547,33 @@ The login form keeps the typed email after a failed sign-in. React resets a form
 its action returns, so `loginUser` echoes the email back as the field's
 `defaultValue`. Until 2026-09-24 a wrong password also cleared the email.
 
+## Profile pictures (`/profile`, app Account screen)
+
+Every player has an avatar. Until they upload a picture it is their **initials**
+(first and last word of the display name, or one letter for a single word) on one
+of four tones picked from their user id, so the colour survives a rename. The
+helpers are `lib/avatar.ts`, mirrored in `apps/mobile/lib/avatar.ts` (a test keeps
+the two identical); the components are `app/components/Avatar.tsx` and
+`apps/mobile/components/Avatar.tsx`.
+
+Avatars show in the web header (beside your name, linking to `/profile`), on
+leaderboard rows and the podium (web and app), and beside each league-mate's name
+in grouped picks on Predictions/Results (web) and fixture cards (app).
+
+**Uploading.** Web: *Upload picture* on `/profile`. The browser first shrinks the
+photo to 1024px JPEG (it has to fit the 1 MB server-action limit, and phone photos
+are several MB), then the server action stores it. App: *Add a picture* on Account
+opens the system photo picker with a square crop, and the base64 goes to
+`PUT /api/mobile/v1/me/avatar`. Both end in `lib/avatarUpload.ts`, which decodes
+the image with `sharp`, crops it to a 256px square (`position: "attention"`), and
+stores WebP in `UserAvatar`. Re-encoding rejects non-images, caps decoded size
+(50 MP) and strips EXIF, so a photo's GPS position never reaches league-mates.
+*Remove* goes back to initials.
+
+**Serving.** `GET /api/avatars/<key>` is public (exempt in `proxy.ts`) but the key
+is random and changes on every upload, so it is unguessable and cacheable forever.
+A removed or replaced picture's old URL returns 404.
+
 ## Account deletion (`/profile`)
 
 The profile page carries a **Delete account** section, collapsed behind a
@@ -556,8 +583,8 @@ act to reach.
 
 `lib/accountDeletion.ts` is the single implementation, shared with the mobile
 app's `DELETE /api/mobile/v1/me`. In one transaction it removes the user's
-predictions, bonus awards, league memberships, push tokens, refresh tokens and
-reset tokens, then the user. Leagues are **not** deleted with the member — a
+predictions, bonus awards, league memberships, push tokens, refresh tokens,
+reset tokens and profile picture, then the user. Leagues are **not** deleted with the member — a
 league belongs to everyone in it — unless the leaver was the last one, in which
 case nothing can reach it any more and it goes too. Deleting signs the session
 out and lands on `/login?deleted=1`.

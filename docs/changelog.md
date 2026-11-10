@@ -6,6 +6,18 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-11-10 — Profile pictures
+
+Players can upload a profile picture on the web (`/profile`) and in the app
+(Account). Until they do, they get their initials on a coloured disc. Avatars show
+in the web header, on leaderboards and podiums, and beside league-mates' picks.
+Uploads are cropped, resized and stripped of metadata on the server, and stored in
+the new `UserAvatar` table (migration `20261110000000_user_avatar`). The app needs
+a new build for the upload button (`expo-image-picker` is native); the API fields
+are optional, so older builds keep working. Details:
+[features.md](features.md#profile-pictures-profile-app-account-screen), rationale in
+[decisions.md](decisions.md).
+
 ## 2026-11-10 — Homepage font is self-hosted
 
 The homepage headline font (Big Shoulders) is now a file in the repo

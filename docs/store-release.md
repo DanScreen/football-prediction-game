@@ -25,7 +25,7 @@ The images it refers to are in `store-assets/promo/` (upload these) and
 | Export compliance | ✅ `ITSAppUsesNonExemptEncryption: false` in `app.json` |
 | On-device testing before submission | ✅ Expo Go, `npm run start:go` (no Apple account needed) |
 | Apple Developer Program membership | ✅ active — team `MB86PHVDWH` (individual) |
-| `eas login` / `eas build` / submission | ✅ **1.0.1 (8)** (email-verification screen) reviewed and live on the App Store, 2026-09-24. **1.1.0 (9)** (redesigned screens) built and sent to App Store Connect 2026-11-10; it still needs adding as a version there and submitting for review |
+| `eas login` / `eas build` / submission | ✅ **1.0.1 (8)** (email-verification screen) reviewed and live on the App Store, 2026-09-24. **1.1.0 (9)** (redesigned screens) built and sent to App Store Connect 2026-11-10; it still needs adding as a version there and submitting for review. Profile pictures (merged after build 9) add a native module, so they need a new build: run the release workflow by hand for another 1.1.0 build before submitting, or ship them in the next version. Either way, add **Photos or Videos** to the App Privacy answers first ([listing](../store-assets/app-store-listing.md)) |
 | Production demo account for the reviewer | ✅ done (2026-09-04) — see `app-store-listing.md` |
 | iPad screenshots **or** `supportsTablet: false` | ✅ `supportsTablet: false` (2026-09-04) — iPhone only, no iPad set needed |
 

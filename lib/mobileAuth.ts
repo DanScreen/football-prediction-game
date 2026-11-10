@@ -1,6 +1,7 @@
 import { createHmac, createHash, randomBytes, timingSafeEqual } from "node:crypto"
 import { prisma } from "@/lib/prisma"
 import { touchLastSeen } from "@/lib/lastSeen"
+import { avatarPath } from "@/lib/avatar"
 
 /** Access JWT lifetime — short enough that theft window is limited. */
 export const MOBILE_ACCESS_TTL_SECONDS = 30 * 60 // 30 minutes
@@ -15,6 +16,8 @@ export type MobileUserPublic = {
   isBot: boolean
   /** False until the user clicks the link in their verification email. */
   emailVerified: boolean
+  /** Site-relative URL of their profile picture; null = show initials. */
+  avatarUrl: string | null
 }
 
 type AccessClaims = {
@@ -83,6 +86,7 @@ export function toMobileUserPublic(user: {
   displayName: string
   isBot: boolean
   emailVerifiedAt: Date | null
+  avatarKey: string | null
 }): MobileUserPublic {
   return {
     id: user.id,
@@ -90,6 +94,7 @@ export function toMobileUserPublic(user: {
     displayName: user.displayName,
     isBot: user.isBot,
     emailVerified: !!user.emailVerifiedAt,
+    avatarUrl: avatarPath(user.avatarKey),
   }
 }
 
@@ -186,7 +191,14 @@ export async function authenticateMobileAccess(
   if (!userId) return null
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, displayName: true, isBot: true, emailVerifiedAt: true },
+    select: {
+      id: true,
+      email: true,
+      displayName: true,
+      isBot: true,
+      emailVerifiedAt: true,
+      avatarKey: true,
+    },
   })
   return user ? toMobileUserPublic(user) : null
 }

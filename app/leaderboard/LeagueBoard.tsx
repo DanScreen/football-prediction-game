@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Avatar from "@/app/components/Avatar"
 import {
   computeLeaderboard,
   computeLeagueForm,
@@ -308,15 +309,24 @@ export default async function LeagueBoard({
                       {entry.rank}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-semibold text-ink">{entry.displayName}</span>
-                      {entry.isBot && (
-                        <span className="ml-1.5 text-[10px] font-bold tracking-wider text-ink-faint">
-                          BOT
+                      <div className="flex items-center gap-2.5">
+                        <Avatar
+                          userId={entry.id}
+                          displayName={entry.displayName}
+                          avatarUrl={entry.avatarUrl}
+                        />
+                        <span className="min-w-0">
+                          <span className="font-semibold text-ink">{entry.displayName}</span>
+                          {entry.isBot && (
+                            <span className="ml-1.5 text-[10px] font-bold tracking-wider text-ink-faint">
+                              BOT
+                            </span>
+                          )}
+                          {entry.id === currentUserId && (
+                            <span className="ml-1.5 text-xs text-pitch font-medium">(you)</span>
+                          )}
                         </span>
-                      )}
-                      {entry.id === currentUserId && (
-                        <span className="ml-1.5 text-xs text-pitch font-medium">(you)</span>
-                      )}
+                      </div>
                       {/* The breakdown columns are desktop-only — five more numeric
                           columns would force the table to scroll sideways on a phone.
                           Below md the breakdown opens on tap instead, as in the app:
@@ -388,6 +398,13 @@ function Podium({ top }: { top: [Entry, Entry, Entry] }) {
             <span className="text-[10px] font-bold uppercase tracking-widest text-board-gold">
               {PODIUM_LABELS[place as 1 | 2 | 3]}
             </span>
+            <Avatar
+              userId={entry.id}
+              displayName={entry.displayName}
+              avatarUrl={entry.avatarUrl}
+              size="md"
+              className="my-1 ring-2 ring-board-gold/60"
+            />
             <span className="max-w-full truncate text-sm font-bold">{entry.displayName}</span>
             <span className="score-digits text-lg">{entry.confirmedPoints}</span>
           </div>

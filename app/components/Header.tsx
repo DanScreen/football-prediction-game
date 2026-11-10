@@ -6,6 +6,8 @@ import MobileNav from "./MobileNav"
 import ThemeToggle from "./ThemeToggle"
 import Logo from "./Logo"
 import { getTheme } from "@/lib/theme.server"
+import { avatarPath } from "@/lib/avatar"
+import Avatar from "./Avatar"
 
 export default async function Header() {
   const session = await auth()
@@ -21,6 +23,14 @@ export default async function Header() {
         select: { id: true },
       }))
     : false
+  // Not in the JWT (it changes on upload, and a stale token would show the old
+  // picture), so read it fresh.
+  const me = session?.user?.id
+    ? await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { avatarKey: true },
+      })
+    : null
 
   return (
     <>
@@ -78,9 +88,16 @@ export default async function Header() {
                   is the only route to it. Truncated rather than hidden. */}
               <Link
                 href="/profile"
-                className="max-w-24 truncate font-medium text-ink-muted transition-colors hover:text-ink sm:max-w-none"
+                className="flex min-w-0 items-center gap-2 font-medium text-ink-muted transition-colors hover:text-ink"
               >
-                {session.user.name ?? session.user.email}
+                <Avatar
+                  userId={session.user.id ?? ""}
+                  displayName={session.user.name ?? session.user.email ?? ""}
+                  avatarUrl={avatarPath(me?.avatarKey)}
+                />
+                <span className="max-w-24 truncate sm:max-w-none">
+                  {session.user.name ?? session.user.email}
+                </span>
               </Link>
               <form
                 action={async () => {

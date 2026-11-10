@@ -5,6 +5,27 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## 2026-11-10 — Profile pictures live in Postgres, behind unguessable public URLs
+
+**Storage.** Pictures go in a `UserAvatar` table (bytes), not a Cloud Storage
+bucket. Each is re-encoded to a 256px WebP of a few KB, so a thousand players is a
+few MB. A bucket would have meant Terraform, a service-account grant and a second
+place for account deletion and backups to cover; the table gets all of that for
+free. Revisit if pictures ever get large or numerous enough to matter to the
+database.
+
+**Access.** `/api/avatars/<key>` needs no sign-in. The app's `<Image>` would
+otherwise need an access token in its headers, which expires every 30 minutes and
+would break caching. Instead the key is 144 random bits, regenerated on every
+upload, and only ever shown to league-mates. Someone without the URL can't find a
+picture; anyone who has it already saw it. The URL never changes meaning, so it is
+served `Cache-Control: public, max-age=31536000, immutable`.
+
+**Processing.** The server always re-encodes, whatever the client did first, so
+nothing the client sends is stored as-is: no EXIF/GPS, no non-image payloads, one
+format and size. The clients shrink first only to keep the upload small (and, on
+the web, under the 1 MB server-action body limit).
+
 ## 2026-11-09 — The homepage is a rewrite of `/`, and the demo uses the real scorer
 
 Signed-out visitors used to land on a login form headed "Welcome back", so nothing on

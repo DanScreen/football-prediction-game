@@ -191,7 +191,10 @@ later.
 
 #### `GET /api/mobile/v1/me`
 
-Response: `{ id, email, displayName, isBot, emailVerified }` plus membership summary.
+Response: `{ id, email, displayName, isBot, emailVerified, avatarUrl }` plus membership summary.
+`avatarUrl` is a site-relative path to the profile picture, or null (show initials).
+The same field is on `user` in the login/register responses, on every leaderboard
+standing, and on each fixture pick (`prediction`, `peerPredictions[]`).
 For an unverified user it also sends a verification link if no live one is out
 (`ensureVerificationEmailSent`). The app's verify screen says "tap the link we
 emailed" without ever requesting one, so this is what makes that true for older
@@ -205,6 +208,7 @@ Deliberately not gated on verification — it's how the app learns the account's
   "displayName": "...",
   "isBot": false,
   "emailVerified": true,
+  "avatarUrl": "/api/avatars/Qm9…",
   "leagues": [
     {
       "id": "...",
@@ -230,6 +234,24 @@ Permanently deletes the caller's account and everything belonging to it, then
 returns `204`. Required in-app by App Store guideline 5.1.1(v). Shares
 `lib/accountDeletion.ts` with the web profile page; leagues survive unless the
 leaver was the last member — see [decisions.md](decisions.md).
+
+#### `PUT /api/mobile/v1/me/avatar`
+
+Body `{ image: "<base64>" }` — any common image format, up to 8 MB decoded. The
+server square-crops it, resizes it to 256px, re-encodes it as WebP (dropping EXIF
+and GPS) and returns `200 { avatarUrl }`. `400` if it isn't a readable image, `413`
+if it's too big. The app sends base64 JSON because `expo-image-picker` returns it.
+
+#### `DELETE /api/mobile/v1/me/avatar`
+
+Removes the picture: `200 { avatarUrl: null }`.
+
+#### Pictures themselves: `GET /api/avatars/<key>`
+
+Not under `/api/mobile` and needs no token: the key is 144 random bits and changes
+on every upload, so the URL works as a capability and is cached for a year
+(`immutable`). The app prefixes the path with `API_BASE_URL`. See
+[decisions.md](decisions.md).
 
 ### Scoring constants (so the Rules screen stays accurate)
 

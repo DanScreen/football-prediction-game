@@ -56,7 +56,14 @@ export async function POST(request: Request) {
         ? { memberships: { create: { leagueId: joinLeagueId, role: "MEMBER" } } }
         : {}),
     },
-    select: { id: true, email: true, displayName: true, isBot: true, emailVerifiedAt: true },
+    select: {
+      id: true,
+      email: true,
+      displayName: true,
+      isBot: true,
+      emailVerifiedAt: true,
+      avatarKey: true,
+    },
   })
 
   // The account exists either way; a failed send is recoverable from the

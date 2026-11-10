@@ -19,6 +19,7 @@ beforeEach(() => {
     displayName: "A",
     isBot: false,
     emailVerified: false,
+    avatarUrl: null,
   })
 })
 

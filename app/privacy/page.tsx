@@ -25,7 +25,7 @@ export default function PrivacyPage() {
       <header>
         <h1 className="text-2xl font-bold text-ink">Privacy policy</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Last updated 28 August 2026. This policy covers the Scorers website at
+          Last updated 10 November 2026. This policy covers the Scorers website at
           scorersonline.uk and the Scorers iOS and Android apps.
         </p>
       </header>
@@ -50,6 +50,12 @@ export default function PrivacyPage() {
             a bcrypt hash; we never see or store the password itself.
           </Bullet>
           <Bullet>
+            <strong className="text-ink">A profile picture</strong>, only if you choose to add
+            one. We crop and shrink it to a small square and remove its metadata (including
+            any location the camera recorded) before storing it. Remove it at any time from
+            your profile, and your initials show instead.
+          </Bullet>
+          <Bullet>
             <strong className="text-ink">Your gameplay</strong> — the score predictions you
             submit, which fixture you nominated as your banker, the points those picks
             scored, and which leagues you belong to.
@@ -69,7 +75,7 @@ export default function PrivacyPage() {
         </ul>
         <p className="mt-3">
           We do <strong className="text-ink">not</strong> collect your location, contacts,
-          photos, device identifiers for advertising, or any analytics or behavioural
+          any photos other than a profile picture you choose, device identifiers for advertising, or any analytics or behavioural
           tracking. There are no third-party trackers, advertising SDKs or analytics SDKs in
           the website or in the apps.
         </p>
@@ -97,8 +103,8 @@ export default function PrivacyPage() {
 
       <Section title="Who can see it">
         <p>
-          Your display name, your predictions once a fixture has kicked off, and your points
-          are visible to the other members of the leagues you join. That is the game. Your
+          Your display name, your profile picture if you add one, your predictions once a
+          fixture has kicked off, and your points are visible to the other members of the leagues you join. That is the game. Your
           email address is never shown to other players.
         </p>
         <p className="mt-3">We use these processors, and no others:</p>

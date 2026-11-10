@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { scoreOnePrediction, BANKER_MULTIPLIER } from "@/lib/scoring"
 import { provisionalPoints } from "@/lib/provisional"
+import { avatarPath } from "@/lib/avatar"
 
 export type PointsBreakdown = {
   /** Right result only (1 each). */
@@ -19,6 +20,8 @@ export type LeaderboardEntry = {
   id: string
   displayName: string
   isBot: boolean
+  /** Site-relative URL of their profile picture; null = show initials. */
+  avatarUrl: string | null
   /** Confirmed points (pointsAwarded + streak bonuses) — authoritative. */
   confirmedPoints: number
   /** Points from proposed-but-unconfirmed results. Display only. */
@@ -64,7 +67,7 @@ export async function computeLeaderboard(
   const [users, predictions, bonusAwards] = await Promise.all([
     prisma.user.findMany({
       where: { id: { in: memberIds } },
-      select: { id: true, displayName: true, isBot: true },
+      select: { id: true, displayName: true, isBot: true, avatarKey: true },
     }),
     prisma.prediction.findMany({
       where: {
@@ -149,6 +152,7 @@ export async function computeLeaderboard(
         id: user.id,
         displayName: user.displayName,
         isBot: user.isBot,
+        avatarUrl: avatarPath(user.avatarKey),
         confirmedPoints,
         provisionalPoints: provisional,
         exactCount,

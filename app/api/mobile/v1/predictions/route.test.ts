@@ -25,7 +25,7 @@ const membershipFindFirst = vi.mocked(prisma.leagueMembership.findFirst)
 const upsertMock = vi.mocked(upsertPrediction)
 const setBankerMock = vi.mocked(setBanker)
 
-const user = { id: "u1", email: "a@b.c", displayName: "A", isBot: false, emailVerified: true }
+const user = { id: "u1", email: "a@b.c", displayName: "A", isBot: false, emailVerified: true, avatarUrl: null }
 const futureFixture = {
   id: "fx1",
   competitionId: "c1",
