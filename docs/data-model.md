@@ -42,8 +42,12 @@ Platform-owned. Owns the canonical fixtures that leagues share.
   `email_unverified` on the mobile API. Every pre-existing account started null
   (migration `20260923120000_email_verification`), except the App Store reviewer's
   demo account, which it backfills.
+- `avatarKey` (nullable, unique) — random id of the current profile picture, and
+  its URL (`/api/avatars/<key>`). Null = no picture; every UI shows initials. A new
+  key on every upload. Migration `20261110000000_user_avatar`.
 - Relations: `memberships[]`, `predictions[]`, `bonusAwards[]`, `resetTokens[]`,
-  `emailVerificationTokens[]`, `mobileRefreshTokens[]`, `mobileDeviceTokens[]`.
+  `emailVerificationTokens[]`, `mobileRefreshTokens[]`, `mobileDeviceTokens[]`,
+  `avatar?`.
 
 ### League
 A group of players subscribed to one competition.
@@ -99,6 +103,14 @@ Migration `20260923120000_email_verification`.
   (nullable), `createdAt` (drives the 60 s resend cooldown).
 - Verifying marks every unused token for the user as used; changing the address
   deletes them all. Deleted with the account.
+
+### UserAvatar
+A user's profile picture, one row per user (`userId` is the primary key). Migration
+`20261110000000_user_avatar`.
+- `userId`, `image` (bytes: a 256×256 WebP, a few KB), `updatedAt`.
+- Written only by `lib/avatarUpload.ts`, which re-encodes every upload and sets
+  `User.avatarKey` in the same transaction. Kept off the `User` row so ordinary user
+  queries never load the bytes. Deleted with the account.
 
 ### MobileDeviceToken
 Expo push tokens for deadline reminders. Migration

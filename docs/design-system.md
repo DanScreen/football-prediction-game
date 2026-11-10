@@ -130,6 +130,17 @@ not theme. `TeamChip` (web and app) draws a small two-tone circle from
 `lib/teamColours.ts` with its own hairline border, so a white chip still reads on a white
 card. Unknown teams get a neutral token chip.
 
+## Avatars
+
+`Avatar` (`app/components/Avatar.tsx`, `apps/mobile/components/Avatar.tsx`) is a
+circle: the player's picture, or their initials on one of four token pairs chosen
+by `avatarTone(userId)` — `pitch-tint`/`pitch-deep`, `clock-tint`/`clock`,
+`info-tint`/`info`, `chip`/`ink-mid`. Both platforms use the same index order, so a
+player's colour matches across web and app. Web sizes: `xs` 20px (beside picks),
+`sm` 28px (header, table rows), `md` 36px (podium, with a gold ring), `xl` 80px
+(profile). Avatars are decorative — always next to the name — so they are hidden
+from screen readers.
+
 ## Homepage
 
 `app/welcome/` is the scoreboard palette at full strength: a full-width `board` band,

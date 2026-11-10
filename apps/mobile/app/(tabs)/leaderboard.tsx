@@ -23,6 +23,7 @@ import { podiumRank } from "@/lib/podium"
 import { useTokens } from "@/lib/theme"
 import type { Tokens } from "@/constants/tokens"
 import { useAsyncData } from "@/lib/useAsyncData"
+import { Avatar } from "@/components/Avatar"
 
 /**
  * Where a player's points came from — the same five buckets, tones and wording
@@ -410,6 +411,15 @@ function Podium({ standings }: { standings: LeaderboardEntry[] }) {
             <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1, color: t.boardGold }}>
               {PODIUM_LABELS[place]}
             </Text>
+            <View style={{ marginVertical: 3 }}>
+              <Avatar
+                userId={row.id}
+                displayName={row.displayName}
+                avatarUrl={row.avatarUrl}
+                size={36}
+                ring={t.boardGold}
+              />
+            </View>
             <Text
               style={{ fontSize: 13, fontWeight: "700", color: t.boardFore }}
               numberOfLines={1}
@@ -472,6 +482,8 @@ function StandingRow({
         <Text style={{ width: 22, fontWeight: "700", color: t.inkMuted, fontSize: 14, ...scoreDigits }}>
           {row.rank}
         </Text>
+
+        <Avatar userId={row.id} displayName={row.displayName} avatarUrl={row.avatarUrl} />
 
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text numberOfLines={1}>

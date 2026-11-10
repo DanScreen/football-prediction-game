@@ -53,6 +53,14 @@
       "expo-dev-client",
       "expo-secure-store",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Scorers uses your photo library so you can choose a profile picture.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-notifications",
         {
           "color": "#128749"

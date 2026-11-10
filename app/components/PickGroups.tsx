@@ -39,14 +39,14 @@ export default function PickGroups({
           </span>
           <span className="min-w-0 flex-1 text-ink-muted">
             {g.picks.map((p, i) => (
-              <span key={p.id}>
-                {i > 0 && ", "}
+              <span key={p.id} className="inline-flex items-center align-top">
+                {i > 0 && <span className="mr-1.5">,</span>}
                 <Avatar
                   userId={p.userId}
                   displayName={p.displayName}
                   avatarUrl={p.avatarUrl}
                   size="xs"
-                  className="mr-1 align-[-5px]"
+                  className="mr-1"
                 />
                 {p.isBot && (
                   <span className="mr-1 text-[10px] font-bold tracking-wider text-ink-faint">BOT</span>

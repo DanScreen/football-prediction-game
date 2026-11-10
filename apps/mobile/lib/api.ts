@@ -18,6 +18,11 @@ export type MobileUser = {
    * verified (that server wouldn't gate anything).
    */
   emailVerified?: boolean
+  /**
+   * Site-relative URL of their profile picture; null = show initials. Missing
+   * from servers that predate profile pictures, which reads the same as null.
+   */
+  avatarUrl?: string | null
 }
 
 export type LeagueSummary = {
@@ -45,6 +50,7 @@ export type FixturePrediction = {
   userId: string
   displayName: string
   isBot: boolean
+  avatarUrl?: string | null
   homeScore: number
   awayScore: number
   isBanker: boolean
@@ -84,6 +90,7 @@ export type LeaderboardEntry = {
   id: string
   displayName: string
   isBot: boolean
+  avatarUrl?: string | null
   totalPoints: number
   provisionalPoints: number
   projectedPoints: number
@@ -272,6 +279,19 @@ export async function changeEmail(
   email: string,
 ): Promise<{ email: string; emailVerified: boolean; warning?: string }> {
   return apiRequest("/me", { method: "PATCH", body: { email } })
+}
+
+/**
+ * Set the profile picture from base64 image data (what the image picker
+ * returns). The server crops, resizes and re-encodes it.
+ */
+export async function uploadAvatar(base64: string): Promise<{ avatarUrl: string }> {
+  return apiRequest("/me/avatar", { method: "PUT", body: { image: base64 } })
+}
+
+/** Remove the profile picture; initials show instead. */
+export async function removeAvatar(): Promise<{ avatarUrl: null }> {
+  return apiRequest("/me/avatar", { method: "DELETE" })
 }
 
 /** Permanent, irreversible account deletion (App Store guideline 5.1.1(v)). */
