@@ -6,6 +6,17 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-11-10 — iOS app version 1.1.0
+
+`expo.version` is now **1.1.0** (`apps/mobile/app.json`, `package.json`), a minor bump
+because it carries the redesigned screens from the 2026-11-09 UI refresh and the new
+`expo-haptics` native module. Merging it makes CI build and upload to App Store Connect
+([store-release.md](store-release.md#submitting)). Still manual: add version 1.1.0 in App
+Store Connect with the *What's New* text from `store-assets/app-store-listing.md`, pick
+the build once Apple has processed it, and press **Submit for Review**.
+
+---
+
 ## 2026-11-09 — UI refresh: homepage, faster score entry, simpler app screens
 
 - **Public homepage** at `/` for signed-out visitors, with a playable scoring demo

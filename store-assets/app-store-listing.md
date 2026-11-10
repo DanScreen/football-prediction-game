@@ -122,7 +122,21 @@ list above keeps "table" deliberately; drop it if you re-add it to the subtitle.
 
 ---
 
-## What's New in This Version (4000 max) — for version 1.0.1
+## What's New in This Version (4000 max) — for version 1.1.0
+
+```
+A faster, clearer Scorers.
+
+• Predict with a tap. Plus and minus buttons replace the keyboard, and a whole gameweek fits on one screen. A progress bar shows how many picks you have left.
+• Results that explain themselves. The final score is the headline, your points come with the reason, and everyone's picks are grouped by scoreline.
+• A simpler leaderboard. A podium for the top three, one line per player, and a tap to see where the points came from.
+• Leagues at a glance. Each league shows your position and how far you are behind the player above.
+• Club colours beside team names, and a gentle tap you can feel when you set a score.
+
+The rules have moved to your account screen.
+```
+
+### Version 1.0.1 (live)
 
 ```
 Scorers now asks you to confirm your email address with a link we send you, so password resets and reminders always reach you. If you haven't confirmed yet, the app will show you how — you can resend the link or fix a mistyped address from there.
