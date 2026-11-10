@@ -84,7 +84,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   Rules moved out of its tab bar. **The app half ships as iOS 1.1.0**: the version was
   bumped on 2026-11-10 so CI builds and uploads it; it still needs adding in App Store
   Connect and submitting for review by hand. The web Results, Leaderboard and Leagues pages
-  got the matching redesign on 2026-11-10.
+  have not had the matching redesign yet.
 - **Mobile** — bottom tab bar; skeleton loading states, an error boundary and a 404 page.
 - **Account deletion** — irreversible, in-app on both platforms, one shared
   implementation (`lib/accountDeletion.ts`). Leagues outlive the member who leaves.
@@ -107,7 +107,7 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **401 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **396 unit tests** (vitest, prisma/fetch mocked) — all passing.
 - **34 end-to-end tests** (Playwright, real browser + Postgres; `npm run e2e`) — all
   passing, and stable across repeated runs. They cover the golden path (invite, sign
   up, verify, predict with a banker, kickoff lock, host confirms, leaderboard), public
