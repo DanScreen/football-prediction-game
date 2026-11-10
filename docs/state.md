@@ -3,7 +3,7 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-11-09
+**Last updated:** 2026-11-10
 
 ## Status: live in production
 
@@ -81,8 +81,9 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   demo; signed-in users get Predictions there as before.
 - **UI refresh (2026-11-09)** — score steppers and club colour chips on both clients;
   the app's Predictions, Results, Leaderboard and Leagues screens were redesigned and
-  Rules moved out of its tab bar. **The app half is merged but not released**: it needs
-  a new store build (version 1.0.2+). The web Results, Leaderboard and Leagues pages
+  Rules moved out of its tab bar. **The app half ships as iOS 1.1.0**: the version was
+  bumped on 2026-11-10 so CI builds and uploads it; it still needs adding in App Store
+  Connect and submitting for review by hand. The web Results, Leaderboard and Leagues pages
   have not had the matching redesign yet.
 - **Mobile** — bottom tab bar; skeleton loading states, an error boundary and a 404 page.
 - **Account deletion** — irreversible, in-app on both platforms, one shared
