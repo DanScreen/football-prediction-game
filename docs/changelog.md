@@ -6,6 +6,14 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-11-10 — Homepage font is self-hosted
+
+The homepage headline font (Big Shoulders) is now a file in the repo
+(`app/welcome/fonts/`, loaded with `next/font/local`) instead of a build-time
+download from Google Fonts. That download failed twice in one day, once in CI and
+once in the production deploy after the web redesign merged, each time on that
+font only. A re-run passed both times, but the build should not depend on it.
+
 ## 2026-11-10 — Web Results, Leaderboard and Leagues match the app
 
 Closes the parity gap left by the 2026-11-09 refresh.

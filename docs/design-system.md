@@ -134,8 +134,8 @@ card. Unknown teams get a neutral token chip.
 
 `app/welcome/` is the scoreboard palette at full strength: a full-width `board` band,
 `board-panel` for the demo card, `board-gold` for the accent and the primary button. Its
-headline, team names and strip headings use **Big Shoulders** (loaded with
-`next/font/google` on that page only); nothing else in the product does.
+headline, team names and strip headings use **Big Shoulders** (self-hosted from `app/welcome/fonts/` with
+`next/font/local`, on that page only); nothing else in the product does.
 
 ## Moments
 
