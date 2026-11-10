@@ -25,7 +25,7 @@ The images it refers to are in `store-assets/promo/` (upload these) and
 | Export compliance | ✅ `ITSAppUsesNonExemptEncryption: false` in `app.json` |
 | On-device testing before submission | ✅ Expo Go, `npm run start:go` (no Apple account needed) |
 | Apple Developer Program membership | ✅ active — team `MB86PHVDWH` (individual) |
-| `eas login` / `eas build` / submission | ✅ **1.0.1 (8)** (email-verification screen) reviewed and live on the App Store, 2026-09-24. **1.1.0 (9)** (redesigned screens) built and sent to App Store Connect 2026-11-10; it still needs adding as a version there and submitting for review. Profile pictures (merged after build 9) add a native module, so they need a new build: run the release workflow by hand for another 1.1.0 build before submitting, or ship them in the next version. Either way, add **Photos or Videos** to the App Privacy answers first ([listing](../store-assets/app-store-listing.md)) |
+| `eas login` / `eas build` / submission | ✅ **1.0.1 (8)** (email-verification screen) reviewed and live on the App Store, 2026-09-24. **1.1.0 (9)** (redesigned screens) built and sent to App Store Connect 2026-11-10; it still needs adding as a version there and submitting for review. **1.1.0 (10)** (adds profile pictures) built by a manual release run and sent to App Store Connect the same day — **submit build 10, not 9**, after adding **Photos or Videos** to the App Privacy answers ([listing](../store-assets/app-store-listing.md)) |
 | Production demo account for the reviewer | ✅ done (2026-09-04) — see `app-store-listing.md` |
 | iPad screenshots **or** `supportsTablet: false` | ✅ `supportsTablet: false` (2026-09-04) — iPhone only, no iPad set needed |
 
@@ -194,7 +194,8 @@ Log of uploaded builds:
 
 | Build | Commit | Uploaded | Notes |
 |---|---|---|---|
-| 1.1.0 (9) | `dec3b65` | 2026-11-10 | Redesigned Predictions, Results, Leaderboard and Leagues; score steppers and haptics. Built and submitted by the release workflow; not yet submitted for review. |
+| 1.1.0 (9) | `dec3b65` | 2026-11-10 | Redesigned Predictions, Results, Leaderboard and Leagues; score steppers and haptics. Built and submitted by the release workflow; superseded by build 10. |
+| 1.1.0 (10) | `07db5ac` | 2026-11-10 | Build 9 plus profile pictures (`expo-image-picker`). Manual release-workflow run; uploaded to App Store Connect, not yet submitted for review. |
 | 1.0.1 (8) | `8f43628` | 2026-09-23 | First 1.0.1 build: email-verification screen and sign-up format check. **Approved and live 2026-09-24.** |
 | 1.0.0 (7) | `2b5080e` | 2026-09-23 | Same app code as (8), but still versioned 1.0.0 after 1.0.0 was approved — rejected by App Store Connect (ITMS-90186 / ITMS-90062). |
 | 1.0.0 (6) | `28ee059` | 2026-09-06 | Podium medals go by rank and skip zero-point rounds. No email-verification screen. 1.0.0 has since been approved and is live; 1.0.1 follows. |
