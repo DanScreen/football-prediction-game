@@ -1,6 +1,9 @@
 import { scoreOnePrediction, awardedPoints } from "@/lib/scoring"
 import { FixtureStatus } from "@/app/generated/prisma/client"
 import BankerTag from "@/app/components/BankerTag"
+import PickGroups from "@/app/components/PickGroups"
+import PointsBadge from "@/app/components/PointsBadge"
+import TeamChip from "@/app/components/TeamChip"
 
 type Fixture = {
   id: string
@@ -49,19 +52,20 @@ function awardedScoreOf(p: HistoryPredictionRow, f: Fixture): number | null {
   return base === null ? null : awardedPoints(base, p.isBanker)
 }
 
-function sortPredictions(predictions: HistoryPredictionRow[], userId: string) {
-  return [...predictions].sort((a, b) => {
-    if (a.userId === userId) return -1
-    if (b.userId === userId) return 1
-    return a.user.displayName.localeCompare(b.user.displayName, "en")
-  })
+/** Why a pick scored what it did, so nobody needs the rules page to read a 1.5. */
+const REASON: Record<number, { text: string; class: string }> = {
+  1.5: { text: "One goal out", class: "text-info" },
+  1: { text: "Right result", class: "text-ink-muted" },
+  0: { text: "Wrong result", class: "text-ink-muted" },
 }
 
 /**
  * Settled fixtures grouped by round, newest first.
  *
- * Each fixture lists every league-mate's pick on that competition (same visibility
- * as Kicked Off). Rounds are keyed by competition *and* round name.
+ * Each card leads with the scoreline, then the viewer's pick and why it scored
+ * what it did, then every league-mate's pick on that competition grouped by
+ * scoreline (same visibility as Kicked Off). Rounds are keyed by competition
+ * *and* round name.
  */
 export default function PredictionHistory({
   fixtures,
@@ -140,7 +144,19 @@ export default function PredictionHistory({
               .map((f) => {
                 const myPick = f.predictions.find((p) => p.userId === userId)
                 const baseScore = myPick ? baseScoreOf(myPick, f) : null
-                const visible = sortPredictions(f.predictions, userId)
+                const myAwarded = myPick ? awardedScoreOf(myPick, f) : null
+                const others = f.predictions
+                  .filter((p) => p.userId !== userId)
+                  .map((p) => ({
+                    id: p.id,
+                    displayName: p.user.displayName,
+                    isBot: p.user.isBot,
+                    isBanker: p.isBanker,
+                    homeScore: p.predictedHomeScore,
+                    awayScore: p.predictedAwayScore,
+                    pointsAwarded: awardedScoreOf(p, f),
+                    provisionalPoints: null,
+                  }))
 
                 const accentBorder =
                   baseScore === 3
@@ -156,66 +172,70 @@ export default function PredictionHistory({
                     key={f.id}
                     className={`bg-surface rounded-xl shadow-card border border-line border-l-4 ${accentBorder} overflow-hidden`}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-b border-line-soft">
-                      <div className="min-w-0">
-                        <p className="font-bold text-ink truncate">
-                          {f.homeTeam}{" "}
-                          <span className="text-ink-faint font-normal">vs</span> {f.awayTeam}
-                        </p>
-                        <p className="text-xs text-ink-muted mt-0.5">
-                          {new Date(f.kickoffTime).toLocaleString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </p>
-                      </div>
+                    <div className="px-5 pt-3 pb-4">
+                      <p className="text-xs text-ink-muted">
+                        {new Date(f.kickoffTime).toLocaleString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
 
-                      <div className="shrink-0">
-                        <p className="text-xs text-ink-faint mb-0.5">Result</p>
-                        <p className="score-digits text-lg">
+                      {/* The scoreline is the headline: teams either side of the score. */}
+                      <div className="mt-2 flex items-center gap-2 sm:gap-3">
+                        <p className="flex min-w-0 flex-1 items-center justify-end gap-2 text-[15px] font-bold text-ink">
+                          <span className="truncate">{f.homeTeam}</span>
+                          <TeamChip team={f.homeTeam} />
+                        </p>
+                        <p className="score-digits shrink-0 rounded-lg bg-board px-3 py-1 text-xl text-board-fore">
+                          <span className="sr-only">Result: </span>
                           {f.actualHomeScore} – {f.actualAwayScore}
                         </p>
+                        <p className="flex min-w-0 flex-1 items-center gap-2 text-[15px] font-bold text-ink">
+                          <TeamChip team={f.awayTeam} />
+                          <span className="truncate">{f.awayTeam}</span>
+                        </p>
                       </div>
-                    </div>
 
-                    <div className="px-5 py-3 space-y-2">
-                      {visible.map((p) => {
-                        const base = baseScoreOf(p, f)
-                        const awarded = awardedScoreOf(p, f)
-                        const isYou = p.userId === userId
-
-                        return (
-                          <div
-                            key={p.id}
-                            className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-sm ${
-                              isYou ? "text-ink" : "text-ink-muted"
-                            }`}
-                          >
-                            <span
-                              className={`w-28 truncate ${isYou ? "font-semibold text-pitch" : ""}`}
-                            >
-                              {isYou ? "You" : `${p.user.isBot ? "🤖 " : ""}${p.user.displayName}`}
+                      <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm">
+                        {myPick ? (
+                          <>
+                            <span className="font-semibold text-pitch">You</span>
+                            <span className="score-digits font-bold text-ink">
+                              {myPick.predictedHomeScore} – {myPick.predictedAwayScore}
                             </span>
-                            <span className="font-bold tabular-nums score-digits">
-                              {p.predictedHomeScore} – {p.predictedAwayScore}
-                            </span>
-                            {p.isBanker && <BankerTag />}
-                            {awarded !== null ? (
-                              <PointsBadge points={awarded} tone={base ?? 0} />
-                            ) : (
-                              <span className="text-xs text-ink-faint">–</span>
+                            {myPick.isBanker && <BankerTag />}
+                            {myAwarded !== null && (
+                              <PointsBadge points={myAwarded} tone={baseScore ?? 0} />
                             )}
-                            {isYou && base === 3 && (
+                            {baseScore === 3 && (
                               <span className="text-xs font-bold text-good bg-good-tint border border-good-line rounded-full px-2 py-0.5 animate-pop whitespace-nowrap">
                                 Nailed it! ⚽
                               </span>
                             )}
-                          </div>
+                            {baseScore !== null && REASON[baseScore] && (
+                              <span className={`text-xs font-semibold ${REASON[baseScore].class}`}>
+                                {REASON[baseScore].text}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-xs italic text-ink-faint">
+                            You didn&apos;t predict this one.
+                          </span>
+                        )}
+                      </div>
+
+                      {others.length > 0 ? (
+                        <div className="mt-3 border-t border-line-soft pt-3">
+                          <PickGroups picks={others} settled />
+                        </div>
+                      ) : (
+                        myPick && (
+                          <p className="mt-3 border-t border-line-soft pt-3 text-xs italic text-ink-faint">
+                            No one else in your leagues predicted this one.
+                          </p>
                         )
-                      })}
-                      {visible.length === 0 && (
-                        <p className="text-xs text-ink-faint italic">No predictions submitted.</p>
                       )}
                     </div>
                   </div>
@@ -225,23 +245,5 @@ export default function PredictionHistory({
         </section>
       ))}
     </div>
-  )
-}
-
-/** `points` is what's scored; `tone` is the undoubled base that picks the colour. */
-function PointsBadge({ points, tone }: { points: number; tone: number }) {
-  const color =
-    tone === 3
-      ? "bg-good-tint text-good border border-good-line"
-      : tone === 1.5
-        ? "bg-info-tint text-info border border-info-line"
-        : tone === 1
-          ? "bg-clock-tint text-clock border border-clock-line"
-          : "bg-chip text-ink-muted border border-line"
-
-  return (
-    <span className={`inline-block px-2 py-0.5 rounded-full text-sm font-bold ${color}`}>
-      {points}
-    </span>
   )
 }

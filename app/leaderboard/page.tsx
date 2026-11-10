@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { NOT_ARCHIVED } from "@/lib/peers"
-import LeagueBoard, { FORM_LEGEND } from "./LeagueBoard"
+import LeagueBoard from "./LeagueBoard"
 import type { SearchParams } from "./roundNav"
 
 export const metadata = { title: "Leaderboard" }
@@ -115,29 +115,6 @@ export default async function LeaderboardPage({
         ))}
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 px-1 text-xs text-ink-muted">
-        <span className="font-semibold text-ink-mid">
-          Form key <span className="font-normal">(oldest → newest)</span>:
-        </span>
-        {(
-          [
-            ["strong", ">40% of pts"],
-            ["mixed", "21–40%"],
-            ["poor", "≤20%"],
-            ["none", "No picks"],
-          ] as const
-        ).map(([tier, label]) => (
-          <span key={tier} className="flex items-center gap-1.5">
-            <span
-              aria-hidden="true"
-              className={`flex h-4 w-4 items-center justify-center rounded-sm border text-[8px] leading-none ${FORM_LEGEND[tier].class}`}
-            >
-              {FORM_LEGEND[tier].glyph}
-            </span>
-            {label}
-          </span>
-        ))}
-      </div>
     </div>
   )
 }

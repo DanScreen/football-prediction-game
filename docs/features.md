@@ -87,6 +87,12 @@ import. A user can belong to multiple leagues — predictions and leaderboards c
 of them at once, so there is nothing to "switch" as a player. Commissioners use the
 **Manage** action here to pick which league `/admin` edits.
 
+Each league card shows **where you stand**: your position, the player count, your points
+and the gap to the player directly above ("3 behind Marcus", "Level with …", "Top of the
+league") — `app/leagues/standing.ts`, from `computeLeaderboard`. "Open table" jumps to
+that league on the leaderboard. Once you are in a league, the join and create forms sit
+behind one "Join or create a league" control; with no leagues they are shown outright.
+
 Leagues on a competition a host has declared **finished** move into a collapsed
 "Finished leagues" section at the bottom, with a link through to
 `/leaderboard?archived=1` for the final table. They keep their history but lose the
@@ -184,9 +190,13 @@ two identical). A team that isn't in the table gets a neutral chip.
 ## Results (`/results`)
 
 Settled fixtures grouped by competition and round, newest first (`PredictionHistory.tsx`).
-Each fixture shows the confirmed scoreline and **every league-mate's pick** with points
-(same visibility as Kicked Off). The round header still shows **your** subtotal and any
-streak bonus. Left-edge colour reflects your outcome on that fixture. Split from
+Each card leads with the **scoreline** between the two team names, then **your pick**
+with its points and the reason ("One goal out", "Right result", "Wrong result", or
+"Nailed it!"), then **every league-mate's pick grouped by scoreline** — "1 – 1  Bob,
+Marcus, Priya" — with a ★ after a banker (`app/components/PickGroups.tsx`, on
+`lib/groupPicks.ts`; same visibility as Kicked Off, which uses the same grouping). The
+app's results card is the same layout. The round header still shows **your** subtotal
+and any streak bonus. Left-edge colour reflects your outcome on that fixture. Split from
 Predictions on 2026-08-22 — the combined page grew unbounded once every league-mate's
 pick appeared on each settled fixture.
 
@@ -252,8 +262,12 @@ The web therefore needs no round endpoint: the page is a server component and
 calls `computeLeaderboard` directly. See [mobile.md](mobile.md) for the app's
 `/leaderboards/round` endpoint.
 
-**Podium medals go by rank, not row order.** 🥇🥈🥉 follow `rank`, so players level
-on points share a medal (joint-first is two golds, and silver is skipped) instead
+**A podium sits above each table** (web and app) when there are at least three players
+and the leader has points: 2nd, 1st, 3rd as steps in the scoreboard palette. Rows show
+plain rank numbers and only your own row is tinted.
+
+**Podium places go by rank, not row order.** The 1st/2nd/3rd labels follow `rank`, so players level
+on points share a place (joint-first is two 1sts, and 2nd is skipped) instead
 of having the order decided by whichever name sorted first. Nobody medals on zero
 points — a round whose results a host has not confirmed scores everyone zero, and
 handing out three medals for it would invent a winner. Both clients use the same
@@ -268,11 +282,15 @@ Banker is counted as the extra only, so a bankered exact reads as 3 exact + 3 ba
 rather than 6 in a column claiming to mean "exact scores".
 
 Five extra numeric columns would force a phone to scroll the table sideways, so below
-`md` they collapse into a wrapping chip line under the player's name showing only the
-non-zero parts. The ★ and 🔥 headers carry `sr-only` labels, since an emoji alone
+`md` the breakdown opens on tap instead (a `<details>` under the player's name, no
+client JS): a stacked bar, a legend of the non-zero parts and "N exact scores". Your own
+row starts open. The app does the same at every width. The ★ and 🔥 headers carry `sr-only` labels, since an emoji alone
 announces nothing useful.
 
-Each form cell is **dual-encoded**.
+**Form is drawn as bars**, one per round: height is the points scored that gameweek
+relative to the player's own best of the five, colour is the tier. Height carries the
+meaning, so it reads without colour and needs no printed key (the old glyph boxes had a
+legend under the page).
 
 ## Host area (`/host`) — site hosts only
 

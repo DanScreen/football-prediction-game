@@ -6,6 +6,21 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-11-10 — Web Results, Leaderboard and Leagues match the app
+
+Closes the parity gap left by the 2026-11-09 refresh.
+
+- **Results and Kicked Off:** the scoreline is the headline, your points come with a
+  reason, and league-mates' picks are grouped by scoreline
+  ([details](features.md#results-results)).
+- **Leaderboard:** a podium above each table, form as bars (the printed key is gone),
+  plain ranks with your row tinted. Below `md` the breakdown opens on tap; desktop keeps
+  its columns ([details](features.md#leaderboard-leaderboard)).
+- **Leagues:** cards show your position, points and the gap to the player above; join
+  and create sit behind one control ([details](features.md#leagues-leagues)).
+
+---
+
 ## 2026-11-10 — iOS app version 1.1.0
 
 `expo.version` is now **1.1.0** (`apps/mobile/app.json`, `package.json`), a minor bump
@@ -32,8 +47,8 @@ the build once Apple has processed it, and press **Submit for Review**.
   one button. **Rules** moved from the tab bar to Account (four tabs).
 - Disabled buttons in the app are readable in dark mode.
 
-**Parity gap, on purpose:** the Results, Leaderboard and Leagues redesigns are app-only
-in this change. The web versions of those pages are unchanged and are next.
+**Parity gap, closed 2026-11-10:** the Results, Leaderboard and Leagues redesigns were
+app-only in this change; the web versions followed the next day (entry above).
 
 **The app changes need a new store build** — `expo-haptics` is a native module. Nothing
 reaches phones until `expo.version` is bumped (1.0.2 or higher) and merged.

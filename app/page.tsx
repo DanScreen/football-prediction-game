@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import OpenFixtureCard from "@/app/components/OpenFixtureCard"
 import BankerTag from "@/app/components/BankerTag"
+import PickGroups from "@/app/components/PickGroups"
+import TeamChip from "@/app/components/TeamChip"
 import RequestResultButton from "@/app/components/RequestResultButton"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
 import { resolvePeerContext } from "@/lib/peers"
@@ -301,8 +303,9 @@ export default async function PredictionsPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 px-5 pt-4 pb-1">
-                    <p className="order-1 min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">
-                      {f.homeTeam}
+                    <p className="order-1 flex min-w-0 flex-1 items-center gap-2 text-[15px] font-semibold text-ink">
+                      <TeamChip team={f.homeTeam} />
+                      <span className="truncate">{f.homeTeam}</span>
                     </p>
                     <div className="order-3 flex w-full flex-col items-center sm:order-2 sm:w-auto">
                       <span className="score-digits inline-flex items-center gap-2 rounded-lg bg-board px-3.5 py-1.5 text-xl text-board-muted">
@@ -310,8 +313,9 @@ export default async function PredictionsPage() {
                       </span>
                       <span className="mt-1 text-xs font-medium text-ink-muted">awaiting result</span>
                     </div>
-                        <p className="order-2 min-w-0 flex-1 truncate text-right text-[15px] font-semibold text-ink sm:order-3">
-                          {f.awayTeam}
+                        <p className="order-2 flex min-w-0 flex-1 items-center justify-end gap-2 text-right text-[15px] font-semibold text-ink sm:order-3">
+                          <span className="truncate">{f.awayTeam}</span>
+                          <TeamChip team={f.awayTeam} />
                         </p>
                       </div>
 
@@ -329,18 +333,23 @@ export default async function PredictionsPage() {
                             You didn&apos;t submit a prediction.
                           </p>
                         )}
-                        {others.map((p) => (
-                          <div key={p.id} className="flex items-center gap-2 text-sm text-ink-muted">
-                            <span className="w-24 truncate">
-                              {p.user.isBot ? "🤖 " : ""}
-                              {p.user.displayName}
-                            </span>
-                            <span className="font-medium tabular-nums">
-                              {p.predictedHomeScore} – {p.predictedAwayScore}
-                            </span>
-                        {p.isBanker && <BankerTag />}
-                      </div>
-                    ))}
+                        {others.length > 0 && (
+                          <div className={myPick ? "pt-1.5" : ""}>
+                            <PickGroups
+                              picks={others.map((p) => ({
+                                id: p.id,
+                                displayName: p.user.displayName,
+                                isBot: p.user.isBot,
+                                isBanker: p.isBanker,
+                                homeScore: p.predictedHomeScore,
+                                awayScore: p.predictedAwayScore,
+                                pointsAwarded: null,
+                                provisionalPoints: null,
+                              }))}
+                              settled={false}
+                            />
+                          </div>
+                        )}
                         {visible.length === 0 && (
                           <p className="text-xs text-ink-faint italic">No predictions submitted.</p>
                         )}

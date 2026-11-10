@@ -3,6 +3,7 @@ import {
   computeLeaderboard,
   computeLeagueForm,
   listPlayedRounds,
+  type FormCell,
   type FormTier,
   type PointsBreakdown,
 } from "@/lib/leaderboard"
@@ -11,18 +12,19 @@ import { roundHref, selectedRound, type SearchParams } from "./roundNav"
 import { podiumRank } from "./podium"
 
 /**
- * Form cells are dual-encoded: a glyph as well as a colour. Colour alone left
- * colour-blind players unable to read their own form, and the `title` tooltip
- * that carried the meaning does nothing on touch.
+ * Form is drawn as bars: height is the points scored that gameweek (relative to
+ * the player's own best of the five), colour is the tier. Height carries the
+ * meaning, so colour-blind players can read it and no printed key is needed —
+ * the old glyph boxes needed a legend under the page to be understood.
  */
-const FORM_TIERS: Record<FormTier, { class: string; glyph: string; label: string }> = {
-  strong: { class: "bg-good-tint text-good border-good-line", glyph: "▲", label: "Strong" },
-  mixed: { class: "bg-clock-tint text-clock border-clock-line", glyph: "■", label: "Mixed" },
-  poor: { class: "bg-bad-tint text-bad border-bad-line", glyph: "▼", label: "Poor" },
-  none: { class: "bg-chip text-ink-faint border-line", glyph: "·", label: "No picks" },
+const FORM_TIERS: Record<FormTier, { bar: string; label: string }> = {
+  strong: { bar: "bg-good", label: "Strong" },
+  mixed: { bar: "bg-clock", label: "Mixed" },
+  poor: { bar: "bg-bad", label: "Poor" },
+  none: { bar: "bg-line-strong", label: "No picks" },
 }
 
-export const FORM_LEGEND = FORM_TIERS
+const PODIUM_LABELS = { 1: "1st", 2: "2nd", 3: "3rd" } as const
 
 /**
  * Where a player's points came from. These five sum to their total, so the row
@@ -41,6 +43,8 @@ const BREAKDOWN_COLUMNS: {
   short: string
   title: string
   tone: string
+  /** The same colour as a fill, for the stacked bar on narrow screens. */
+  bar: string
 }[] = [
   {
     key: "result",
@@ -48,6 +52,7 @@ const BREAKDOWN_COLUMNS: {
     short: "result",
     title: "Points from getting the result right only (1 each)",
     tone: "text-ink-muted",
+    bar: "bg-ink-muted",
   },
   {
     key: "close",
@@ -55,6 +60,7 @@ const BREAKDOWN_COLUMNS: {
     short: "close",
     title: "Points from the right result with a scoreline within one goal, but not exact (1.5 each)",
     tone: "text-info",
+    bar: "bg-info",
   },
   {
     key: "exact",
@@ -62,6 +68,7 @@ const BREAKDOWN_COLUMNS: {
     short: "exact",
     title: "Points from exact scorelines (3 each)",
     tone: "text-good",
+    bar: "bg-good",
   },
   {
     key: "banker",
@@ -70,6 +77,7 @@ const BREAKDOWN_COLUMNS: {
     short: "banker",
     title: "Extra points earned by doubling a banker pick",
     tone: "text-clock",
+    bar: "bg-clock",
   },
   {
     key: "streak",
@@ -77,7 +85,9 @@ const BREAKDOWN_COLUMNS: {
     srLabel: "Streak",
     short: "streak",
     title: "Streak bonus points for calling a lot of a gameweek's results right",
-    tone: "text-clock",
+    // Not amber like the banker: the two sit side by side in the stacked bar.
+    tone: "text-pitch",
+    bar: "bg-pitch",
   },
 ]
 
@@ -173,26 +183,12 @@ export default async function LeagueBoard({
   const olderRound = round ? (playedRounds[roundIndex + 1] ?? null) : null
   const newerRound = roundIndex > 0 ? playedRounds[roundIndex - 1] : null
 
-  const rankDisplay = (i: number) => {
-    const podium = podiumRank(ranked[i])
-    return podium === 1 ? "🥇" : podium === 2 ? "🥈" : podium === 3 ? "🥉" : ranked[i].rank
-  }
+  // The podium above the table carries the medals, so rows show plain ranks and
+  // only the viewer's own row is tinted.
+  const rowBg = (id: string) =>
+    id === currentUserId ? "bg-pitch-tint" : "hover:bg-ground"
 
-  // Podium rows fade from a gold-ish tint down to the plain surface. Tinting by
-  // opacity of one token keeps the ramp readable in both themes — stock oranges
-  // and ambers turned to mud on the dark ground.
-  const rowBg = (i: number) => {
-    switch (podiumRank(ranked[i])) {
-      case 1:
-        return "bg-clock-tint hover:bg-clock-tint/70"
-      case 2:
-        return "bg-chip/60 hover:bg-chip"
-      case 3:
-        return "bg-clock-tint/40 hover:bg-clock-tint/60"
-      default:
-        return "hover:bg-ground"
-    }
-  }
+  const showPodium = ranked.length >= 3 && ranked[0].confirmedPoints > 0
 
   return (
     <section id={`league-${leagueId}`} className="scroll-mt-4">
@@ -252,6 +248,7 @@ export default async function LeagueBoard({
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-line shadow-card bg-surface">
+          {showPodium && <Podium top={[ranked[1], ranked[0], ranked[2]]} />}
           <table className="w-full text-sm">
             <caption className="sr-only">
               {leagueName} {round ? `${round} standings` : "standings"}, ranked by
@@ -304,36 +301,27 @@ export default async function LeagueBoard({
                 return (
                   <tr
                     key={entry.id}
-                    className={`transition-colors animate-slide-up ${rowBg(i)}`}
+                    className={`transition-colors animate-slide-up ${rowBg(entry.id)}`}
                     style={{ animationDelay: `${i * 55}ms` }}
                   >
                     <td className="px-4 py-3 font-bold text-ink-muted tabular-nums text-base">
-                      {rankDisplay(i)}
+                      {entry.rank}
                     </td>
                     <td className="px-4 py-3">
                       <span className="font-semibold text-ink">{entry.displayName}</span>
                       {entry.isBot && (
-                        <span className="ml-1.5 text-xs text-ink-faint font-normal">🤖</span>
+                        <span className="ml-1.5 text-[10px] font-bold tracking-wider text-ink-faint">
+                          BOT
+                        </span>
                       )}
                       {entry.id === currentUserId && (
                         <span className="ml-1.5 text-xs text-pitch font-medium">(you)</span>
                       )}
                       {/* The breakdown columns are desktop-only — five more numeric
                           columns would force the table to scroll sideways on a phone.
-                          Below md it becomes a wrapping chip line, and only the
-                          non-zero parts show, so it stays short. */}
-                      <span className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] md:hidden">
-                        {BREAKDOWN_COLUMNS.filter((col) => entry.breakdown[col.key] > 0).map(
-                          (col) => (
-                            <span key={col.key} className={col.tone}>
-                              <span className="font-semibold tabular-nums">
-                                {entry.breakdown[col.key]}
-                              </span>{" "}
-                              {col.short}
-                            </span>
-                          ),
-                        )}
-                      </span>
+                          Below md the breakdown opens on tap instead, as in the app:
+                          one line per player, and your own row starts open. */}
+                      <BreakdownDetails entry={entry} open={entry.id === currentUserId} />
                     </td>
                     <td className="score-digits px-4 py-3 text-right text-ink text-base">
                       <AnimatedPoints value={entry.confirmedPoints} />
@@ -362,28 +350,8 @@ export default async function LeagueBoard({
                     })}
                     {last5Rounds.length > 0 && (
                       <td className="px-2 sm:px-4 py-3">
-                        <div className="flex justify-end gap-1">
-                          {form.map(({ round, tier, scored }) => {
-                            const t = FORM_TIERS[tier]
-                            return (
-                              <span
-                                key={round}
-                                title={
-                                  tier === "none"
-                                    ? `${round}: no predictions`
-                                    : `${round}: ${scored} pts (${t.label.toLowerCase()})`
-                                }
-                                aria-label={
-                                  tier === "none"
-                                    ? `${round}: no predictions`
-                                    : `${round}: ${scored} points, ${t.label.toLowerCase()}`
-                                }
-                                className={`flex h-5 w-5 items-center justify-center rounded-sm border text-[9px] leading-none ${t.class}`}
-                              >
-                                <span aria-hidden="true">{t.glyph}</span>
-                              </span>
-                            )
-                          })}
+                        <div className="flex justify-end">
+                          <FormBars form={form} />
                         </div>
                       </td>
                     )}
@@ -395,5 +363,98 @@ export default async function LeagueBoard({
         </div>
       )}
     </section>
+  )
+}
+
+type Entry = Awaited<ReturnType<typeof computeLeaderboard>>[number]
+
+/** Top three as steps — 2nd, 1st, 3rd — in the scoreboard palette. */
+function Podium({ top }: { top: [Entry, Entry, Entry] }) {
+  const steps = ["pb-4", "pb-8", "pb-2"]
+  return (
+    // Decorative: the table below carries the same three rows for screen readers.
+    <div aria-hidden="true" className="flex items-end gap-1.5 border-b border-line-soft px-4 pt-3">
+      {top.map((entry, i) => {
+        const centre = i === 1
+        // Ties share a place: two players level on the top points both read "1st".
+        const place = podiumRank(entry) || ([2, 1, 3] as const)[i]
+        return (
+          <div
+            key={entry.id}
+            className={`flex min-w-0 flex-1 flex-col items-center gap-px rounded-t-lg px-1 pt-2 text-board-fore ${steps[i]} ${
+              centre ? "bg-board-panel" : "bg-board"
+            }`}
+          >
+            <span className="text-[10px] font-bold uppercase tracking-widest text-board-gold">
+              {PODIUM_LABELS[place as 1 | 2 | 3]}
+            </span>
+            <span className="max-w-full truncate text-sm font-bold">{entry.displayName}</span>
+            <span className="score-digits text-lg">{entry.confirmedPoints}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/** Narrow screens only: the points breakdown as a stacked bar, opened on tap. */
+function BreakdownDetails({ entry, open }: { entry: Entry; open: boolean }) {
+  const parts = BREAKDOWN_COLUMNS.filter((col) => entry.breakdown[col.key] > 0)
+  return (
+    <details open={open} className="mt-1 md:hidden">
+      <summary className="cursor-pointer text-[11px] font-medium text-ink-muted hover:text-ink">
+        Points breakdown
+      </summary>
+      {parts.length === 0 ? (
+        <p className="mt-1 text-[11px] text-ink-faint">No points yet.</p>
+      ) : (
+        <div className="mt-1.5 space-y-1.5">
+          <div aria-hidden="true" className="flex h-2 overflow-hidden rounded-full bg-chip">
+            {parts.map((col) => (
+              <span key={col.key} className={col.bar} style={{ flexGrow: entry.breakdown[col.key] }} />
+            ))}
+          </div>
+          <p className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-ink-mid">
+            {parts.map((col) => (
+              <span key={col.key} className="inline-flex items-center gap-1">
+                <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-sm ${col.bar}`} />
+                <span className="capitalize">{col.short}</span>
+                <span className="font-semibold tabular-nums">{entry.breakdown[col.key]}</span>
+              </span>
+            ))}
+          </p>
+          {entry.exactCount > 0 && (
+            <p className="text-[11px] text-ink-muted">
+              {entry.exactCount} exact score{entry.exactCount !== 1 ? "s" : ""}
+            </p>
+          )}
+        </div>
+      )}
+    </details>
+  )
+}
+
+function FormBars({ form }: { form: FormCell[] }) {
+  const max = Math.max(1, ...form.map((cell) => cell.scored))
+  return (
+    <div className="flex h-5 items-end gap-[3px]">
+      {form.map(({ round, tier, scored }) => {
+        const t = FORM_TIERS[tier]
+        const label =
+          tier === "none"
+            ? `${round}: no predictions`
+            : `${round}: ${scored} points, ${t.label.toLowerCase()}`
+        return (
+          <span
+            key={round}
+            role="img"
+            title={label}
+            aria-label={label}
+            className={`w-1.5 rounded-sm ${t.bar}`}
+            style={{ height: tier === "none" ? 3 : 4 + Math.round(16 * (scored / max)) }}
+          />
+        )
+      })}
+    </div>
   )
 }
