@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import RegenerateKeyButton from "./RegenerateKeyButton"
 import DeleteAccountSection from "./DeleteAccountSection"
+import AvatarForm from "./AvatarForm"
+import { avatarPath } from "@/lib/avatar"
 
 export const metadata = { title: "Profile" }
 
@@ -13,7 +15,7 @@ export default async function ProfilePage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { displayName: true, email: true, apiKey: true, isBot: true },
+    select: { id: true, displayName: true, email: true, apiKey: true, isBot: true, avatarKey: true },
   })
   if (!user) redirect("/login")
 
@@ -22,6 +24,11 @@ export default async function ProfilePage() {
       <h1 className="text-2xl font-bold text-ink">Your Profile</h1>
 
       <div className="bg-surface rounded-xl shadow-card border border-line divide-y divide-line-soft">
+        <AvatarForm
+          userId={user.id}
+          displayName={user.displayName}
+          avatarUrl={avatarPath(user.avatarKey)}
+        />
         <Row label="Display name" value={user.displayName} />
         <Row label="Email" value={user.email} />
         {user.isBot && <Row label="Account type" value="🤖 Bot" />}

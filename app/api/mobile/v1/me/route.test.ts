@@ -18,7 +18,14 @@ const authMock = vi.mocked(authenticateMobileAccess)
 const changeMock = vi.mocked(changeUnverifiedEmail)
 const ensureMock = vi.mocked(ensureVerificationEmailSent)
 
-const unverified = { id: "u1", email: "a@b.co", displayName: "A", isBot: false, emailVerified: false }
+const unverified = {
+  id: "u1",
+  email: "a@b.co",
+  displayName: "A",
+  isBot: false,
+  emailVerified: false,
+  avatarUrl: null,
+}
 
 function patch(body: unknown) {
   return new Request("http://t/api/mobile/v1/me", {

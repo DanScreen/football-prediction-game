@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { authenticateMobileAccess } from "@/lib/mobileAuth"
 import { emailUnverifiedError, jsonError } from "@/lib/mobileHttp"
 import { provisionalScore, provisionalPoints } from "@/lib/provisional"
+import { avatarPath } from "@/lib/avatar"
 import {
   takeNearestFixturesByRound,
   VISIBLE_OPEN_ROUNDS,
@@ -34,7 +35,7 @@ type RawPrediction = {
   predictedAwayScore: number
   isBanker: boolean
   pointsAwarded: number | null
-  user: { id: string; displayName: string; isBot: boolean }
+  user: { id: string; displayName: string; isBot: boolean; avatarKey: string | null }
 }
 
 function mapPrediction(
@@ -45,6 +46,7 @@ function mapPrediction(
     userId: pred.userId,
     displayName: pred.user.displayName,
     isBot: pred.user.isBot,
+    avatarUrl: avatarPath(pred.user.avatarKey),
     homeScore: pred.predictedHomeScore,
     awayScore: pred.predictedAwayScore,
     isBanker: pred.isBanker,
@@ -128,7 +130,7 @@ export async function GET(request: NextRequest) {
           predictedAwayScore: true,
           isBanker: true,
           pointsAwarded: true,
-          user: { select: { id: true, displayName: true, isBot: true } },
+          user: { select: { id: true, displayName: true, isBot: true, avatarKey: true } },
         },
       },
     },

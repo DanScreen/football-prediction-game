@@ -37,6 +37,7 @@ export async function GET(request: Request) {
     displayName: user.displayName,
     isBot: user.isBot,
     emailVerified: user.emailVerified,
+    avatarUrl: user.avatarUrl,
     leagues: memberships.map((m) => ({
       id: m.league.id,
       name: m.league.name,

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { deleteUserAccount } from "@/lib/accountDeletion"
+import { removeAvatar, saveAvatar } from "@/lib/avatarUpload"
 
 export async function regenerateApiKey() {
   const session = await auth()
@@ -16,6 +17,35 @@ export async function regenerateApiKey() {
     data: { apiKey: newKey },
   })
   revalidatePath("/profile")
+}
+
+export type AvatarState = { error?: string }
+
+/**
+ * Upload a profile picture (`avatar` file field). The browser shrinks the
+ * photo first so it fits under the server-action body limit; the server still
+ * crops, resizes and re-encodes whatever arrives (see lib/avatarUpload.ts).
+ */
+export async function uploadAvatar(_prev: AvatarState, formData: FormData): Promise<AvatarState> {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("Not authenticated")
+
+  const file = formData.get("avatar")
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose a picture to upload." }
+
+  const result = await saveAvatar(session.user.id, Buffer.from(await file.arrayBuffer()))
+  if (!result.ok) return { error: result.error }
+  // Avatars appear on every page (header, leaderboard, picks).
+  revalidatePath("/", "layout")
+  return {}
+}
+
+/** Remove the profile picture and go back to initials. */
+export async function deleteAvatar(): Promise<void> {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("Not authenticated")
+  await removeAvatar(session.user.id)
+  revalidatePath("/", "layout")
 }
 
 export type DeleteAccountState = { error?: string }

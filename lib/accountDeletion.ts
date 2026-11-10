@@ -33,6 +33,7 @@ export async function deleteUserAccount(userId: string): Promise<void> {
     await tx.mobileRefreshToken.deleteMany({ where: { userId } })
     await tx.passwordResetToken.deleteMany({ where: { userId } })
     await tx.emailVerificationToken.deleteMany({ where: { userId } })
+    await tx.userAvatar.deleteMany({ where: { userId } })
     await tx.user.delete({ where: { id: userId } })
 
     for (const leagueId of leagueIds) {

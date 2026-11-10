@@ -17,6 +17,7 @@ const tx = {
   mobileRefreshToken: { deleteMany: vi.fn() },
   passwordResetToken: { deleteMany: vi.fn() },
   emailVerificationToken: { deleteMany: vi.fn() },
+  userAvatar: { deleteMany: vi.fn() },
   user: { delete: vi.fn() },
   league: { delete: vi.fn() },
 }
@@ -47,6 +48,7 @@ describe("deleteUserAccount", () => {
       tx.mobileRefreshToken,
       tx.passwordResetToken,
       tx.emailVerificationToken,
+      tx.userAvatar,
     ]) {
       expect(model.deleteMany).toHaveBeenCalledWith({ where: { userId: "u1" } })
     }

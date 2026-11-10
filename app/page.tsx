@@ -5,6 +5,7 @@ import Link from "next/link"
 import OpenFixtureCard from "@/app/components/OpenFixtureCard"
 import BankerTag from "@/app/components/BankerTag"
 import PickGroups from "@/app/components/PickGroups"
+import { avatarPath } from "@/lib/avatar"
 import TeamChip from "@/app/components/TeamChip"
 import RequestResultButton from "@/app/components/RequestResultButton"
 import { RESULT_DELAY_MS } from "@/lib/resolution"
@@ -82,7 +83,7 @@ export default async function PredictionsPage() {
       competition: { select: { name: true } },
       predictions: {
         where: { userId: { in: allPeerIds } },
-        include: { user: { select: { id: true, displayName: true, isBot: true } } },
+        include: { user: { select: { id: true, displayName: true, isBot: true, avatarKey: true } } },
       },
     },
   })
@@ -338,7 +339,9 @@ export default async function PredictionsPage() {
                             <PickGroups
                               picks={others.map((p) => ({
                                 id: p.id,
+                                userId: p.userId,
                                 displayName: p.user.displayName,
+                                avatarUrl: avatarPath(p.user.avatarKey),
                                 isBot: p.user.isBot,
                                 isBanker: p.isBanker,
                                 homeScore: p.predictedHomeScore,

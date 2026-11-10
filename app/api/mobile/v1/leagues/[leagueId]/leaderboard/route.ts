@@ -35,6 +35,7 @@ export async function GET(request: Request, context: Ctx) {
       id: e.id,
       displayName: e.displayName,
       isBot: e.isBot,
+      avatarUrl: e.avatarUrl,
       totalPoints: e.confirmedPoints,
       provisionalPoints: e.provisionalPoints,
       projectedPoints: e.confirmedPoints + e.provisionalPoints,
