@@ -1,15 +1,16 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Big_Shoulders } from "next/font/google"
+import localFont from "next/font/local"
 import InviteCodeForm from "./InviteCodeForm"
 import ScoreDemo from "./ScoreDemo"
 
-// The headline face. This Next version ships the family as `Big_Shoulders`
-// (its display optical size is on the opsz axis, which browsers set from the
-// font size automatically), so there is no separate `Big_Shoulders_Display`.
-const display = Big_Shoulders({
-  subsets: ["latin"],
-  weight: ["700", "900"],
+// The headline face, Big Shoulders (OFL, licence beside the file). It is
+// self-hosted: fetching it from Google Fonts at build time failed often enough
+// to break CI and a production deploy. One variable file covers every weight,
+// and browsers set its optical size from the font size.
+const display = localFont({
+  src: "./fonts/big-shoulders-latin.woff2",
+  weight: "100 900",
   display: "swap",
 })
 
