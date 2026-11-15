@@ -3,7 +3,7 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-11-10
+**Last updated:** 2026-11-15
 
 ## Status: live in production
 
@@ -95,6 +95,8 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 - **Store assets** — `store-assets/app-store-listing.md` (every App Store Connect
   field) and `store-assets/promo/` (six framed 1290×2796 panels, captured from the
   real app; regenerate with `npm run store:shots`).
+- **App Store link on the website** — homepage button, support-page link and Safari's
+  Smart App Banner, all from `lib/appStore.ts` (2026-11-15).
 
 ## Deployment state
 

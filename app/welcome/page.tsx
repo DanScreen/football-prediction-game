@@ -3,6 +3,7 @@ import Link from "next/link"
 import localFont from "next/font/local"
 import InviteCodeForm from "./InviteCodeForm"
 import ScoreDemo from "./ScoreDemo"
+import { APP_STORE_URL } from "@/lib/appStore"
 
 // The headline face, Big Shoulders (OFL, licence beside the file). It is
 // self-hosted: fetching it from Google Fonts at build time failed often enough
@@ -74,7 +75,14 @@ export default function WelcomePage() {
             </div>
 
             <p className="mt-6 text-sm text-board-muted">Free on the web and the iPhone app.</p>
-            <div className="mt-1 flex flex-wrap gap-x-4 text-sm text-board-muted">
+            <a
+              href={APP_STORE_URL}
+              className={`mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-board-fore/25 px-4 text-[0.95rem] font-bold text-board-fore hover:border-board-fore/50 ${focusRing}`}
+            >
+              Get the iPhone app on the App Store
+              <span aria-hidden>→</span>
+            </a>
+            <div className="mt-3 flex flex-wrap gap-x-4 text-sm text-board-muted">
               <Link href="/rules" className={`inline-flex min-h-10 items-center underline underline-offset-4 ${focusRing}`}>
                 How it works
               </Link>

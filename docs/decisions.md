@@ -5,6 +5,20 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## 2026-11-15 — App Store link: a text button plus Apple's Smart App Banner
+
+The homepage links to the App Store with a button in the page's own style, not Apple's
+"Download on the App Store" badge artwork. The badge has its own usage rules and would
+be a downloaded asset to keep current; a plainly worded link does the job.
+
+The Smart App Banner (`apple-itunes-app` meta, set once in the root layout) shows on
+every page, signed in or out, because that is where an iPhone visitor already using
+the website would benefit from the app. Safari lets them dismiss it, and it changes
+to "Open" for people who have the app.
+
+The URL is `apps.apple.com/app/id<ID>` with no country or name slug, so it lands on
+the visitor's own storefront and survives a listing rename.
+
 ## 2026-11-10 — Profile pictures live in Postgres, behind unguessable public URLs
 
 **Storage.** Pictures go in a `UserAvatar` table (bytes), not a Cloud Storage
