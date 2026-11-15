@@ -3,6 +3,7 @@ import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/app/components/Header";
 import { getTheme } from "@/lib/theme.server";
+import { APP_STORE_ID } from "@/lib/appStore";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -24,6 +25,8 @@ export const metadata: Metadata = {
     template: "%s — Scorers",
   },
   description: "Predict match scores and compete with friends",
+  // Safari on iPhone shows its Smart App Banner, linking to the app (or opening it if installed).
+  itunes: { appId: APP_STORE_ID },
 };
 
 export default async function RootLayout({

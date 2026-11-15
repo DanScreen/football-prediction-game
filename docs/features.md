@@ -18,6 +18,16 @@ points and where that puts them in an example five-player table. It scores with 
 `scoreOnePrediction` and `BANKER_MULTIPLIER` from `lib/scoring.ts`, so it can never
 disagree with the game. The fixture, result and table are fixed examples and labelled so.
 
+Under "Free on the web and the iPhone app." sits a **"Get the iPhone app on the App
+Store"** button. The store link and the app's Apple ID live in one place,
+`lib/appStore.ts` (`APP_STORE_URL`, `APP_STORE_ID` — the same ID as `ascAppId` in
+`apps/mobile/eas.json`).
+
+**Smart App Banner:** the root layout's metadata sets `itunes: { appId }`, so every page
+carries `<meta name="apple-itunes-app">`. Safari on iPhone shows Apple's banner at the
+top of the site, offering the app (or "Open" if it's installed). Other browsers ignore
+the tag.
+
 ## Navigation & shell
 
 **Five destinations, one job each:** Predictions (`/`), Results (`/results`), Leaderboard,
@@ -610,7 +620,8 @@ the questions people actually arrive with — joining a league, invite codes tha
 won't take, the per-fixture kickoff deadline, autosave, the banker, why points
 moved, where a finished competition went, notifications, forgotten passwords,
 finding the account screen, and deleting an account — and gives an email address
-(`support@scorersonline.uk`) with a stated two-working-day response.
+(`support@scorersonline.uk`) with a stated two-working-day response. Its header
+also links to the iPhone app on the App Store (`APP_STORE_URL`).
 
 The listing pointed at `/rules` until 2026-09-05. `/rules` is the rules of the
 game: it explains the points table perfectly and answers none of the "it isn't

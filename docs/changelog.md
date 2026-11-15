@@ -6,6 +6,13 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-11-15 — Website links to the App Store
+
+The homepage has a "Get the iPhone app on the App Store" button, the support page
+links to the app, and every page carries Apple's Smart App Banner tag so Safari on
+iPhone offers the app. The store URL and app ID live in `lib/appStore.ts`. Details:
+[features.md](features.md#homepage--when-signed-out).
+
 ## 2026-11-10 — Profile pictures
 
 Players can upload a profile picture on the web (`/profile`) and in the app

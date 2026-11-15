@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { APP_STORE_URL } from "@/lib/appStore"
 
 export const metadata = {
   title: "Support",
@@ -33,6 +34,13 @@ export default function SupportPage() {
             {SUPPORT_EMAIL}
           </a>{" "}
           and a real person will reply.
+        </p>
+        <p className="mt-2 text-sm text-ink-muted">
+          Don&apos;t have the iPhone app yet?{" "}
+          <a href={APP_STORE_URL} className="font-medium text-pitch hover:underline">
+            Get it on the App Store
+          </a>
+          .
         </p>
       </header>
 
