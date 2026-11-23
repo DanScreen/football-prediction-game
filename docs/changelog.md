@@ -6,6 +6,20 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-11-23 — Host analytics
+
+Site hosts get **`/host/analytics`**: headline engagement, daily active players
+(returning vs first visit), a sign-up-to-picking funnel, player segments (core →
+never picked), return frequency, platform reach, weekly retention cohorts,
+gameweek participation, group sizes and health, and players slipping away. **Groups**
+and **Players** tabs list every league and player and drill down to a page each.
+Visits are now recorded as one `UserActivityDay` row per user per day (migration
+`20261123000000_user_activity_day`, backfilled from existing picks and joins). The
+privacy policy discloses it; **the App Store privacy answers need _Product
+Interaction_ adding by hand** ([listing](../store-assets/app-store-listing.md)).
+Details: [features.md](features.md#host-analytics), rationale in
+[decisions.md](decisions.md).
+
 ## 2026-11-10 — Profile pictures
 
 Players can upload a profile picture on the web (`/profile`) and in the app

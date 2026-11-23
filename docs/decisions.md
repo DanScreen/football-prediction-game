@@ -5,6 +5,37 @@ don't rewrite history — if a decision is later reversed, add a new entry that 
 
 ---
 
+## 2026-11-23 — Host analytics: a daily activity rollup, computed in memory
+
+The 2026-09 metrics decision ruled out an event log "unless we need funnels existing
+tables can't answer". *How often do people come back* is one: `lastSeenAt` is a
+single timestamp, and JWT sessions only bumped it on login, picks and app refresh,
+so a player who checked the leaderboard every day looked absent.
+
+**What we added:** `UserActivityDay`, one row per user per London day with
+web/app/api flags — the coarsest record that answers return frequency, retention
+cohorts and platform mix. No page views, clicks or timestamps. Written from the
+proxy (every signed-in page view, including client navigations), mobile access-token
+auth and API-key auth, memoised per instance so it costs one upsert per user per
+surface per day. Failures are swallowed — analytics never breaks a request.
+Backfilled from picks, sign-ups and joins so charts have history on day one.
+
+**Definitions** favour gameweeks over raw counts: "making picks" means playing at
+least one fixture of a recent gameweek, because a player who picks one match a
+week is engaged in a way a pick count hides. Recent = last 4 started gameweeks.
+
+**Computed in memory**, from a lean snapshot, as pure functions. At hundreds of
+users and tens of thousands of picks this is milliseconds and keeps every number
+unit-testable; drill-downs load only the users they need. Move to SQL aggregates
+if predictions pass ~200k rows.
+
+**Hosts only.** Commissioners still see only their own league (see the 2026-09
+decision); the group page here is the host's view of any league.
+
+**Disclosure:** the privacy policy now lists the days-used record, and the App
+Store privacy answers add *Usage Data → Product Interaction (Analytics)*. It's
+first-party and server-side, but that is what Apple's category covers.
+
 ## 2026-11-10 — Profile pictures live in Postgres, behind unguessable public URLs
 
 **Storage.** Pictures go in a `UserAvatar` table (bytes), not a Cloud Storage

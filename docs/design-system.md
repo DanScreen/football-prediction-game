@@ -45,6 +45,18 @@ you find yourself reaching for a numbered Tailwind colour, add or reuse a token 
 - **`.score-digits`** class = Geist Mono bold, tabular — used for scores, countdowns,
   and countdowns. Reach for it wherever digits should line up.
 
+## Charts
+
+Host analytics charts (`app/host/analytics/ui.tsx`) use two tokens: **`chart`**
+(the series in focus — pitch) and **`chart-soft`** (a de-emphasised second series
+stacked with it — pitch mixed 58% into surface). Both derive from `pitch` and
+`surface`, so dark mode needs nothing extra; the pair was checked as an ordinal
+ramp (one hue, monotone lightness) in both themes. Heat cells (retention) mix
+pitch into surface by value. Bars are ≤24px with 4px rounded data ends and a 2px
+gap; gridlines are `line-soft` hairlines. Tooltips are CSS (hover and keyboard
+focus), and every chart has a "Show as table" twin. Status-style badges (segments,
+group health) reuse the `good`/`info`/`bad` families and always carry a label.
+
 ## Dark theme
 
 Three states, cycled by the header toggle: **System** (default, follows

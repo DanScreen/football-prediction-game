@@ -297,12 +297,65 @@ legend under the page).
 | Page | Purpose |
 |------|---------|
 | `/host` | **Overview** — platform user counts (humans/bots), DAU/WAU/MAU from `lastSeenAt`, signups and prediction volume (7d/30d, web vs API), mobile reach, and a recent-users table. |
+| `/host/analytics` | **Analytics** — engagement across the platform, with **Groups** (`/host/analytics/leagues`) and **Players** (`/host/analytics/players`) tabs that drill down to one league or one player. See [below](#host-analytics). |
 | `/host/users` | **Users** — every account, newest first, searchable by name or email, with All / Unverified / Verified tabs (counts on each; bots only under All). Each row shows verification status (and when the last link went out), joined, last seen and league count. Actions: **Send verification link** and **Fix email** (unverified only), and **Send reset link** (anyone). See [below](#host-user-management). |
 | `/host/competitions` | Create/edit competitions (name, football-data code, flag, active). No delete. |
 | `/host/fixtures` | Add/edit/delete canonical fixtures for a competition. |
 | `/host/fixtures/editor` | **Gameweek editor** — one competition at a time, every fixture in the database grouped by gameweek. Tick any number and move them to another gameweek or delete them in bulk. For re-cutting rounds that don't divide evenly (TV splits, postponements, cup ties landing mid-round). Guards below. |
 | `/host/import` | Manually import upcoming fixtures from football-data.org (1–3 rounds). Override for the auto-import. |
 | `/host/results` | **Platform-wide** queue of fixtures awaiting a result, with manual entry. Edit confirmed scores from here or `/host/fixtures`. |
+
+### Host analytics
+
+`/host/analytics` (`app/host/analytics/`, numbers from `lib/analytics/`) answers
+"who's playing, which groups are alive, and how often do people come back". Bots
+are left out of player numbers (the Players tab can include them).
+
+**Definitions** (all in `lib/analytics/compute.ts`):
+
+- A **gameweek** is a (competition, round). It has *started* once its first fixture
+  kicks off. A player is *eligible* for one if they were in a league on that
+  competition before one of its fixtures kicked off; they *played* it if they picked
+  at least one of its fixtures.
+- **Recent gameweeks** are the last 4 started ones of each unfinished competition.
+- **Segments** (per player): **Core** (played 3+ of their last 4), **Regular** (2),
+  **Casual** (1), **Lapsed** (picked before, none recently), **Never picked** (had
+  gameweeks, no picks), **Not started** (no gameweek has kicked off since joining),
+  **No league**.
+- **Group health** (per league): the average share of eligible members who played
+  each recent gameweek — **Thriving** ≥60%, **Active** 30–60%, **Quiet** under 30%,
+  **Dormant** 0. **Solo** means one human member; **Finished** means an archived
+  competition.
+- **Active days** come from `UserActivityDay` (one row per user per London day,
+  [data model](data-model.md#useractivityday)), so "returning" means a different
+  day, not another page view.
+
+**Overview:** headline tiles (players, making picks, active this week with
+week-over-week return, stickiness = mean DAU/MAU, multi-player groups, healthy
+groups, picks in 7 days, slipping away); daily active players for 30/90/180 days,
+split into returning and first visit; a funnel from sign-up to "back in the last 7
+days"; segments; return frequency (days active in the last 30); platform reach (web,
+app, bot API); weekly retention cohorts by sign-up week; gameweek participation per
+active competition; group sizes and the busiest groups; and **Slipping away** —
+players who played 3+ gameweeks and then missed the latest 2+ in a row.
+
+**Groups** lists every league with players, active pickers, participation per
+gameweek (with a mini bar for each of the last 4), active members, picks, health and
+creation date, filterable to 2+ players or solo and sortable. A **group page** adds
+per-gameweek participation for the last 12, a 28-day grid of which members visited
+on which day, and a member table (joined, picks, gameweeks played since joining,
+last pick, last seen, segment).
+
+**Players** lists every player with groups, picks, last-4 record, fixture coverage,
+days active in 30, last seen, surfaces used and segment, with segment tabs, search
+and sorting. A **player page** adds a 26-week activity calendar, accuracy (exact %,
+results called, points per settled pick), median time between picking and kickoff,
+bankers, per-gameweek picks for the last 12, their groups and their recent picks.
+Player names on `/host` and `/host/users` link here.
+
+Everything is computed in memory from a lean snapshot (`lib/analytics/load.ts`);
+drill-down pages load only the users concerned. Charts are server-rendered (CSS
+tooltips, no client JS) and each has a "Show as table" view.
 
 ### Host user management
 

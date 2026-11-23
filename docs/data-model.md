@@ -47,7 +47,7 @@ Platform-owned. Owns the canonical fixtures that leagues share.
   key on every upload. Migration `20261110000000_user_avatar`.
 - Relations: `memberships[]`, `predictions[]`, `bonusAwards[]`, `resetTokens[]`,
   `emailVerificationTokens[]`, `mobileRefreshTokens[]`, `mobileDeviceTokens[]`,
-  `avatar?`.
+  `avatar?`, `activityDays[]`.
 
 ### League
 A group of players subscribed to one competition.
@@ -111,6 +111,25 @@ A user's profile picture, one row per user (`userId` is the primary key). Migrat
 - Written only by `lib/avatarUpload.ts`, which re-encodes every upload and sets
   `User.avatarKey` in the same transaction. Kept off the `User` row so ordinary user
   queries never load the bytes. Deleted with the account.
+
+### UserActivityDay
+One row per user per **Europe/London calendar day** on which they used Scorers.
+Powers return frequency and retention on `/host/analytics`. Migration
+`20261123000000_user_activity_day`.
+- `userId` + `day` (`@db.Date`) — composite primary key. Indexed on `day`.
+- `web`, `app`, `api` — which surfaces were used that day (any can be true).
+- Written by `recordActivity()` (`lib/activity.ts`) from the proxy (a signed-in,
+  verified page view → `web`), `authenticateMobileAccess` (`app`) and
+  `authenticateApiKey` (`api`). An in-memory memo makes it one upsert per user per
+  surface per day per server instance; the first one of the day also bumps
+  `lastSeenAt`.
+- The migration **backfilled** history from what already existed: prediction
+  `createdAt`, and `updatedAt` only when before kickoff (after it, scoring touches
+  the row); sign-up, league joins and `lastSeenAt`. Backfilled surfaces are best
+  effort: a WEB pick is web, an API pick is app for a human and api for a bot.
+  Before 2026-11-23 (`ACTIVITY_TRACKING_STARTED`) visits that changed nothing are
+  missing.
+- Deleted with the account.
 
 ### MobileDeviceToken
 Expo push tokens for deadline reminders. Migration
