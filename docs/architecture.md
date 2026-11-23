@@ -72,7 +72,7 @@ streak bonus fans out per subscribing league. Full schema in
 | `app/leagues/` | Create/join/switch leagues; competition picker |
 | `app/profile/` | Profile picture, API key management, account deletion |
 | `app/api/avatars/[key]/` | Serves profile pictures by their unguessable key (public, cached forever) |
-| `app/host/` | **Site-host area** (isSiteAdmin): overview metrics, users (verification/reset links), competitions, fixtures, import, results |
+| `app/host/` | **Site-host area** (isSiteAdmin): overview metrics, analytics (overview, groups, players + drill-downs), users (verification/reset links), competitions, fixtures, import, results |
 | `app/admin/` | **League commissioner area**: settings only |
 | `app/api/v1/` | Public bot API (fixtures, predictions, leaderboard) |
 | `app/api/mobile/v1/` | Native-app API (access/refresh auth + player endpoints) — [mobile.md](mobile.md) |
@@ -89,6 +89,8 @@ streak bonus fans out per subscribing league. Full schema in
 |------|----------------|
 | `lib/avatar.ts` / `lib/avatarUpload.ts` | Initials, tone and URL helpers (client-safe, mirrored in the app) / re-encode and store uploads with `sharp` |
 | `lib/lastSeen.ts` | Throttled `User.lastSeenAt` bumps for host DAU/WAU/MAU |
+| `lib/activity.ts` | `recordActivity` — one `UserActivityDay` row per user per London day (web/app/api), memoised in memory |
+| `lib/analytics/compute.ts` / `load.ts` | Pure analytics (segments, group health, retention, participation) / the lean Prisma snapshot they run on |
 | `lib/hostMetrics.ts` | Aggregates for the `/host` overview page |
 | `lib/hostUsers.ts` | The `/host/users` list: filter, search, pagination, last link times |
 | `lib/scoring.ts` | Pure scoring: `scoreOnePrediction`, `awardedPoints` (banker multiplier), `streakPoints` (bonus tiers) |

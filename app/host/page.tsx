@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { getHostOverviewMetrics } from "@/lib/hostMetrics"
 
 export const metadata = { title: "Host overview" }
@@ -39,7 +40,11 @@ export default async function HostOverviewPage() {
       <h1 className="mb-1 text-2xl font-bold text-ink">Overview</h1>
       <p className="mb-8 text-sm text-ink-muted">
         Platform-wide user counts and activity. Derived from the database — no third-party
-        analytics.
+        analytics. For segments, retention and per-group or per-player detail, see{" "}
+        <Link className="text-pitch hover:underline" href="/host/analytics">
+          Analytics
+        </Link>
+        .
       </p>
 
       <section className="mb-10">
@@ -80,7 +85,7 @@ export default async function HostOverviewPage() {
           <StatCard
             label="Picks · 7d"
             value={m.predictions.last7d}
-            hint={`${m.predictions.webLast7d} web · ${m.predictions.apiLast7d} API`}
+            hint={`${m.predictions.webLast7d} web · ${m.predictions.appLast7d} app · ${m.predictions.apiLast7d} bot API`}
           />
           <StatCard label="Picks · 30d" value={m.predictions.last30d} />
         </div>
@@ -108,7 +113,12 @@ export default async function HostOverviewPage() {
                 {m.recentUsers.map((u) => (
                   <tr key={u.id} className="border-b border-line-soft last:border-0">
                     <td className="px-4 py-3 font-medium text-ink">
-                      {u.displayName}
+                      <Link
+                        className="hover:text-pitch hover:underline"
+                        href={`/host/analytics/players/${u.id}`}
+                      >
+                        {u.displayName}
+                      </Link>
                       {u.isBot ? (
                         <span className="ml-2 text-xs font-normal text-ink-muted">bot</span>
                       ) : null}

@@ -43,7 +43,9 @@ across every league on the competition, one pick counts everywhere you play.
 ### `GET /api/v1/predictions`
 Your predictions with fixture details and actual scores. `isBanker` flags the
 double-points pick for that round, and `pointsAwarded` includes the doubling once the
-fixture is completed. Legacy `provisionalPoints` / `provisional*` fields remain for
+fixture is completed. `submittedVia` is where the pick was first made: `API` (this
+API), `WEB` (the website) or `APP` (the native app — new on 2026-11-23; earlier app
+picks read `API`). Legacy `provisionalPoints` / `provisional*` fields remain for
 compatibility but are null under auto-confirm.
 
 ### `GET /api/v1/leaderboard`

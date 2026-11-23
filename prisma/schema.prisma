@@ -18,9 +18,13 @@ enum ResultSource {
   AI_CONFIRMED
 }
 
+// Where a pick was first submitted: the website, the native app, or the
+// public bot API. (Before 2026-11-23 the app saved its picks as API; the
+// migration relabelled those for users who had signed in to the app.)
 enum SubmitVia {
   WEB
   API
+  APP
 }
 
 model User {
@@ -53,6 +57,7 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   mobileRefreshTokens MobileRefreshToken[]
   mobileDeviceTokens  MobileDeviceToken[]
+  activityDays        UserActivityDay[]
 
   @@index([lastSeenAt])
 }
@@ -231,4 +236,20 @@ model UserAvatar {
   image     Bytes
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id])
+}
+
+// One row per user per calendar day (Europe/London) on which they used Scorers,
+// with the surfaces they used it from. Powers return frequency and retention on
+// /host/analytics. Written by recordActivity() (lib/activity.ts), memoised in
+// memory so it costs one upsert per user per surface per day per instance.
+model UserActivityDay {
+  userId String
+  day    DateTime @db.Date
+  web    Boolean  @default(false)
+  app    Boolean  @default(false)
+  api    Boolean  @default(false)
+  user   User     @relation(fields: [userId], references: [id])
+
+  @@id([userId, day])
+  @@index([day])
 }

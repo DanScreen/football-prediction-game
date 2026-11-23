@@ -6,6 +6,31 @@ initial build; later work is listed individually.
 
 ---
 
+## 2026-11-23 — Host analytics
+
+Site hosts get **`/host/analytics`**: headline engagement, daily active players
+(returning vs first visit), a sign-up-to-picking funnel, player segments (core →
+never picked), return frequency, platform reach, weekly retention cohorts,
+gameweek participation, group sizes and health, and players slipping away. **Groups**
+and **Players** tabs list every league and player and drill down to a page each.
+Visits are now recorded as one `UserActivityDay` row per user per day (migration
+`20261123000200_user_activity_day`, backfilled from existing picks and joins).
+
+**Fixed: app picks were counted as bot-API picks.** The app saved picks with
+`submittedVia: API`, so the `/host` "web · API" split credited every app pick to
+bots. Picks now record `APP`, past ones were relabelled for users who had signed in
+to the app ([data model](data-model.md#prediction)), and the overview shows web / app
+/ bot API.
+
+**Fixed: `/host` pick counts were inflated by scoring.** "Picks · 7d / 30d" counted
+picks by `updatedAt`, which result scoring rewrites on every pick in the round each
+time a result confirms, so finished matches' picks looked like fresh activity. They
+now count when a player made or edited the pick (edits only before kickoff). The
+privacy policy discloses it; **the App Store privacy answers need _Product
+Interaction_ adding by hand** ([listing](../store-assets/app-store-listing.md)).
+Details: [features.md](features.md#host-analytics), rationale in
+[decisions.md](decisions.md).
+
 ## 2026-11-10 — Profile pictures
 
 Players can upload a profile picture on the web (`/profile`) and in the app

@@ -25,6 +25,12 @@ export default async function HostLayout({ children }: { children: React.ReactNo
             Overview
           </Link>
           <Link
+            href="/host/analytics"
+            className="text-sm text-board-muted hover:text-board-fore transition-colors"
+          >
+            Analytics
+          </Link>
+          <Link
             href="/host/users"
             className="text-sm text-board-muted hover:text-board-fore transition-colors"
           >

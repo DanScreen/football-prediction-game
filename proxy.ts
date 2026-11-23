@@ -1,6 +1,7 @@
 import NextAuth from "next-auth"
 import { authConfig } from "./auth.config"
 import { NextResponse } from "next/server"
+import { recordActivity } from "@/lib/activity"
 
 const { auth } = NextAuth(authConfig)
 
@@ -20,7 +21,7 @@ const PUBLIC_PATHS = [
   "/welcome",
 ]
 
-export default auth((req) => {
+export default auth(async (req) => {
   const { pathname } = req.nextUrl
 
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
@@ -57,6 +58,10 @@ export default auth((req) => {
   if (!req.auth.user?.hasVerifiedEmail) {
     return NextResponse.redirect(new URL("/verify-email", req.url))
   }
+
+  // A signed-in page view (or client-side navigation) counts as a visit for host
+  // analytics. Memoised per user per day, so this is a map lookup almost always.
+  if (req.auth.user?.id) await recordActivity(req.auth.user.id, "web")
 
   return NextResponse.next()
 })

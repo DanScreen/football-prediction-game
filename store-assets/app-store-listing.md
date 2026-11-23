@@ -213,8 +213,15 @@ nothing else. Every one is **linked to the user** and **not used for tracking**.
 | Other User Content (predictions) | User Content | App Functionality | Yes | No |
 | Photos or Videos (optional profile picture) | User Content | App Functionality | Yes | No |
 | Device ID (Expo push token) | Identifiers | App Functionality | Yes | No |
+| Product Interaction (days the app is used) | Usage Data | Analytics | Yes | No |
 
-Declare **no** advertising data, **no** usage data, **no** diagnostics, **no**
+**Product Interaction** was added on 2026-11-23, when the server started recording
+one row per user per day of use (`UserActivityDay`, for host analytics). It is
+first-party and server-side — no SDK in the binary — but Apple counts it as usage
+data collected for analytics. **Update the App Privacy answers in App Store Connect
+to match** (no new build needed).
+
+Declare **no** advertising data, **no** other usage data, **no** diagnostics, **no**
 location, **no** contacts, **no** purchases, and **no** third-party analytics.
 There is no ad SDK or analytics SDK in the binary, so `NSUserTrackingUsageDescription`
 and the App Tracking Transparency prompt are not required.

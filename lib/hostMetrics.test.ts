@@ -6,14 +6,14 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: { count: vi.fn(), findMany: vi.fn() },
     league: { count: vi.fn() },
-    prediction: { count: vi.fn() },
+    $queryRaw: vi.fn(),
   },
 }))
 
 const userCount = vi.mocked(prisma.user.count)
 const userFindMany = vi.mocked(prisma.user.findMany)
 const leagueCount = vi.mocked(prisma.league.count)
-const predictionCount = vi.mocked(prisma.prediction.count)
+const queryRaw = vi.mocked(prisma.$queryRaw)
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -28,11 +28,10 @@ beforeEach(() => {
     .mockResolvedValueOnce(4) // signups 30d
     .mockResolvedValueOnce(2) // mobile
   leagueCount.mockResolvedValue(3)
-  predictionCount
-    .mockResolvedValueOnce(40) // 7d
-    .mockResolvedValueOnce(120) // 30d
-    .mockResolvedValueOnce(30) // web 7d
-    .mockResolvedValueOnce(10) // api 7d
+  // Postgres count(*) comes back as bigint.
+  queryRaw.mockResolvedValue([
+    { last7d: BigInt(45), last30d: BigInt(120), web7d: BigInt(30), app7d: BigInt(5), api7d: BigInt(10) },
+  ] as never)
   userFindMany.mockResolvedValue([
     {
       id: "u1",
@@ -56,9 +55,10 @@ describe("getHostOverviewMetrics", () => {
     expect(m.signups).toEqual({ last7d: 1, last30d: 4 })
     expect(m.leagues).toBe(3)
     expect(m.predictions).toEqual({
-      last7d: 40,
+      last7d: 45,
       last30d: 120,
       webLast7d: 30,
+      appLast7d: 5,
       apiLast7d: 10,
     })
     expect(m.mobileUsers).toBe(2)

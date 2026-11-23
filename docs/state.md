@@ -3,7 +3,7 @@
 > Snapshot of what exists and what's live. **Keep this current** — it's the first
 > thing an agent reads to know where the project actually stands.
 
-**Last updated:** 2026-11-10
+**Last updated:** 2026-11-23
 
 ## Status: live in production
 
@@ -41,7 +41,9 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
   - **Site hosts** (`User.isSiteAdmin`) own competitions, fixtures, imports, and
     the platform-wide result-confirmation queue at `/host`. `/host` itself is an
     **overview** of user counts and activity (DAU/WAU/MAU via `lastSeenAt`,
-    signups, prediction volume, recent users). **`/host/users`** lists every account
+    signups, prediction volume, recent users). **`/host/analytics`** (2026-11-23) adds
+    segments, retention, return frequency, group health and per-group / per-player
+    drill-downs, from a daily `UserActivityDay` record. **`/host/users`** lists every account
     with its verification status and lets a host send a verification link, a password
     reset link, or fix a mistyped unverified address.
   - **League commissioners** manage only their league's settings at `/admin`.
@@ -108,19 +110,26 @@ Everything through **phase 23** (see [changelog.md](changelog.md) for the phase 
 
 ## Test & build health
 
-- **401 unit tests** (vitest, prisma/fetch mocked) — all passing.
-- **34 end-to-end tests** (Playwright, real browser + Postgres; `npm run e2e`) — all
+- **443 unit tests** (vitest, prisma/fetch mocked) — all passing.
+- **37 end-to-end tests** (Playwright, real browser + Postgres; `npm run e2e`) — all
   passing, and stable across repeated runs. They cover the golden path (invite, sign
   up, verify, predict with a banker, kickoff lock, host confirms, leaderboard), public
   vs protected routing, nav with a fresh session, an older unverified account being
   emailed its link unasked, a host sending verification and reset links from
-  `/host/users`, the bot API over HTTP, and password
+  `/host/users`, host analytics (a visit recorded and drilled into), the bot API over HTTP, and password
   reset. They gate pull requests in CI.
 - Production build is clean (`npm run build`, type-checked).
 - CI runs the unit suite **before** deploying, so a red test blocks production. The E2E
   suite runs on pull requests only.
 
 ## Known rough edges
+
+- **App Store privacy answers are one item behind (2026-11-23).** The server now
+  records which days each user uses the app (`UserActivityDay`, for host analytics),
+  so App Store Connect's App Privacy answers must add *Usage Data → Product
+  Interaction*, purpose Analytics, linked, not tracking. The privacy policy already
+  says so. A hand edit in App Store Connect; no build needed
+  ([listing](../store-assets/app-store-listing.md)).
 
 - **Google Safe Browsing flag on `scorersonline.uk` — appears cleared, not confirmed.**
   Flagged 2026-07-10 with a Chrome "Dangerous site" / social-engineering warning. The app

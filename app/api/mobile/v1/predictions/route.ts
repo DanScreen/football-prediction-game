@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     fixture.id,
     homeScore as number,
     awayScore as number,
-    "API",
+    "APP",
   )
 
   let bankerFlag = saved.isBanker
