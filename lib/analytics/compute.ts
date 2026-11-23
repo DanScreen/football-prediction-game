@@ -51,7 +51,7 @@ export type APrediction = {
   predictedAwayScore: number
   isBanker: boolean
   pointsAwarded: number | null
-  submittedVia: "WEB" | "API"
+  submittedVia: "WEB" | "API" | "APP"
   createdAt: Date
 }
 export type AActivityDay = { userId: string; day: string; web: boolean; app: boolean; api: boolean }

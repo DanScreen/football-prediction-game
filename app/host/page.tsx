@@ -85,7 +85,7 @@ export default async function HostOverviewPage() {
           <StatCard
             label="Picks · 7d"
             value={m.predictions.last7d}
-            hint={`${m.predictions.webLast7d} web · ${m.predictions.apiLast7d} API`}
+            hint={`${m.predictions.webLast7d} web · ${m.predictions.appLast7d} app · ${m.predictions.apiLast7d} bot API`}
           />
           <StatCard label="Picks · 30d" value={m.predictions.last30d} />
         </div>

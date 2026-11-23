@@ -34,6 +34,8 @@ import {
 
 export const metadata = { title: "Player · Analytics" }
 
+const VIA_LABEL = { WEB: "Web", APP: "App", API: "Bot API" } as const
+
 const ROUNDS = 12
 const CALENDAR_WEEKS = 26
 const RECENT_PICKS = 15
@@ -93,7 +95,7 @@ export default async function AnalyticsPlayerPage({ params }: { params: Promise<
 
   const rounds = playerRounds(ds, index, id, ROUNDS)
   const lead = medianLeadHours(ds, index, id)
-  const viaWeb = ds.predictions.filter((x) => x.submittedVia === "WEB").length
+  const via = (v: "WEB" | "APP" | "API") => ds.predictions.filter((x) => x.submittedVia === v).length
 
   const recentPicks = ds.predictions
     .map((x) => ({ ...x, fixture: index.fixtureById.get(x.fixtureId) }))
@@ -218,8 +220,9 @@ export default async function AnalyticsPlayerPage({ params }: { params: Promise<
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">Picks submitted via</h3>
               <BarList
                 rows={[
-                  { label: "Website", value: viaWeb },
-                  { label: "App or bot API", value: ds.predictions.length - viaWeb },
+                  { label: "Website", value: via("WEB") },
+                  { label: "App", value: via("APP") },
+                  { label: "Bot API", value: via("API") },
                 ]}
               />
             </div>
@@ -346,7 +349,7 @@ export default async function AnalyticsPlayerPage({ params }: { params: Promise<
                       <td className="whitespace-nowrap px-3 py-2 text-ink-muted">
                         {hours >= 0 ? `${formatLead(hours)} before` : "after kickoff"}
                       </td>
-                      <td className="px-4 py-2 text-ink-muted">{x.submittedVia === "WEB" ? "Web" : "App/API"}</td>
+                      <td className="px-4 py-2 text-ink-muted">{VIA_LABEL[x.submittedVia]}</td>
                     </tr>
                   )
                 })}

@@ -14,7 +14,13 @@ never picked), return frequency, platform reach, weekly retention cohorts,
 gameweek participation, group sizes and health, and players slipping away. **Groups**
 and **Players** tabs list every league and player and drill down to a page each.
 Visits are now recorded as one `UserActivityDay` row per user per day (migration
-`20261123000000_user_activity_day`, backfilled from existing picks and joins). The
+`20261123000200_user_activity_day`, backfilled from existing picks and joins).
+
+**Fixed: app picks were counted as bot-API picks.** The app saved picks with
+`submittedVia: API`, so the `/host` "web · API" split credited every app pick to
+bots. Picks now record `APP`, past ones were relabelled for users who had signed in
+to the app ([data model](data-model.md#prediction)), and the overview shows web / app
+/ bot API. The
 privacy policy discloses it; **the App Store privacy answers need _Product
 Interaction_ adding by hand** ([listing](../store-assets/app-store-listing.md)).
 Details: [features.md](features.md#host-analytics), rationale in

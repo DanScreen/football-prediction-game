@@ -11,6 +11,8 @@ export type HostOverviewMetrics = {
     last7d: number
     last30d: number
     webLast7d: number
+    appLast7d: number
+    /** The public bot API only — the native app has its own value since 2026-11-23. */
     apiLast7d: number
   }
   mobileUsers: number
@@ -46,6 +48,7 @@ export async function getHostOverviewMetrics(
     predictions30d,
     webLast7d,
     apiLast7d,
+    appLast7d,
     mobileUsers,
     recentUsers,
   ] = await Promise.all([
@@ -66,6 +69,9 @@ export async function getHostOverviewMetrics(
     }),
     prisma.prediction.count({
       where: { updatedAt: { gte: weekAgo }, submittedVia: "API" },
+    }),
+    prisma.prediction.count({
+      where: { updatedAt: { gte: weekAgo }, submittedVia: "APP" },
     }),
     prisma.user.count({
       where: {
@@ -102,8 +108,9 @@ export async function getHostOverviewMetrics(
     predictions: {
       last7d: predictions7d,
       last30d: predictions30d,
-      webLast7d: webLast7d,
-      apiLast7d: apiLast7d,
+      webLast7d,
+      appLast7d,
+      apiLast7d,
     },
     mobileUsers,
     recentUsers: recentUsers.map((u) => ({

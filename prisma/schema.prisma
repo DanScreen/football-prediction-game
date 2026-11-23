@@ -18,9 +18,13 @@ enum ResultSource {
   AI_CONFIRMED
 }
 
+// Where a pick was first submitted: the website, the native app, or the
+// public bot API. (Before 2026-11-23 the app saved its picks as API; the
+// migration relabelled those for users who had signed in to the app.)
 enum SubmitVia {
   WEB
   API
+  APP
 }
 
 model User {

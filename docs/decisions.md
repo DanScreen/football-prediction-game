@@ -241,7 +241,8 @@ overview. We do **not** wire PostHog / Amplitude / GA as the source of truth.
 **What we track**
 - **Volume (derived, no new writes):** `User` rows (split `isBot`),
   `User.createdAt` for signups, `League` / `LeagueMembership` counts,
-  `Prediction` counts (and `submittedVia` for web vs API), mobile reach via
+  `Prediction` counts (and `submittedVia` for web / app / bot API — `APP` was only
+  split out on 2026-11-23), mobile reach via
   `MobileDeviceToken` / non-revoked `MobileRefreshToken`.
 - **Presence (one new field):** `User.lastSeenAt`, bumped on login
   (`authorize`), prediction upsert, and mobile token refresh — **throttled**

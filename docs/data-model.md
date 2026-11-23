@@ -81,7 +81,14 @@ One user's pick for one canonical fixture.
 - `pointsAwarded` (`Float?`) — points as they count: base score × the banker
   multiplier. Streak bonuses are *not* folded in (they live in BonusAward). Null
   until the fixture is confirmed complete. Float because a close pick scores 1.5.
-- `submittedVia`: `WEB` / `API` (`SubmitVia` enum).
+- `submittedVia` (`SubmitVia` enum) — where the pick was **first** submitted (an edit
+  doesn't change it): `WEB` (the website), `APP` (the native app) or `API` (the
+  public bot API). Until 2026-11-23 the app saved picks as `API`, so the host
+  overview counted app picks as bot picks. Migration
+  `20261123000000_submit_via_app` adds `APP`; `20261123000100_submit_via_app_backfill`
+  relabels past `API` picks as `APP` when the user isn't a bot and had already signed
+  in to the app (a `MobileRefreshToken` older than the pick — those are revoked,
+  never deleted). Bot-API accounts never sign in to the app, so their picks stay `API`.
 - **Unique:** `(userId, fixtureId)` — exactly one prediction per user per fixture,
   editable until kickoff.
 
@@ -115,7 +122,7 @@ A user's profile picture, one row per user (`userId` is the primary key). Migrat
 ### UserActivityDay
 One row per user per **Europe/London calendar day** on which they used Scorers.
 Powers return frequency and retention on `/host/analytics`. Migration
-`20261123000000_user_activity_day`.
+`20261123000200_user_activity_day`.
 - `userId` + `day` (`@db.Date`) — composite primary key. Indexed on `day`.
 - `web`, `app`, `api` — which surfaces were used that day (any can be true).
 - Written by `recordActivity()` (`lib/activity.ts`) from the proxy (a signed-in,
@@ -125,8 +132,8 @@ Powers return frequency and retention on `/host/analytics`. Migration
   `lastSeenAt`.
 - The migration **backfilled** history from what already existed: prediction
   `createdAt`, and `updatedAt` only when before kickoff (after it, scoring touches
-  the row); sign-up, league joins and `lastSeenAt`. Backfilled surfaces are best
-  effort: a WEB pick is web, an API pick is app for a human and api for a bot.
+  the row); sign-up, league joins and `lastSeenAt`. Surfaces come from the pick's
+  `submittedVia` (WEB → web, APP → app, API → api).
   Before 2026-11-23 (`ACTIVITY_TRACKING_STARTED`) visits that changed nothing are
   missing.
 - Deleted with the account.

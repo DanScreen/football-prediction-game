@@ -33,6 +33,7 @@ beforeEach(() => {
     .mockResolvedValueOnce(120) // 30d
     .mockResolvedValueOnce(30) // web 7d
     .mockResolvedValueOnce(10) // api 7d
+    .mockResolvedValueOnce(5) // app 7d
   userFindMany.mockResolvedValue([
     {
       id: "u1",
@@ -59,6 +60,7 @@ describe("getHostOverviewMetrics", () => {
       last7d: 40,
       last30d: 120,
       webLast7d: 30,
+      appLast7d: 5,
       apiLast7d: 10,
     })
     expect(m.mobileUsers).toBe(2)

@@ -12,7 +12,7 @@ export async function upsertPrediction(
   fixtureId: string,
   home: number,
   away: number,
-  submittedVia: "WEB" | "API",
+  submittedVia: "WEB" | "API" | "APP",
 ) {
   const saved = await prisma.prediction.upsert({
     where: { userId_fixtureId: { userId, fixtureId } },

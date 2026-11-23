@@ -18,9 +18,9 @@ ALTER TABLE "UserActivityDay" ADD CONSTRAINT "UserActivityDay_userId_fkey" FOREI
 -- Backfill: reconstruct past active days from what the database already records,
 -- so return-frequency and retention have history from day one. Days are
 -- Europe/London calendar days (timestamps are stored as UTC without a zone).
--- Surfaces are best-effort: a WEB pick is web; an API pick is the bot API for a
--- bot and the native app for a human (the app submits as API). Sign-up, league
--- joins and lastSeenAt mark the day without a surface. `updatedAt` counts only
+-- Surfaces come from the pick's submittedVia (WEB / APP / API, relabelled by the
+-- previous migration). Sign-up, league joins and lastSeenAt mark the day
+-- without a surface. `updatedAt` counts only
 -- before kickoff: after it, the row is touched by result scoring, not the player.
 INSERT INTO "UserActivityDay" ("userId", "day", "web", "app", "api")
 SELECT "userId", "day", bool_or("web"), bool_or("app"), bool_or("api")
@@ -28,10 +28,9 @@ FROM (
     SELECT p."userId",
            (ts AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/London')::date AS "day",
            p."submittedVia" = 'WEB' AS "web",
-           p."submittedVia" = 'API' AND NOT u."isBot" AS "app",
-           p."submittedVia" = 'API' AND u."isBot" AS "api"
+           p."submittedVia" = 'APP' AS "app",
+           p."submittedVia" = 'API' AS "api"
     FROM "Prediction" p
-    JOIN "User" u ON u."id" = p."userId"
     JOIN "Fixture" f ON f."id" = p."fixtureId"
     CROSS JOIN LATERAL (VALUES (p."createdAt"), (p."updatedAt")) AS t(ts)
     WHERE ts < f."kickoffTime"

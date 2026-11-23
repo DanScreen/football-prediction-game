@@ -83,7 +83,7 @@ describe("POST /api/mobile/v1/predictions", () => {
       predictedHomeScore: 2,
       predictedAwayScore: 1,
       isBanker: false,
-      submittedVia: "API",
+      submittedVia: "APP",
       updatedAt: new Date("2026-08-16T12:00:00Z"),
     } as never)
 
@@ -91,7 +91,7 @@ describe("POST /api/mobile/v1/predictions", () => {
       post({ fixtureId: "fx1", homeScore: 2, awayScore: 1, isBanker: true }),
     )
     expect(res.status).toBe(200)
-    expect(upsertMock).toHaveBeenCalledWith("u1", "fx1", 2, 1, "API")
+    expect(upsertMock).toHaveBeenCalledWith("u1", "fx1", 2, 1, "APP")
     expect(setBankerMock).toHaveBeenCalledWith("u1", "fx1", true)
     const json = await res.json()
     expect(json.prediction.isBanker).toBe(true)
