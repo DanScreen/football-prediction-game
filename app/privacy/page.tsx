@@ -25,7 +25,7 @@ export default function PrivacyPage() {
       <header>
         <h1 className="text-2xl font-bold text-ink">Privacy policy</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Last updated 10 November 2026. This policy covers the Scorers website at
+          Last updated 23 November 2026. This policy covers the Scorers website at
           scorersonline.uk and the Scorers iOS and Android apps.
         </p>
       </header>
@@ -72,12 +72,19 @@ export default function PrivacyPage() {
           <Bullet>
             <strong className="text-ink">An API key</strong>, if you use the public bot API.
           </Bullet>
+          <Bullet>
+            <strong className="text-ink">Which days you use Scorers</strong> — one record per
+            day you&apos;re signed in, noting whether you used the website, the app or the bot
+            API, plus when you were last active. Nothing finer than that: no pages, clicks,
+            times of day or devices.
+          </Bullet>
         </ul>
         <p className="mt-3">
           We do <strong className="text-ink">not</strong> collect your location, contacts,
-          any photos other than a profile picture you choose, device identifiers for advertising, or any analytics or behavioural
-          tracking. There are no third-party trackers, advertising SDKs or analytics SDKs in
-          the website or in the apps.
+          any photos other than a profile picture you choose, or device identifiers for
+          advertising, and we don&apos;t track what you do beyond the days-used record above.
+          There are no third-party trackers, advertising SDKs or analytics SDKs in the website
+          or in the apps.
         </p>
       </Section>
 
@@ -93,11 +100,17 @@ export default function PrivacyPage() {
             fixture you have not yet predicted.
           </Bullet>
           <Bullet>To send the push reminders you opted into, if you opted in.</Bullet>
+          <Bullet>
+            To see how the game is going — how many people play, how often they come back and
+            which leagues are active. Only the site&apos;s host sees these figures, and they never
+            leave our database.
+          </Bullet>
         </ul>
         <p className="mt-3">
           The lawful basis is performance of a contract (running the game you signed up for)
           and, for reminders, your consent — which you can withdraw at any time by turning
-          notifications off for Scorers in your device settings.
+          notifications off for Scorers in your device settings. The days-used record relies
+          on our legitimate interest in running and improving a small game.
         </p>
       </Section>
 
@@ -140,7 +153,8 @@ export default function PrivacyPage() {
           Your account and its predictions are kept while your account exists. Password-reset
           tokens expire within an hour and are deleted when used. Refresh tokens are deleted
           when you sign out. Push tokens are deleted when you turn notifications off or
-          delete your account.
+          delete your account. The record of which days you used Scorers is kept while your
+          account exists and deleted with it.
         </p>
       </Section>
 

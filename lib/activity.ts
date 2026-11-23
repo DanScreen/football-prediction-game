@@ -4,6 +4,13 @@ import { touchLastSeen } from "@/lib/lastSeen"
 /** Where a visit came from: the website, the native app, or the bot API. */
 export type ActivitySurface = "web" | "app" | "api"
 
+/**
+ * The day visits started being recorded. Activity before it was reconstructed
+ * by the migration from picks, sign-ups and league joins, so it undercounts
+ * visits that didn't change anything.
+ */
+export const ACTIVITY_TRACKING_STARTED = "2026-11-23"
+
 /** Analytics days are Europe/London calendar days, the timezone the game is played in. */
 export const ACTIVITY_TIME_ZONE = "Europe/London"
 

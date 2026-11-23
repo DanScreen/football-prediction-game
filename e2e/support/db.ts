@@ -206,3 +206,12 @@ export async function membershipsOf(userId: string): Promise<string[]> {
   )
   return rows.map((r) => r.leagueId)
 }
+
+/** The analytics activity rows for a user, newest first. */
+export async function activityDaysOf(userId: string) {
+  const { rows } = await pool.query<{ web: boolean; app: boolean; api: boolean }>(
+    `SELECT web, app, api FROM "UserActivityDay" WHERE "userId" = $1 ORDER BY day DESC`,
+    [userId],
+  )
+  return rows
+}

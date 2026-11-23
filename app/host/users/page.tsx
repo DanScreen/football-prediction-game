@@ -144,7 +144,12 @@ export default async function HostUsersPage({
                 <tr className="border-b border-line-soft align-top last:border-0" key={u.id}>
                   <td className="min-w-[15rem] px-4 py-3">
                     <p className="font-medium text-ink">
-                      {u.displayName}
+                      <Link
+                        className="hover:text-pitch hover:underline"
+                        href={`/host/analytics/players/${u.id}`}
+                      >
+                        {u.displayName}
+                      </Link>
                       {u.isBot && <span className="ml-2 text-xs font-normal text-ink-muted">bot</span>}
                       {u.isSiteAdmin && (
                         <span className="ml-2 text-xs font-normal text-ink-muted">host</span>

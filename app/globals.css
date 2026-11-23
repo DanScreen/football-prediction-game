@@ -79,6 +79,13 @@
   --color-board-muted: #a9c9b6;
   --color-board-gold: #f2c74e;
 
+  /* Charts (host analytics). One hue, two steps: `chart` is the series in
+     focus, `chart-soft` the de-emphasised one stacked beside it. Derived from
+     pitch and surface, so dark mode needs no separate values. Validated as an
+     ordinal ramp (monotone lightness, single hue) in both themes. */
+  --color-chart: var(--color-pitch);
+  --color-chart-soft: color-mix(in srgb, var(--color-pitch) 58%, var(--color-surface));
+
   --font-sans: var(--font-inter);
   --font-mono: var(--font-mono);
 
