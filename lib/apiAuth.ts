@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { recordActivity } from "@/lib/activity"
 
 /** Extracts the Bearer token from an Authorization header and returns the matching user, or null. */
 export async function authenticateApiKey(request: Request) {
@@ -6,7 +7,10 @@ export async function authenticateApiKey(request: Request) {
   if (!auth.startsWith("Bearer ")) return null
   const key = auth.slice("Bearer ".length).trim()
   if (!key) return null
-  return prisma.user.findUnique({ where: { apiKey: key } })
+  const user = await prisma.user.findUnique({ where: { apiKey: key } })
+  // Bot API calls count as a visit on the "api" surface (one write a day).
+  if (user) await recordActivity(user.id, "api")
+  return user
 }
 
 /**

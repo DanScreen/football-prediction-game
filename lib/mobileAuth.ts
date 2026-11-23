@@ -1,6 +1,7 @@
 import { createHmac, createHash, randomBytes, timingSafeEqual } from "node:crypto"
 import { prisma } from "@/lib/prisma"
 import { touchLastSeen } from "@/lib/lastSeen"
+import { recordActivity } from "@/lib/activity"
 import { avatarPath } from "@/lib/avatar"
 
 /** Access JWT lifetime — short enough that theft window is limited. */
@@ -200,5 +201,8 @@ export async function authenticateMobileAccess(
       avatarKey: true,
     },
   })
-  return user ? toMobileUserPublic(user) : null
+  if (!user) return null
+  // Every authenticated app call is a visit (memoised to one write a day).
+  await recordActivity(user.id, "app")
+  return toMobileUserPublic(user)
 }

@@ -10,6 +10,10 @@ vi.mock("@/lib/prisma", () => ({
   },
 }))
 
+vi.mock("@/lib/activity", () => ({
+  recordActivity: vi.fn().mockResolvedValue(undefined),
+}))
+
 const userFindUnique = vi.mocked(prisma.user.findUnique)
 const leagueFindUnique = vi.mocked(prisma.league.findUnique)
 const membershipFindUnique = vi.mocked(prisma.leagueMembership.findUnique)
@@ -46,11 +50,15 @@ describe("authenticateApiKey", () => {
     userFindUnique.mockResolvedValue(user as never)
     expect(await authenticateApiKey(requestWithAuth("Bearer  my-key "))).toBe(user)
     expect(userFindUnique).toHaveBeenCalledWith({ where: { apiKey: "my-key" } })
+    const { recordActivity } = await import("./activity")
+    expect(recordActivity).toHaveBeenCalledWith("u1", "api")
   })
 
   it("returns null when the key matches no user", async () => {
     userFindUnique.mockResolvedValue(null)
     expect(await authenticateApiKey(requestWithAuth("Bearer unknown"))).toBeNull()
+    const { recordActivity } = await import("./activity")
+    expect(recordActivity).not.toHaveBeenCalled()
   })
 })
 

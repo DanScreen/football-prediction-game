@@ -27,6 +27,10 @@ vi.mock("@/lib/lastSeen", () => ({
   touchLastSeen: vi.fn().mockResolvedValue(undefined),
 }))
 
+vi.mock("@/lib/activity", () => ({
+  recordActivity: vi.fn().mockResolvedValue(undefined),
+}))
+
 const userFindUnique = vi.mocked(prisma.user.findUnique)
 const refreshCreate = vi.mocked(prisma.mobileRefreshToken.create)
 const refreshFindUnique = vi.mocked(prisma.mobileRefreshToken.findUnique)
@@ -122,6 +126,8 @@ describe("authenticateMobileAccess", () => {
         avatarKey: true,
       },
     })
+    const { recordActivity } = await import("./activity")
+    expect(recordActivity).toHaveBeenCalledWith("u1", "app")
   })
 
   it("still authenticates an unverified user, flagged so routes can gate", async () => {
