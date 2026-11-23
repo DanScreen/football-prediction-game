@@ -20,7 +20,12 @@ Visits are now recorded as one `UserActivityDay` row per user per day (migration
 `submittedVia: API`, so the `/host` "web · API" split credited every app pick to
 bots. Picks now record `APP`, past ones were relabelled for users who had signed in
 to the app ([data model](data-model.md#prediction)), and the overview shows web / app
-/ bot API. The
+/ bot API.
+
+**Fixed: `/host` pick counts were inflated by scoring.** "Picks · 7d / 30d" counted
+picks by `updatedAt`, which result scoring rewrites on every pick in the round each
+time a result confirms, so finished matches' picks looked like fresh activity. They
+now count when a player made or edited the pick (edits only before kickoff). The
 privacy policy discloses it; **the App Store privacy answers need _Product
 Interaction_ adding by hand** ([listing](../store-assets/app-store-listing.md)).
 Details: [features.md](features.md#host-analytics), rationale in

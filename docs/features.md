@@ -296,7 +296,7 @@ legend under the page).
 
 | Page | Purpose |
 |------|---------|
-| `/host` | **Overview** — platform user counts (humans/bots), DAU/WAU/MAU from `lastSeenAt`, signups and prediction volume (7d/30d, split web / app / bot API), mobile reach, and a recent-users table. |
+| `/host` | **Overview** — platform user counts (humans/bots), DAU/WAU/MAU from `lastSeenAt`, signups and prediction volume (7d/30d, split web / app / bot API — picks players made or edited in the window; scoring doesn't count), mobile reach, and a recent-users table. |
 | `/host/analytics` | **Analytics** — engagement across the platform, with **Groups** (`/host/analytics/leagues`) and **Players** (`/host/analytics/players`) tabs that drill down to one league or one player. See [below](#host-analytics). |
 | `/host/users` | **Users** — every account, newest first, searchable by name or email, with All / Unverified / Verified tabs (counts on each; bots only under All). Each row shows verification status (and when the last link went out), joined, last seen and league count. Actions: **Send verification link** and **Fix email** (unverified only), and **Send reset link** (anyone). See [below](#host-user-management). |
 | `/host/competitions` | Create/edit competitions (name, football-data code, flag, active). No delete. |
